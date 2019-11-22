@@ -1,0 +1,60 @@
+/*
+* @Author: Lucien Zhang
+* @Date:   2019-09-19 16:49:13
+* @Last Modified by:   Lucien Zhang
+* @Last Modified time: 2019-10-06 21:52:41
+*/
+
+body {
+    background: url(../images/werewolf/game_bg.jpg) no-repeat center center #CCCCCC;
+    background-size: cover;
+    background-attachment: fixed;
+
+    color: white;
+}
+
+.button-holder{
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+button {
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+
+.row1{
+    margin-top: 10%;
+}
+
+.row1 button{
+    height: 100px;
+    font-size: 20px;
+}
+
+#setup {
+    background-color: #4FA746;
+    color: white;
+}
+
+#join {
+    background-color: #427BFF;
+    color: white;
+}
+
+#goback {
+    background-color: #F2C010;
+    color: black;
+}
+
+.row2{
+    margin-top: 50px;
+}
+
+.row2 button{
+    background-color: #50A3B9;
+    color: white;
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>注册成功</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/register_success.css') }}">
+</head>
+
+<body>
+    <h2>
+        注册成功
+    </h2>
+    <a href="{{ url_for('werewolf_api.login') }}">
+        <button class="btn btn-primary"> 立即登录 </button>
+    </a>
+</body>
+
+</html>

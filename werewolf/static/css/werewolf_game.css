@@ -1,0 +1,131 @@
+/*
+* @Author: Lucien Zhang
+* @Date:   2019-10-04 18:44:09
+* @Last Modified by:   Lucien Zhang
+* @Last Modified time: 2019-10-09 16:26:10
+*/
+
+body {
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none;
+    background: url(../images/werewolf/game_bg.jpg) no-repeat center center #CCCCCC;
+    background-size: cover;
+    background-attachment: fixed;
+
+    color: white;
+}
+
+.logo {
+    text-align: center;
+}
+
+.navbar {
+    position: absolute;
+    top: 25px;
+    padding: 0px;
+    width: 93%;
+    line-height: 34px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.progress {
+    height: 5px;
+}
+
+#info {
+    border-radius: 15px 15px 0 0;
+    background-color: antiquewhite;
+    background-color: rgba(250, 235, 215, 0.5);
+}
+
+.area {
+    padding: 10px 10px;
+    margin: 10px 0;
+}
+
+.notice {
+    height: 50px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.notice .status {
+    font-size: 16px;
+}
+
+.notice .status,
+.notice .setting {
+    display: inline-block;
+}
+
+.btn-group-xs>.btn,
+.btn-xs {
+    padding: .5rem .4rem;
+    font-size: .875rem;
+    line-height: .5;
+    border-radius: .2rem;
+}
+
+#ope-panel {
+    font-weight: bold;
+    margin-top: -10px;
+}
+
+#ope-panel .tip-panel {
+    border-radius: 0 0 15px 15px;
+    background-color: antiquewhite;
+    background-color: rgba(250, 235, 215, 0.5);
+    text-align: center;
+}
+
+#ope-panel .tip-panel .tips {
+    font-size: 18px;
+    height: 50px;
+    line-height: 25px;
+    color: #a94442;
+}
+
+#ope-panel .tip-panel .panel-buttons {
+    height: 34px;
+}
+
+#ope-panel .tip-panel .panel-buttons button {
+  margin: 0 5px;
+}
+
+#ope-panel .player-panel {
+    color: #fff;
+}
+
+.player {
+    display: inline-block;
+    width: 48%;
+    margin: 10px 0;
+}
+
+.player button.btn {
+    width: 60px;
+    color: #fff;
+    background-color: #5bc0de;
+    border: 1px solid #46b8da;
+}
+
+.player.player-right-side {
+    text-align: right;
+}
+
+.modal {
+    color: black;
+}
+
+#check-setting .modal-body,
+#history .modal-body {
+    height: 432px;
+    overflow-y: auto;
+}
+
+.role-img {
+    text-align: center;
+}
