@@ -17,8 +17,7 @@ from werewolf.db import db
 from werewolf.game_module.game_message import GameMessage
 from werewolf.game_module import game_engine
 
-
-werewolf_api = Blueprint('werewolf_api', __name__,template_folder='templates')
+werewolf_api = Blueprint('werewolf_api', __name__, template_folder='templates', static_folder='static')
 
 
 @werewolf_api.route('/')
@@ -83,7 +82,9 @@ def game():
                            role_name=GameMessage(current_user.role.role_type).parse(),
                            role_type=current_user.role.role_type.name.lower(),
                            seat_cnt=current_game.get_seat_num(),
-                           dbtxt=(str(current_user.game.roles) + str(type(current_user.game.roles)) + str(current_user.game.audio) + str(type(current_user.game.audio)) + '\n<br />\n' + str(current_user.game.turn.days) + str(type(current_user.game.turn))))
+                           dbtxt=(str(current_user.game.roles) + str(type(current_user.game.roles)) + str(
+                               current_user.game.audio) + str(type(current_user.game.audio)) + '\n<br />\n' + str(
+                               current_user.game.turn.days) + str(type(current_user.game.turn))))
 
 
 @werewolf_api.route('/get_game_info')
@@ -129,7 +130,6 @@ def join():
             return redirect(url_for('werewolf_api.game'))
         else:
             return message.parse()
-
 
 # @werewolf_api.route('test')
 # def test():
