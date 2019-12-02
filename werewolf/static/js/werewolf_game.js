@@ -6,9 +6,9 @@
  */
 
 // document.querySelector("#history-btn").onclick = function() { $("#history-model-content").scrollTop($("#history-model-content").prop("scrollHeight")); };
-document.querySelector("#history").onfocus = function() { $("#history-model-content").scrollTop($("#history-model-content").prop("scrollHeight")); };
-
-
+document.querySelector("#history").onfocus = function () {
+    $("#history-model-content").scrollTop(this.prop("scrollHeight"));
+};
 
 
 // $.ajax({

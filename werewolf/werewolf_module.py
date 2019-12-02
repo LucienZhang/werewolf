@@ -6,6 +6,7 @@
 
 from flask import Blueprint, render_template, request, current_app, flash, redirect, url_for
 from flask_login import current_user, login_required
+from flask_sse import sse
 from werewolf.game_module.user import User, UserTable
 from werewolf.game_module.game import Game, GameTable
 from werewolf.game_module.role import Role
@@ -131,6 +132,30 @@ def join():
         else:
             return message.parse()
 
-# @werewolf_api.route('test')
-# def test():
-#     return render_template('register_success.html')
+
+@werewolf_api.route('/quit')
+@login_required
+def quit_game():
+    success, message = current_user.quit_game()
+    if success:
+        return redirect(url_for('werewolf_api.home'))
+    else:
+        if message.key == 'NOT_IN_GAME':
+            return redirect(url_for('werewolf_api.home'))
+        else:
+            return message.parse()
+
+
+@werewolf_api.route('/test')
+def test():
+    return render_template('test.html')
+
+
+@werewolf_api.route('/send')
+def send():
+    gid = request.args.get('gid')
+    sse.publish(json.dumps([url_for('werewolf_api.static', filename='audio/seer_start_voice.mp3'),
+                            url_for('werewolf_api.static', filename='audio/night_bgm.mp3'), ]),
+                type='music',
+                channel=gid)
+    return "Message sent!"

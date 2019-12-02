@@ -6,6 +6,7 @@
 
 import os
 from flask import Flask, redirect, url_for
+from flask_sse import sse
 from werewolf.werewolf_module import werewolf_api
 from werewolf.login import init_login
 from werewolf.db import init_db
@@ -15,6 +16,7 @@ from werewolf.config import config
 def init_app(app):
     init_login(app)
     init_db(app)
+    app.register_blueprint(sse, url_prefix='/stream')
 
 
 def create_app(config_name=None):

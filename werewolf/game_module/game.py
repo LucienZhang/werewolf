@@ -232,7 +232,7 @@ class Game(object):
             return None
 
     # if not user_table.login_token:
-        #     user_table.login_token = get_login_token(username)
+        #     user_table.login_token = generate_login_token(username)
         #     db.session.commit()
         # else:
         #     # 已经登录了

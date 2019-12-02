@@ -116,15 +116,18 @@ class Role(object):
     #     self.position = -1
     #     self.history = []
 
-    @classmethod
-    def create_role_from_table(cls, role_table):
-        role = Role(uid=role_table.uid, role_type=RoleType(role_table.role_type), group_type=GroupType(role_table.group_type),
-                    alive=role_table.alive, iscaptain=role_table.iscaptain, votable=role_table.votable, speakable=role_table.speakable,
-                    position=role_table.position, history=json.loads(role_table.history, object_hook=JsonHook()), table=role_table)
+    @staticmethod
+    def create_role_from_table(role_table):
+        role = Role(uid=role_table.uid, role_type=RoleType(role_table.role_type),
+                    group_type=GroupType(role_table.group_type),
+                    alive=role_table.alive, iscaptain=role_table.iscaptain, votable=role_table.votable,
+                    speakable=role_table.speakable,
+                    position=role_table.position, history=json.loads(role_table.history, object_hook=JsonHook()),
+                    table=role_table)
         return role
 
-    @classmethod
-    def create_new_role(cls, uid):
+    @staticmethod
+    def create_new_role(uid):
         role_table = RoleTable.query.get(uid)
         if role_table is None:
             role_table = RoleTable(uid=uid)
@@ -135,15 +138,15 @@ class Role(object):
         role = Role.create_role_from_table(role_table)
         return role
 
-    @classmethod
-    def get_role_by_uid(cls, uid):
+    @staticmethod
+    def get_role_by_uid(uid):
         role_table = RoleTable.query.get(uid)
         if role_table is not None:
             return Role.create_role_from_table(role_table)
         else:
             return None
 
-    def commit(self, lock=False, func=None)->(bool, GameMessage):
+    def commit(self, lock=False, func=None) -> (bool, GameMessage):
         if not lock:
             self._sync_to_table()
             db.session.add(self.table)
