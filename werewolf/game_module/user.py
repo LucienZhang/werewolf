@@ -29,17 +29,17 @@ class UserTable(db.Model):
     gid = db.Column(db.Integer, nullable=False)  # gid=-1 means not in game
     ishost = db.Column(db.Boolean, nullable=False)
 
-    def __init__(self, uid: int = None, username: str = None, password: str = None, login_token: str = None,
-                 name: str = None,
-                 avatar: int = -1, gid: int = -1, ishost: bool = False):
-        self.uid = uid
-        self.username = username
-        self.password = password
-        self.login_token = login_token
-        self.name = name
-        self.avatar = avatar
-        self.gid = gid
-        self.ishost = ishost
+    # def __init__(self, uid: int = None, username: str = None, password: str = None, login_token: str = None,
+    #              name: str = None,
+    #              avatar: int = -1, gid: int = -1, ishost: bool = False):
+    #     self.uid = uid
+    #     self.username = username
+    #     self.password = password
+    #     self.login_token = login_token
+    #     self.name = name
+    #     self.avatar = avatar
+    #     self.gid = gid
+    #     self.ishost = ishost
 
 
 # def commit(func):
@@ -62,9 +62,9 @@ class User(UserMixin):
     def uid(self):
         return self.table.uid
 
-    @uid.setter
-    def uid(self, uid: int):
-        self.table.uid = uid
+    # @uid.setter
+    # def uid(self, uid: int):
+    #     self.table.uid = uid
 
     @property
     def name(self):
@@ -89,7 +89,10 @@ class User(UserMixin):
     @game.setter
     def game(self, game: Game):
         self._game = game
-        self.table.gid = game.gid
+        if game is not None:
+            self.table.gid = game.gid
+        else:
+            self.table.gid = -1
 
     @property
     def ishost(self):
@@ -122,7 +125,7 @@ class User(UserMixin):
     #                     user.role = r
     #                     break
     #             else:
-    #                 user.role = Role.get_role_by_uid(user_table.uid)
+    #                 user.role = Role.get_player_by_uid(user_table.uid)
     #         else:
     #             pass  # no role if no game
     #     return user
@@ -132,7 +135,7 @@ class User(UserMixin):
         if UserTable.query.filter_by(username=username).first() is not None:
             # username exists
             return None
-        user_table = UserTable(username=username, password=password, name=name, avatar=avatar)
+        user_table = UserTable(username=username, password=password, name=name, avatar=avatar, gid=-1, ishost=False)
         db.session.add(user_table)
         db.session.commit()
         role = Role.create_new_role(user_table.uid)
@@ -143,8 +146,10 @@ class User(UserMixin):
     def get_user_by_uid(uid):
         user_table = UserTable.query.get(uid)
         if user_table is not None:
-            role = Role.get_role_by_uid(uid)
             game = Game.get_game_by_gid(user_table.gid)
+            role = game.get_role_by_uid(uid)
+            if role is None:
+                role = Role.get_role_by_uid(uid)
             return User(table=user_table, role=role, game=game)
         else:
             return None
@@ -155,8 +160,10 @@ class User(UserMixin):
             return None
         user_table = UserTable.query.filter_by(login_token=login_token).first()
         if user_table is not None:
-            role = Role.get_role_by_uid(user_table.uid)
             game = Game.get_game_by_gid(user_table.gid)
+            role = game.get_role_by_uid(user_table.uid)
+            if role is None:
+                role = Role.get_role_by_uid(user_table.uid)
             return User(table=user_table, role=role, game=game)
         else:
             return None
@@ -167,44 +174,49 @@ class User(UserMixin):
             return None
         user_table = UserTable.query.filter_by(username=username).first()
         if user_table is not None:
-            role = Role.get_role_by_uid(user_table.uid)
             game = Game.get_game_by_gid(user_table.gid)
+            role = game.get_role_by_uid(user_table.uid)
+            if role is None:
+                role = Role.get_role_by_uid(user_table.uid)
             return User(table=user_table, role=role, game=game)
         else:
             return None
 
     def join_game(self, gid: int) -> (bool, GameMessage):
-        def func(my_game):
-            if len(my_game.roles) >= my_game.get_seat_num():
-                return False, GameMessage('GAME_FULL')
-            new_role = Role.create_new_role(self.uid)
-            self.role = new_role
-
-            # do not use append function here, otherwise the table won't be changed
-            my_game.roles = my_game.roles + [self.role]
-            return True, None
-
-        game = Game.get_game_by_gid(gid)
-        if game is None:
+        game_table = GameTable.query.with_for_update().get(gid)
+        if game_table is None:
             return False, GameMessage('GAME_NOT_EXIST')
+        game = Game.create_game_from_table(game_table)
+        if len(game_table.roles) >= game.get_seat_num():
+            db.session.add(game_table)
+            db.session.commit()
+            return False, GameMessage('GAME_FULL')
         if game.get_role_by_uid(self.uid) is not None:
+            db.session.add(game_table)
+            db.session.commit()
             return False, GameMessage('ALREADY_IN')
 
-        succeed, msg = game.commit(lock=True, func=func)
-        if not succeed:
-            return succeed, msg
-        else:
-            self.game = game
-            self.ishost = self.uid == game.host_id
-            self.role.position = len(game.roles)
-            self.role.commit()
-            self.commit()
-            return True, None
+        # fine to join the game
+        new_role = Role.create_new_role(self.uid)
+        game.roles.append(new_role)
+        game.commit()
+        self.role = new_role
+        self.game = game
+        self.ishost = self.uid == game.host_id
+        self.role.position = len(game.roles)
+        self.role.commit()
+        self.commit()
+        return True, None
 
     def quit_game(self) -> (bool, GameMessage):
+        if self.game is None:
+            return False, GameMessage('NOT_IN_GAME')
         self.game = None
         self.ishost = False
-        self.role
+        # TODO: role reset??
+        # self.role.reset
+        self.role = None
+        return True, None
 
     def commit(self):
         db.session.add(self.table)

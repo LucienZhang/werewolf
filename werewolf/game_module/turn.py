@@ -49,7 +49,7 @@ class Turn(object):
         ans = self.steps[self.now]
         return ans, ans not in [TurnStep.CHECK_VICTORY]
 
-    def go_next_step(self, card_dict, captain_mode):  # return if need to return the answer to user
+    def go_next_step(self, card_dict, captain_mode,):  # return if need to return the answer to user
         if self.now == len(self.steps) - 1:
             self._reset(card_dict, captain_mode)
         else:

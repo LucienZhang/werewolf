@@ -95,6 +95,8 @@ class TurnStep(Enum):
     ELECT = auto()
     VOTE_FOR_CAPTAIN = auto()
     VOTE = auto()
+    TALK = auto()
+    ANNOUNCE_AND_TALK = auto()
 
     def __str__(self):
         return self.name

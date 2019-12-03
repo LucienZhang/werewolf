@@ -46,23 +46,13 @@ def setup():
         for r in single_roles:
             card_dict[RoleType[r.upper()]] = 1
 
-        new_role = Role.create_new_role(current_user.uid)
-        current_user.role = new_role
-        game = Game.create_new_game(host=current_user, victory_mode=victory_mode, card_dict=card_dict,
-                                    captain_mode=captain_mode, witch_mode=witch_mode)
-        # db.session.add(game.table)
-        # # db.session.flush()
-        # db.session.commit()
-        # game.gid = game.table.gid
-        # TODO: position, ishost
-        current_user.game = game
-        # current_user.position = len(current_user.game.roles)
-        current_user.commit()
-        # current_app.logger.info(game.gid)
-        # db.session.add(current_user.table)
-        # db.session.commit()
+        new_game = Game.create_new_game(host=current_user, victory_mode=victory_mode, card_dict=card_dict,
+                                        captain_mode=captain_mode, witch_mode=witch_mode)
 
-        return redirect(url_for('werewolf_api.join', gid=game.gid))
+        current_user.game = new_game
+        current_user.commit()
+
+        return redirect(url_for('werewolf_api.join', gid=new_game.gid))
 
 
 @werewolf_api.route('/game', methods=['GET'])
@@ -83,24 +73,16 @@ def game():
                            role_name=GameMessage(current_user.role.role_type).parse(),
                            role_type=current_user.role.role_type.name.lower(),
                            seat_cnt=current_game.get_seat_num(),
-                           dbtxt=(str(current_user.game.roles) + str(type(current_user.game.roles)) + str(
-                               current_user.game.audio) + str(type(current_user.game.audio)) + '\n<br />\n' + str(
-                               current_user.game.turn.days) + str(type(current_user.game.turn))))
+                           dbtxt=(str(current_user.game.roles) + str(
+                               type(current_user.game.roles)) + '\n<br />\n' + str(
+                               current_user.game.days) + str(type(current_user.game.steps))))
 
 
-@werewolf_api.route('/get_game_info')
+@werewolf_api.route('/action')
 @login_required
-def get_game_info():
-    content = request.args.get('content')
-    if content == 'history':
-        return game_engine.get_history()
-    elif content == 'audio':
-        return game_engine.get_audio()
-
-
 def action():
-    # get game
-    pass
+    ret_message = game_engine.take_action()
+    return ret_message.parse()
 
 
 @werewolf_api.route('/login', methods=['GET', 'POST'])
