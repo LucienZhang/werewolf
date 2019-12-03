@@ -6,7 +6,6 @@
 import json
 
 from functools import singledispatch
-from werewolf.game_module.turn import Turn
 # from app.werewolf.role import Role
 from enum import Enum
 from flask import current_app
@@ -23,9 +22,9 @@ def _(o):
     return o.name
 
 
-@convert.register(Turn)
-def _(o):
-    return o.__dict__
+# @convert.register(Turn)
+# def _(o):
+#     return o.__dict__
 
 
 # @convert.register(Role)

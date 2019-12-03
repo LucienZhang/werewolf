@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-from werewolf.game_module.turn import Turn
 from datetime import datetime, timedelta
 from flask_login import current_user
 from werewolf.utils.enums import GameStatus, VictoryMode, CaptainMode, WitchMode, RoleType, TurnStep

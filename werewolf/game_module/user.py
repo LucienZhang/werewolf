@@ -147,9 +147,11 @@ class User(UserMixin):
         user_table = UserTable.query.get(uid)
         if user_table is not None:
             game = Game.get_game_by_gid(user_table.gid)
-            role = game.get_role_by_uid(uid)
-            if role is None:
-                role = Role.get_role_by_uid(uid)
+            role = None
+            if game is not None:
+                role = game.get_role_by_uid(user_table.uid)
+                if role is None:
+                    role = Role.get_role_by_uid(user_table.uid)
             return User(table=user_table, role=role, game=game)
         else:
             return None
@@ -161,9 +163,11 @@ class User(UserMixin):
         user_table = UserTable.query.filter_by(login_token=login_token).first()
         if user_table is not None:
             game = Game.get_game_by_gid(user_table.gid)
-            role = game.get_role_by_uid(user_table.uid)
-            if role is None:
-                role = Role.get_role_by_uid(user_table.uid)
+            role = None
+            if game is not None:
+                role = game.get_role_by_uid(user_table.uid)
+                if role is None:
+                    role = Role.get_role_by_uid(user_table.uid)
             return User(table=user_table, role=role, game=game)
         else:
             return None
@@ -175,9 +179,11 @@ class User(UserMixin):
         user_table = UserTable.query.filter_by(username=username).first()
         if user_table is not None:
             game = Game.get_game_by_gid(user_table.gid)
-            role = game.get_role_by_uid(user_table.uid)
-            if role is None:
-                role = Role.get_role_by_uid(user_table.uid)
+            role = None
+            if game is not None:
+                role = game.get_role_by_uid(user_table.uid)
+                if role is None:
+                    role = Role.get_role_by_uid(user_table.uid)
             return User(table=user_table, role=role, game=game)
         else:
             return None
@@ -218,9 +224,10 @@ class User(UserMixin):
         self.role = None
         return True, None
 
-    def commit(self):
+    def commit(self) -> (bool, GameMessage):
         db.session.add(self.table)
         db.session.commit()
+        return True, None
 
     # def commit(self, lock=False, func=None)->(bool, str):
     #     if not lock:
