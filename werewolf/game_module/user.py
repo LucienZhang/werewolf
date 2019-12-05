@@ -5,16 +5,12 @@
 # @Last Modified time: 2019-10-16 16:17:38
 
 
-import functools
 from werewolf.game_module.game import Game
 from flask_login import UserMixin
 from werewolf.game_module.game import GameTable
 from werewolf.game_module.role import Role
-from datetime import datetime
 from werewolf.db import db
-import json
-from werewolf.utils.json_utils import JsonHook, ExtendJSONEncoder
-from werewolf.game_module.game_message import GameMessage
+from werewolf.utils.game_message import GameMessage
 
 
 class UserTable(db.Model):

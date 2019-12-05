@@ -6,9 +6,9 @@
 
 from werewolf.db import db
 from werewolf.utils.enums import RoleType, GroupType
+from werewolf.utils.game_message import GameMessage
 import json
-from werewolf.utils.json_utils import JsonHook, ExtendJSONEncoder
-from werewolf.game_module.game_message import GameMessage
+from werewolf.utils.json_utils import ExtendJSONEncoder, JsonHook
 
 
 class RoleTable(db.Model):
@@ -21,6 +21,8 @@ class RoleTable(db.Model):
     voteable = db.Column(db.Boolean)
     speakable = db.Column(db.Boolean)
     position = db.Column(db.Integer)
+    tags = db.Column(db.String(length=255), nullable=False)
+    args = db.Column(db.String(length=255), nullable=False)
 
     # history = db.Column(db.String(length=4095))
     #
@@ -48,14 +50,17 @@ class RoleTable(db.Model):
         self.voteable = True
         self.speakable = True
         self.position = -1
+        self.tags = '[]'
+        self.args = '{}'
         # self.history = json.dumps([], cls=ExtendJSONEncoder)
 
 
 class Role(object):
     """Base Class"""
 
-    def __init__(self, table: RoleTable):
+    def __init__(self, table: RoleTable, args: dict = None):
         self.table = table
+        self._args = args
 
     @property
     def uid(self):
@@ -116,6 +121,23 @@ class Role(object):
     @position.setter
     def position(self, position: int):
         self.table.position = position
+
+    @property
+    def tags(self):
+        # todo
+        return self.table.tags
+
+    @tags.setter
+    def tags(self, tags: int):  # todo: tags:??
+        self.table.tags = tags.value
+
+    @property
+    def args(self):
+        return self._args
+
+    @args.setter
+    def args(self, args: dict):
+        self._args = args
 
     # def __init__(self, uid: int = -1, role_type: RoleType = RoleType.UNKNOWN, group_type: GroupType = GroupType.UNKNOWN,
     #              alive: bool = True, iscaptain: bool = False, voteable: bool = True, speakable: bool = True,
@@ -194,27 +216,33 @@ class Role(object):
     def create_new_role(uid):
         role_table = RoleTable.query.get(uid)
         if role_table is None:
-            role_table = RoleTable(uid=uid)
+            role_table = RoleTable(uid=uid, tags='[]', args='{}')
         else:
             role_table.reset()
         db.session.add(role_table)
         db.session.commit()
-        role = Role(role_table)
+        args = json.loads(role_table.args, object_hook=JsonHook())
+        role = Role(role_table, args=args)
         return role
 
     @staticmethod
     def get_role_by_uid(uid):
         role_table = RoleTable.query.get(uid)
         if role_table is not None:
-            return Role(role_table)
+            args = json.loads(role_table.args, object_hook=JsonHook())
+            return Role(role_table, args)
         else:
             return None
 
     def commit(self) -> (bool, GameMessage):
+        self.table.args = json.dumps(self._args, cls=ExtendJSONEncoder)
         db.session.add(self.table)
         db.session.commit()
         return True, None
 
+    def prepare(self):
+        # if self.role_type is RoleType.
+        pass
     # def commit(self, lock=False, func=None) -> (bool, GameMessage):
     #     if not lock:
     #         self._sync_to_table()

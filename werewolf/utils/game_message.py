@@ -14,6 +14,7 @@ class GameMessage(object):
                     'ALREADY_IN': '你已在游戏中',
                     'ROLE_NOT_EXIST': '角色不存在',
                     'NOT_IN_GAME': '你不在游戏中',
+                    'CANNOT_START': '玩家不足，无法开始',
 
                     VictoryMode.KILL_ALL: '屠城',
                     VictoryMode.KILL_GROUP: '屠边',

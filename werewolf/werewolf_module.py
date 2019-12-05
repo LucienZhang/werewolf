@@ -4,18 +4,14 @@
 # @Last Modified by:   Lucien Zhang
 # @Last Modified time: 2019-10-16 15:01:42
 
-from flask import Blueprint, render_template, request, current_app, flash, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import current_user, login_required
 from flask_sse import sse
-from werewolf.game_module.user import User, UserTable
-from werewolf.game_module.game import Game, GameTable
-from werewolf.game_module.role import Role
-import time
+from werewolf.game_module.game import Game
 import json
 from werewolf.login import do_login, do_logout, do_register
 from werewolf.utils.enums import VictoryMode, RoleType, CaptainMode, WitchMode
-from werewolf.db import db
-from werewolf.game_module.game_message import GameMessage
+from werewolf.utils.game_message import GameMessage
 from werewolf.game_module import game_engine
 
 werewolf_api = Blueprint('werewolf_api', __name__, template_folder='templates', static_folder='static')

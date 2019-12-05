@@ -22,7 +22,7 @@ class GameStatus(Enum):
 
 
 class VictoryMode(Enum):
-    UNKNOWN = 0
+    UNKNOWN = 100
     KILL_GROUP = auto()  # 屠边
     KILL_ALL = auto()  # 屠城
 
@@ -31,7 +31,7 @@ class VictoryMode(Enum):
 
 
 class CaptainMode(Enum):
-    UNKNOWN = 0
+    UNKNOWN = 200
     WITH_CAPTAIN = auto()  # 有警长
     WITHOUT_CAPTAIN = auto()  # 没有警长
 
@@ -40,7 +40,7 @@ class CaptainMode(Enum):
 
 
 class WitchMode(Enum):
-    UNKNOWN = 0
+    UNKNOWN = 300
     CAN_SAVE_SELF = auto()  # 全程可以自救
     FIRST_NIGHT_ONLY = auto()  # 仅首夜可以自救
     CANNOT_SAVE_SELF = auto()  # 全程不可自救
@@ -50,7 +50,7 @@ class WitchMode(Enum):
 
 
 class RoleType(Enum):
-    UNKNOWN = 0
+    UNKNOWN = 400
     SEER = auto()
     HUNTER = auto()
     CUPID = auto()
@@ -77,7 +77,7 @@ class RoleType(Enum):
 
 
 class GroupType(Enum):
-    UNKNOWN = 0
+    UNKNOWN = 500
     WOLVES = auto()
     GODS = auto()
     VILLAGERS = auto()
@@ -88,7 +88,7 @@ class GroupType(Enum):
 
 
 class TurnStep(Enum):
-    UNKNOWN = 0
+    UNKNOWN = 600
     CHECK_VICTORY = auto()
     TURN_NIGHT = auto()
     TURN_DAY = auto()

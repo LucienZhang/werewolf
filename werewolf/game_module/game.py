@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from flask_login import current_user
 from werewolf.utils.enums import GameStatus, VictoryMode, CaptainMode, WitchMode, RoleType, TurnStep
 import json
 from werewolf.utils.json_utils import JsonHook, ExtendJSONEncoder, stringify_keys
@@ -16,7 +15,7 @@ from werewolf.game_module.role import Role
 from sqlalchemy.dialects.mysql import DATETIME
 import typing
 from typing import List
-from werewolf.game_module.game_message import GameMessage
+from werewolf.utils.game_message import GameMessage
 from collections import Counter
 
 if typing.TYPE_CHECKING:
@@ -380,3 +379,11 @@ class Game(object):
 #     # 已经登录了
 #     current_app.logger.info(user_table.login_token)
 #     return redirect(url_for('werewolf_api.logout'))
+
+    def go_next_step(self):  # return if need to return the answer to user
+        pass
+    #         if self.now == len(self.steps) - 1:
+    #             self._reset(card_dict, captain_mode)
+    #         else:
+    #             self.now += 1
+    #         return self.current_step()

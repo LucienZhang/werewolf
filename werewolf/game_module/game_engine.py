@@ -9,9 +9,13 @@ from flask_login import current_user
 import json
 from werewolf.utils.json_utils import JsonHook, ExtendJSONEncoder
 from werewolf.utils.enums import GameStatus, RoleType, TurnStep, CaptainMode
+from werewolf.utils.game_message import GameMessage
+from werewolf.game_module.game import Game, GameTable
+from collections import Counter
+import random
 
 
-def take_action():
+def take_action() -> (bool, GameMessage):
     # /action?op=start
     # /action?op=see&target=1
     me = current_user
@@ -19,8 +23,22 @@ def take_action():
     game = current_user.game
     op = request.args.get('op')
     if op == 'start':
+        # TODO: with lock!
+        positions = set()
+        for r in game.roles:
+            positions.add(r.position)
+        if len(positions) != game.get_seat_num():
+            return False, GameMessage('CANNOT_START')
+
+        cards = list(Counter(game.card_dict).elements())
+        random.shuffle(cards)
+        for r, c in zip(game.roles, cards):
+            r.role_type = c
+            r.prepare()
+            r.commit()
+
         game.status = GameStatus.NIGHT
-        game.turn.go_next_step
+        game.go_next_step()
 
     me.commit()
     role.commit()
