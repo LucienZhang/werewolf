@@ -11,8 +11,6 @@ from werewolf.game_module.game import Game
 import json
 from werewolf.login import do_login, do_logout, do_register
 from werewolf.utils.enums import GameEnum
-# from werewolf.utils.enums import VictoryMode, RoleType, CaptainMode, WitchMode
-# from werewolf.utils.game_message import GameMessage
 from werewolf.game_module import game_engine
 from collections import Counter
 
@@ -37,12 +35,10 @@ def setup():
         villager_cnt = int(request.form['villager'])
         normal_wolf_cnt = int(request.form['normal_wolf'])
         cards = [GameEnum.ROLE_TYPE_VILLAGER] * villager_cnt + [GameEnum.ROLE_TYPE_NORMAL_WOLF] * normal_wolf_cnt
-        # card_dict = {GameEnum.ROLE_TYPE_VILLAGER: villager_cnt, GameEnum.ROLE_TYPE_NORMAL_WOLF: normal_wolf_cnt}
 
         single_roles = request.form.getlist('single_roles')
         for r in single_roles:
             cards.append(GameEnum(f'ROLE_TYPE_{r.upper()}'))
-            # card_dict[] = 1
 
         new_game = Game.create_new_game(host=current_user, victory_mode=victory_mode, cards=cards,
                                         captain_mode=captain_mode, witch_mode=witch_mode)

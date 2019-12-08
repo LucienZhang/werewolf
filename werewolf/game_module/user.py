@@ -10,7 +10,6 @@ from flask_login import UserMixin
 from werewolf.game_module.game import GameTable
 from werewolf.game_module.role import Role
 from werewolf.db import db
-# from werewolf.utils.game_message import GameMessage
 from werewolf.utils.enums import GameEnum
 
 
@@ -26,28 +25,6 @@ class UserTable(db.Model):
     gid = db.Column(db.Integer, nullable=False)  # gid=-1 means not in game
     ishost = db.Column(db.Boolean, nullable=False)
 
-    # def __init__(self, uid: int = None, username: str = None, password: str = None, login_token: str = None,
-    #              name: str = None,
-    #              avatar: int = -1, gid: int = -1, ishost: bool = False):
-    #     self.uid = uid
-    #     self.username = username
-    #     self.password = password
-    #     self.login_token = login_token
-    #     self.name = name
-    #     self.avatar = avatar
-    #     self.gid = gid
-    #     self.ishost = ishost
-
-
-# def commit(func):
-#     @functools.wraps(func)
-#     def wrapper(self, *args, **kw):
-#         func(self, *args, **kw)
-#         db.session.add(self.table)
-#         db.session.commit()
-#
-#     return wrapper
-
 
 class User(UserMixin):
     def __init__(self, table: UserTable = None, game: Game = None, role=None):
@@ -58,10 +35,6 @@ class User(UserMixin):
     @property
     def uid(self):
         return self.table.uid
-
-    # @uid.setter
-    # def uid(self, uid: int):
-    #     self.table.uid = uid
 
     @property
     def name(self):
@@ -106,26 +79,6 @@ class User(UserMixin):
     @role.setter
     def role(self, role: Role):
         self._role = role
-
-    # @staticmethod
-    # def create_user_from_table(user_table, role=None):
-    #     user = User(uid=user_table.uid, name=user_table.name, avatar=user_table.avatar, ishost=user_table.ishost,
-    #                 table=user_table)
-    #     user.id = user_table.login_token
-    #     user.game = Game.get_game_by_gid(user_table.gid)
-    #     if role is not None:
-    #         user.role = role
-    #     else:
-    #         if user.game is not None:
-    #             for r in user.game.roles:
-    #                 if r.uid == user.uid:
-    #                     user.role = r
-    #                     break
-    #             else:
-    #                 user.role = Role.get_player_by_uid(user_table.uid)
-    #         else:
-    #             pass  # no role if no game
-    #     return user
 
     @staticmethod
     def create_new_user(username, password, name, avatar):
@@ -225,18 +178,3 @@ class User(UserMixin):
         db.session.add(self.table)
         db.session.commit()
         return True, None
-
-    # def commit(self, lock=False, func=None)->(bool, str):
-    #     if not lock:
-    #         db.session.add(self.table)
-    #         db.session.commit()
-    #         return True, None
-    #     else:
-    #         new_table = GameTable.query.with_for_update().get(self.gid)
-    #         if new_table is None:
-    #             return False, GameMessage.parse('GAME_NOT_EXIST', None)
-    #         else:
-    #             self.table = new_table
-    #             success, message = func(self)
-    #             db.session.commit()
-    #             return success, message

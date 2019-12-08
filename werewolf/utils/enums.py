@@ -4,8 +4,6 @@
 # @Last Modified by:   Lucien Zhang
 # @Last Modified time: 2019-10-09 13:11:33
 
-import functools
-
 
 class EnumMember(object):
     def __init__(self, name, value, message):
@@ -22,7 +20,7 @@ class EnumMember(object):
     def __str__(self):
         return self.name
 
-
+#todo: add messages!
 class GameEnumMeta(type):
     _enum_dict = {
         # 0
@@ -33,7 +31,7 @@ class GameEnumMeta(type):
         'GAME_STATUS_ELECTING': EnumMember('GAME_STATUS_ELECTING', 4, ''),
         'GAME_STATUS_VOTING': EnumMember('GAME_STATUS_VOTING', 5, ''),
         'GAME_STATUS_VOTING_FOR_CAPTAIN': EnumMember('GAME_STATUS_VOTING_FOR_CAPTAIN', 6, ''),
-        'GAME_STATUS_WAITING': EnumMember('GAME_STATUS_WAITING', 7, ''),
+        'GAME_STATUS_WAITING': EnumMember('GAME_STATUS_WAITING', 7, ''), # TODO: what is this for?????
         # 100
         'VICTORY_MODE_UNKNOWN': EnumMember('VICTORY_MODE_UNKNOWN', 100, ''),
         'VICTORY_MODE_KILL_GROUP': EnumMember('VICTORY_MODE_KILL_GROUP', 101, ''),
@@ -125,28 +123,7 @@ class GameEnum(metaclass=GameEnumMeta):
         k = args[0]
         return GameEnum.item(k)
 
-# if __name__=='__main__':
-#     d={GameEnum.GROUP_TYPE_WOLVES:1,GameEnum.TURN_STEP_TALK:2}
-#     print(GameEnum.GROUP_TYPE_WOLVES in d)
 
-
-#
-#
-# from enum import Enum, auto
-#
-#
-# class GameStatus(Enum):
-#     UNKNOWN = 0
-#     WAIT_TO_START = auto()
-#     DAY = auto()
-#     NIGHT = auto()
-#     ELECTING = auto()
-#     VOTING = auto()
-#     VOTING_FOR_CAPTAIN = auto()
-#     WAITING = auto()  # TODO: what is this for?????
-#
-#     def __str__(self):
-#         return self.name
 #
 #
 # class VictoryMode(Enum):
@@ -177,54 +154,4 @@ class GameEnum(metaclass=GameEnumMeta):
 #         return self.name
 #
 #
-# class RoleType(Enum):
-#     UNKNOWN = 400
-#     SEER = auto()
-#     HUNTER = auto()
-#     CUPID = auto()
-#     WITCH = auto()
-#     LITTLE_GIRL = auto()
-#     THIEF = auto()
-#     VILLAGER = auto()
-#     NORMAL_WOLF = auto()
-#     IDIOT = auto()
-#     ANCIENT = auto()
-#     SCAPEGOAT = auto()
-#     SAVIOR = auto()
-#     PIPER = auto()
-#     WHITE_WOLF = auto()
-#     RAVEN = auto()
-#     PYROMANIAC = auto()
-#     TWO_SISTERS = auto()
-#     THREE_BROTHERS = auto()
-#     ANGEL = auto()
-#     ALL_WOLF = auto()
-#
-#     def __str__(self):
-#         return self.name
-#
-#
-# class GroupType(Enum):
-#     UNKNOWN = 500
-#     WOLVES = auto()
-#     GODS = auto()
-#     VILLAGERS = auto()
-#     THIRD_PARTY = auto()
-#
-#     def __str__(self):
-#         return self.name
-#
-#
-# class TurnStep(Enum):
-#     UNKNOWN = 600
-#     CHECK_VICTORY = auto()
-#     TURN_NIGHT = auto()
-#     TURN_DAY = auto()
-#     ELECT = auto()
-#     VOTE_FOR_CAPTAIN = auto()
-#     VOTE = auto()
-#     TALK = auto()
-#     ANNOUNCE_AND_TALK = auto()
-#
-#     def __str__(self):
-#         return self.name
+

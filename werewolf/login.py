@@ -8,8 +8,6 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, current_user, login_user, logout_user
 from werewolf.game_module.user import User, UserTable
 from werewolf.game_module.game import Game
-# from werewolf.utils.enums import GameStatus, VictoryMode
-# from app.werewolf.player import Player
 from flask import current_app
 from werewolf.game_module.game import GameTable
 from datetime import datetime
@@ -27,15 +25,6 @@ def init_login(app):
     login_manager.login_view = 'werewolf_api.login'
     login_manager.login_message = '请先登录'
     login_manager.login_message_category = "info"
-
-    # def _get_user_from_db(login_token):
-    # if not login_token:
-    #     return None
-    # user_table = UserTable.query.filter_by(login_token=login_token).first()
-    # if user_table is not None:
-    #     return User.create_user_from_table(user_table)
-    # else:
-    #     return None
 
     @login_manager.user_loader
     def load_user(login_token):
@@ -77,9 +66,6 @@ def do_logout():
     db.session.commit()
     logout_user()
     current_app.logger.info(f'{username} logout successfully!')
-    # try:
-    # except Exception as e:
-    #     current_app.logger.info(str(e))
 
     return 'Logged out successfully!'
 
@@ -100,16 +86,3 @@ def do_register():
                 return render_template('register_success.html')
     else:
         return render_template('register.html')
-
-# # @login_manager.unauthorized_handler
-# # def unauthorized_handler():
-# #     return 'Unauthorized'
-
-
-# # app.secret_key = '1234567'
-
-
-# user=UserTable.query.filter_by(login_token=login_token).with_for_update().first()
-# if addr.status == 0:
-# addr.status = 1
-# db.session.commit()

@@ -7,9 +7,6 @@
 from flask import request, current_app
 from flask_login import current_user
 import json
-# from werewolf.utils.json_utils import JsonHook, ExtendedJSONEncoder
-# from werewolf.utils.enums import GameStatus, RoleType, TurnStep, CaptainMode
-# from werewolf.utils.game_message import GameMessage
 from werewolf.utils.enums import GameEnum
 from werewolf.game_module.game import Game, GameTable
 from collections import Counter

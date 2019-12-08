@@ -51,13 +51,4 @@ from werewolf.utils.enums import *
 #                     'PLACE_HOLDER': '占位符'
 #                     }
 #
-#     def __init__(self, key, arg=None):
-#         assert (key in GameMessage.message_dict)
-#         self.key = key
-#         self.arg = arg
-#
-#     def parse(self):
-#         if self.arg is None:
-#             return GameMessage.message_dict[self.key]
-#         else:
-#             return GameMessage.message_dict[self.key].format(*self.arg)
+
