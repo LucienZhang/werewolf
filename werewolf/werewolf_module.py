@@ -10,8 +10,9 @@ from flask_sse import sse
 from werewolf.game_module.game import Game
 import json
 from werewolf.login import do_login, do_logout, do_register
-from werewolf.utils.enums import VictoryMode, RoleType, CaptainMode, WitchMode
-from werewolf.utils.game_message import GameMessage
+from werewolf.utils.enums import GameEnum
+# from werewolf.utils.enums import VictoryMode, RoleType, CaptainMode, WitchMode
+# from werewolf.utils.game_message import GameMessage
 from werewolf.game_module import game_engine
 
 werewolf_api = Blueprint('werewolf_api', __name__, template_folder='templates', static_folder='static')
@@ -29,18 +30,16 @@ def setup():
         # TODO: ask to quick existing game if user is in a game!
         return render_template("werewolf_setup.html")
     else:
-        victory_mode = VictoryMode[request.form['victoryMode'].upper()]
-        captain_mode = CaptainMode[request.form['captainMode'].upper()]
-        witch_mode = WitchMode[request.form['witchMode'].upper()]
+        victory_mode = GameEnum('VICTORY_MODE_{}'.format(request.form['victoryMode'].upper()))
+        captain_mode = GameEnum('CAPTAIN_MODE_{}'.format(request.form['captainMode'].upper()))
+        witch_mode = GameEnum('WITCH_MODE_{}'.format(request.form['witchMode'].upper()))
         villager_cnt = int(request.form['villager'])
         normal_wolf_cnt = int(request.form['normal_wolf'])
-        card_dict = {}
-        card_dict[RoleType.VILLAGER] = villager_cnt
-        card_dict[RoleType.NORMAL_WOLF] = normal_wolf_cnt
+        card_dict = {GameEnum.ROLE_TYPE_VILLAGER: villager_cnt, GameEnum.ROLE_TYPE_NORMAL_WOLF: normal_wolf_cnt}
 
         single_roles = request.form.getlist('single_roles')
         for r in single_roles:
-            card_dict[RoleType[r.upper()]] = 1
+            card_dict[GameEnum(f'ROLE_TYPE_{r.upper()}')] = 1
 
         new_game = Game.create_new_game(host=current_user, victory_mode=victory_mode, card_dict=card_dict,
                                         captain_mode=captain_mode, witch_mode=witch_mode)
@@ -56,17 +55,17 @@ def setup():
 def game():
     current_setting = []
     current_game = current_user.game
-    current_setting.append('游戏模式为：' + GameMessage(current_game.victory_mode).parse())
-    current_setting.append('警长模式为：' + GameMessage(current_game.captain_mode).parse())
-    current_setting.append('女巫模式为：' + GameMessage(current_game.witch_mode).parse())
+    current_setting.append('游戏模式为：' + current_game.victory_mode.message)
+    current_setting.append('警长模式为：' + current_game.captain_mode.message)
+    current_setting.append('女巫模式为：' + current_game.witch_mode.message)
     current_setting.append('游戏总人数为：' + str(current_game.get_seat_num()) + '人')
     for role, cnt in current_game.card_dict.items():
-        current_setting.append(GameMessage(role).parse() + ' = ' + str(cnt))
+        current_setting.append(role.message + ' = ' + str(cnt))
 
     return render_template("werewolf_game.html", ishost=current_user.ishost, name=current_user.name,
                            gid=current_game.gid,
                            current_setting=current_setting,
-                           role_name=GameMessage(current_user.role.role_type).parse(),
+                           role_name=current_user.role.role_type.message,
                            role_type=current_user.role.role_type.name.lower(),
                            seat_cnt=current_game.get_seat_num(),
                            dbtxt=(str(current_user.game.roles) + str(
@@ -101,27 +100,27 @@ def register():
 @login_required
 def join():
     gid = int(request.args.get('gid'))
-    success, message = current_user.join_game(gid)
+    success, e = current_user.join_game(gid)
     if success:
         return redirect(url_for('werewolf_api.game'))
     else:
-        if message.key == 'ALREADY_IN':
+        if e is GameEnum.GAME_MESSAGE_ALREADY_IN:
             return redirect(url_for('werewolf_api.game'))
         else:
-            return message.parse()
+            return e.message
 
 
 @werewolf_api.route('/quit')
 @login_required
 def quit_game():
-    success, message = current_user.quit_game()
+    success, e = current_user.quit_game()
     if success:
         return redirect(url_for('werewolf_api.home'))
     else:
-        if message.key == 'NOT_IN_GAME':
+        if e is GameEnum.GAME_MESSAGE_NOT_IN_GAME:
             return redirect(url_for('werewolf_api.home'))
         else:
-            return message.parse()
+            return e.message
 
 
 @werewolf_api.route('/test')

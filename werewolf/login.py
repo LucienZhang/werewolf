@@ -8,7 +8,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, current_user, login_user, logout_user
 from werewolf.game_module.user import User, UserTable
 from werewolf.game_module.game import Game
-from werewolf.utils.enums import GameStatus, VictoryMode
+# from werewolf.utils.enums import GameStatus, VictoryMode
 # from app.werewolf.player import Player
 from flask import current_app
 from werewolf.game_module.game import GameTable

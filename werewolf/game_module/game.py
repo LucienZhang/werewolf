@@ -7,7 +7,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from werewolf.utils.enums import GameStatus, VictoryMode, CaptainMode, WitchMode, RoleType, TurnStep
+# from werewolf.utils.enums import GameStatus, VictoryMode, CaptainMode, WitchMode, RoleType, TurnStep
+from werewolf.utils.enums import GameEnum, EnumMember
 import json
 from werewolf.utils.json_utils import JsonHook, ExtendJSONEncoder, stringify_keys
 from werewolf.db import db
@@ -15,7 +16,7 @@ from werewolf.game_module.role import Role
 from sqlalchemy.dialects.mysql import DATETIME
 import typing
 from typing import List
-from werewolf.utils.game_message import GameMessage
+# from werewolf.utils.game_message import GameMessage
 from collections import Counter
 
 if typing.TYPE_CHECKING:
@@ -129,15 +130,15 @@ class Game(object):
 
     @property
     def status(self):
-        return GameStatus(self.table.status)
+        return GameEnum(self.table.status)
 
     @status.setter
-    def status(self, status: GameStatus):
+    def status(self, status: EnumMember):
         self.table.status = status.value
 
     @property
     def victory_mode(self):
-        return VictoryMode(self.table.victory_mode)
+        return GameEnum(self.table.victory_mode)
 
     # @victory_mode.setter
     # def victory_mode(self, victory_mode: VictoryMode):
@@ -145,11 +146,11 @@ class Game(object):
 
     @property
     def captain_mode(self):
-        return CaptainMode(self.table.captain_mode)
+        return GameEnum(self.table.captain_mode)
 
     @property
     def witch_mode(self):
-        return WitchMode(self.table.witch_mode)
+        return GameEnum(self.table.witch_mode)
 
     @property
     def roles(self):
@@ -240,11 +241,11 @@ class Game(object):
     #     return super().__setattr__(name, value)
 
     @staticmethod
-    def create_new_game(host: User, victory_mode: VictoryMode, card_dict: dict, captain_mode: CaptainMode,
-                        witch_mode: WitchMode):
+    def create_new_game(host: User, victory_mode: GameEnum, card_dict: dict, captain_mode: GameEnum,
+                        witch_mode: GameEnum):
         steps = Game._get_init_steps(card_dict, captain_mode)
         game_table = GameTable(host_id=host.uid,
-                               status=GameStatus.WAIT_TO_START.value,
+                               status=GameEnum.GAME_STATUS_WAIT_TO_START.value,
                                victory_mode=victory_mode.value,
                                roles='[]',
                                end_time=datetime.utcnow() + timedelta(days=1),
@@ -288,7 +289,7 @@ class Game(object):
             for uid in uid_list:
                 r = Role.get_role_by_uid(uid)
                 roles.append(r)
-            steps = json.loads(game_table.steps, object_hook=JsonHook())
+            steps = json.loads(game_table.steps, object_hook=JsonHook('steps'))
             card_dict = json.loads(game_table.card_dict, object_hook=JsonHook('card_dict'))
             return Game(table=game_table, roles=roles, steps=steps, card_dict=card_dict,
                         last_modified=game_table.last_modified)
@@ -303,7 +304,7 @@ class Game(object):
         game_table = GameTable.query.get(gid)
         return Game.create_game_from_table(game_table)
 
-    def commit(self) -> (bool, GameMessage):
+    def commit(self) -> (bool, GameEnum):
         assert self._last_modified == self.table.last_modified
         self.table.roles = json.dumps([r.uid for r in self.roles], cls=ExtendJSONEncoder)
         self.table.steps = json.dumps(self.steps, cls=ExtendJSONEncoder)
@@ -332,7 +333,7 @@ class Game(object):
 
     def get_seat_num(self):
         cnt = sum(Counter(self.card_dict).values())
-        if RoleType.THIEF in self.card_dict:
+        if GameEnum.ROLE_TYPE_THIEF in self.card_dict:
             cnt -= 2
         return cnt
 
@@ -353,32 +354,32 @@ class Game(object):
     @staticmethod
     def _reset_steps(day, card_dict, captain_mode):
         steps = []
-        if day == 1 and RoleType.THIEF in card_dict:
+        if day == 1 and GameEnum.ROLE_TYPE_THIEF in card_dict:
             pass
-        if day == 1 and RoleType.CUPID in card_dict:
+        if day == 1 and GameEnum.ROLE_TYPE_CUPID in card_dict:
             pass
         # TODO: 恋人互相确认身份
-        steps.append(RoleType.ALL_WOLF)
-        steps.append(RoleType.SEER)
-        steps.append(RoleType.WITCH)
-        steps.append(RoleType.SAVIOR)
-        steps.append(TurnStep.CHECK_VICTORY)
-        steps.append(TurnStep.TURN_DAY)
-        if day == 1 and captain_mode is CaptainMode.WITH_CAPTAIN:
-            steps.append(TurnStep.ELECT)
-            steps.append(TurnStep.TALK)
-            steps.append(TurnStep.VOTE_FOR_CAPTAIN)
-        steps.append(TurnStep.ANNOUNCE_AND_TALK)
+        steps.append(GameEnum.ROLE_TYPE_ALL_WOLF)
+        steps.append(GameEnum.ROLE_TYPE_SEER)
+        steps.append(GameEnum.ROLE_TYPE_WITCH)
+        steps.append(GameEnum.ROLE_TYPE_SAVIOR)
+        steps.append(GameEnum.TURN_STEP_CHECK_VICTORY)
+        steps.append(GameEnum.TURN_STEP_TURN_DAY)
+        if day == 1 and captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
+            steps.append(GameEnum.TURN_STEP_ELECT)
+            steps.append(GameEnum.TURN_STEP_TALK)
+            steps.append(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
+        steps.append(GameEnum.TURN_STEP_ANNOUNCE_AND_TALK)
 
         return steps
 
-# if not user_table.login_token:
-#     user_table.login_token = generate_login_token(username)
-#     db.session.commit()
-# else:
-#     # 已经登录了
-#     current_app.logger.info(user_table.login_token)
-#     return redirect(url_for('werewolf_api.logout'))
+    # if not user_table.login_token:
+    #     user_table.login_token = generate_login_token(username)
+    #     db.session.commit()
+    # else:
+    #     # 已经登录了
+    #     current_app.logger.info(user_table.login_token)
+    #     return redirect(url_for('werewolf_api.logout'))
 
     def go_next_step(self):  # return if need to return the answer to user
         pass

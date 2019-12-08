@@ -10,7 +10,8 @@ from flask_login import UserMixin
 from werewolf.game_module.game import GameTable
 from werewolf.game_module.role import Role
 from werewolf.db import db
-from werewolf.utils.game_message import GameMessage
+# from werewolf.utils.game_message import GameMessage
+from werewolf.utils.enums import GameEnum
 
 
 class UserTable(db.Model):
@@ -184,19 +185,19 @@ class User(UserMixin):
         else:
             return None
 
-    def join_game(self, gid: int) -> (bool, GameMessage):
+    def join_game(self, gid: int) -> (bool, GameEnum):
         game_table = GameTable.query.with_for_update().get(gid)
         if game_table is None:
-            return False, GameMessage('GAME_NOT_EXIST')
+            return False, GameEnum.GAME_MESSAGE_GAME_NOT_EXIST
         game = Game.create_game_from_table(game_table)
         if len(game_table.roles) >= game.get_seat_num():
             db.session.add(game_table)
             db.session.commit()
-            return False, GameMessage('GAME_FULL')
+            return False, GameEnum.GAME_MESSAGE_GAME_FULL
         if game.get_role_by_uid(self.uid) is not None:
             db.session.add(game_table)
             db.session.commit()
-            return False, GameMessage('ALREADY_IN')
+            return False, GameEnum.GAME_MESSAGE_ALREADY_IN
 
         # fine to join the game
         new_role = Role.create_new_role(self.uid)
@@ -210,9 +211,9 @@ class User(UserMixin):
         self.commit()
         return True, None
 
-    def quit_game(self) -> (bool, GameMessage):
+    def quit_game(self) -> (bool, GameEnum):
         if self.game is None:
-            return False, GameMessage('NOT_IN_GAME')
+            return False, GameEnum.GAME_MESSAGE_NOT_IN_GAME
         self.game = None
         self.ishost = False
         # TODO: role reset??
@@ -220,7 +221,7 @@ class User(UserMixin):
         self.role = None
         return True, None
 
-    def commit(self) -> (bool, GameMessage):
+    def commit(self) -> (bool, GameEnum):
         db.session.add(self.table)
         db.session.commit()
         return True, None

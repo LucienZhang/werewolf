@@ -5,8 +5,9 @@
 # @Last Modified time: 2019-10-16 17:26:30
 
 from werewolf.db import db
-from werewolf.utils.enums import RoleType, GroupType
-from werewolf.utils.game_message import GameMessage
+# from werewolf.utils.enums import RoleType, GroupType
+# from werewolf.utils.game_message import GameMessage
+from werewolf.utils.enums import GameEnum,EnumMember
 import json
 from werewolf.utils.json_utils import ExtendJSONEncoder, JsonHook
 
@@ -43,8 +44,8 @@ class RoleTable(db.Model):
     #         self.history = json.dumps(history, cls=ExtendJSONEncoder)
 
     def reset(self):
-        self.role_type = RoleType.UNKNOWN.value
-        self.group_type = GroupType.UNKNOWN.value
+        self.role_type = GameEnum.ROLE_TYPE_UNKNOWN.value
+        self.group_type = GameEnum.GROUP_TYPE_UNKNOWN.value
         self.alive = True
         self.iscaptain = False
         self.voteable = True
@@ -68,18 +69,18 @@ class Role(object):
 
     @property
     def role_type(self):
-        return RoleType(self.table.role_type)
+        return GameEnum(self.table.role_type)
 
     @role_type.setter
-    def role_type(self, role_type: RoleType):
+    def role_type(self, role_type: EnumMember):
         self.table.role_type = role_type.value
 
     @property
     def group_type(self):
-        return GroupType(self.table.group_type)
+        return GameEnum(self.table.group_type)
 
     @group_type.setter
-    def group_type(self, group_type: GroupType):
+    def group_type(self, group_type: EnumMember):
         self.table.group_type = group_type.value
 
     @property
@@ -234,7 +235,7 @@ class Role(object):
         else:
             return None
 
-    def commit(self) -> (bool, GameMessage):
+    def commit(self) -> (bool, GameEnum):
         self.table.args = json.dumps(self._args, cls=ExtendJSONEncoder)
         db.session.add(self.table)
         db.session.commit()

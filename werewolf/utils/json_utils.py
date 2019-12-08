@@ -9,7 +9,8 @@ from functools import singledispatch
 # from app.werewolf.role import Role
 from enum import Enum
 from flask import current_app
-from werewolf.utils.enums import RoleType
+# from werewolf.utils.enums import RoleType
+from werewolf.utils.enums import GameEnum, EnumMember
 
 
 @singledispatch
@@ -42,6 +43,11 @@ def _(o):
 # @convert.register(MyClass)
 # def _(o):
 #     return o.get_value()
+
+@convert.register(EnumMember)
+def _(o):
+    return o.name
+
 
 def stringify_keys(d):
     """Convert a dict's keys to strings if they are not."""
@@ -83,7 +89,12 @@ def JsonHook(cls=None):
         if cls == 'card_dict':
             obj = {}
             for k, v in d.items():
-                obj[RoleType[k]] = v
+                obj[GameEnum(k)] = v
+            return obj
+        elif cls == 'steps':
+            obj = []
+            for m in d:
+                obj.append(GameEnum(m))
             return obj
         elif cls is not None:
             obj = cls()
@@ -91,6 +102,7 @@ def JsonHook(cls=None):
             return obj
         else:
             return d
+
     if cls is not None:
         return hook
     else:
