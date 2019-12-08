@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # from werewolf.utils.enums import GameStatus, VictoryMode, CaptainMode, WitchMode, RoleType, TurnStep
 from werewolf.utils.enums import GameEnum, EnumMember
 import json
-from werewolf.utils.json_utils import JsonHook, ExtendJSONEncoder, stringify_keys
+from werewolf.utils.json_utils import json_hook, ExtendedJSONEncoder
 from werewolf.db import db
 from werewolf.game_module.role import Role
 from sqlalchemy.dialects.mysql import DATETIME
@@ -35,7 +35,7 @@ class GameTable(db.Model):
     end_time = db.Column(DATETIME(fsp=3), nullable=False)
     last_modified = db.Column(db.TIMESTAMP(True), nullable=False)
     # turn = db.Column(db.String(length=1023), nullable=False)
-    card_dict = db.Column(db.String(length=1023), nullable=False)
+    cards = db.Column(db.String(length=1023), nullable=False)
     days = db.Column(db.Integer, nullable=False)
     now_index = db.Column(db.Integer, nullable=False)
     repeat = db.Column(db.Integer, nullable=False)
@@ -77,13 +77,13 @@ class GameTable(db.Model):
     #     self.witch_mode = witch_mode.value
     #     if roles is None:
     #         roles = []
-    #     self.roles = json.dumps([role.uid for role in roles], cls=ExtendJSONEncoder)
+    #     self.roles = json.dumps([role.uid for role in roles], cls=ExtendedJSONEncoder)
     #     self.end_time = end_time
-    #     self.turn = json.dumps(turn, cls=ExtendJSONEncoder)
-    #     self.card_dict = json.dumps(stringify_keys(card_dict), cls=ExtendJSONEncoder)
-    #     self.audio = json.dumps(audio, cls=ExtendJSONEncoder)
-    #     self.history = json.dumps(history, cls=ExtendJSONEncoder)
-    #     # self.roles = json.dumps(roles, cls=ExtendJSONEncoder)
+    #     self.turn = json.dumps(turn, cls=ExtendedJSONEncoder)
+    #     self.card_dict = json.dumps(stringify_keys(card_dict), cls=ExtendedJSONEncoder)
+    #     self.audio = json.dumps(audio, cls=ExtendedJSONEncoder)
+    #     self.history = json.dumps(history, cls=ExtendedJSONEncoder)
+    #     # self.roles = json.dumps(roles, cls=ExtendedJSONEncoder)
 
     # @classmethod
     # def create_new_game_table(cls, host_id: int, victory_mode: VictoryMode, card_dict: dict,
@@ -97,12 +97,12 @@ class GameTable(db.Model):
 
 
 class Game(object):
-    def __init__(self, table: GameTable = None, roles: List[Role] = None, steps: list = None, card_dict: dict = None,
+    def __init__(self, table: GameTable = None, roles: List[Role] = None, steps: list = None, cards: list = None,
                  last_modified: datetime = None):
         self.table = table
         self._roles = roles
         self._steps = steps
-        self._card_dict = card_dict
+        self._cards = cards
         self._last_modified = last_modified
         # def __init__(self, gid: int = -1, host_id: int = -1, status: GameStatus = GameStatus.UNKNOWN,
         #              victory_mode: VictoryMode = VictoryMode.UNKNOWN,
@@ -189,8 +189,8 @@ class Game(object):
         self.table._steps = steps
 
     @property
-    def card_dict(self):
-        return self._card_dict
+    def cards(self):
+        return self._cards
 
     #
     # def _sync_to_table(self):
@@ -203,10 +203,10 @@ class Game(object):
     #     self.table.captain_mode = self.captain_mode.value
     #     self.table.witch_mode = self.witch_mode.value
     #     self.table.roles = str([role.uid for role in self.roles])
-    #     self.table.turn = json.dumps(self.turn, cls=ExtendJSONEncoder)
-    #     self.table.card_dict = json.dumps(stringify_keys(self.card_dict), cls=ExtendJSONEncoder)
-    #     self.table.audio = json.dumps(self.audio, cls=ExtendJSONEncoder)
-    #     self.table.history = json.dumps(self.history, cls=ExtendJSONEncoder)
+    #     self.table.turn = json.dumps(self.turn, cls=ExtendedJSONEncoder)
+    #     self.table.card_dict = json.dumps(stringify_keys(self.card_dict), cls=ExtendedJSONEncoder)
+    #     self.table.audio = json.dumps(self.audio, cls=ExtendedJSONEncoder)
+    #     self.table.history = json.dumps(self.history, cls=ExtendedJSONEncoder)
     #
     # def _sync_from_talbe(self):
     #     if self.table is None:
@@ -233,7 +233,7 @@ class Game(object):
     #         if name in ['status', 'victory_mode', 'captain_mode', 'witch_mode']:
     #             self.table.__setattr__(name, value.value)
     #         elif name in ['turn', 'card_dict', 'audio', 'history']:
-    #             self.table.__setattr__(name, json.dumps(value, cls=ExtendJSONEncoder))
+    #             self.table.__setattr__(name, json.dumps(value, cls=ExtendedJSONEncoder))
     #         elif name == 'roles':
     #             self.table.__setattr__(name, str([role.uid for role in value]))
     #         else:
@@ -241,24 +241,24 @@ class Game(object):
     #     return super().__setattr__(name, value)
 
     @staticmethod
-    def create_new_game(host: User, victory_mode: GameEnum, card_dict: dict, captain_mode: GameEnum,
+    def create_new_game(host: User, victory_mode: GameEnum, cards: list, captain_mode: GameEnum,
                         witch_mode: GameEnum):
-        steps = Game._get_init_steps(card_dict, captain_mode)
+        steps = Game._get_init_steps(cards, captain_mode)
         game_table = GameTable(host_id=host.uid,
                                status=GameEnum.GAME_STATUS_WAIT_TO_START.value,
                                victory_mode=victory_mode.value,
                                roles='[]',
                                end_time=datetime.utcnow() + timedelta(days=1),
-                               card_dict=json.dumps(stringify_keys(card_dict), cls=ExtendJSONEncoder),
+                               cards=json.dumps(cards, cls=ExtendedJSONEncoder),
                                captain_mode=captain_mode.value,
                                witch_mode=witch_mode.value,
                                days=1,
                                now_index=-1,
                                repeat=0,
-                               steps=json.dumps(steps, cls=ExtendJSONEncoder))
+                               steps=json.dumps(steps, cls=ExtendedJSONEncoder))
         db.session.add(game_table)
         db.session.commit()
-        game = Game(table=game_table, roles=[], steps=steps, card_dict=card_dict,
+        game = Game(table=game_table, roles=[], steps=steps, cards=cards,
                     last_modified=game_table.last_modified)
         return game
 
@@ -284,14 +284,14 @@ class Game(object):
     @staticmethod
     def create_game_from_table(game_table):
         if game_table and datetime.utcnow() < game_table.end_time:
-            uid_list = json.loads(game_table.roles, object_hook=JsonHook())
+            uid_list = json.loads(game_table.roles)
             roles = []
             for uid in uid_list:
                 r = Role.get_role_by_uid(uid)
                 roles.append(r)
-            steps = json.loads(game_table.steps, object_hook=JsonHook('steps'))
-            card_dict = json.loads(game_table.card_dict, object_hook=JsonHook('card_dict'))
-            return Game(table=game_table, roles=roles, steps=steps, card_dict=card_dict,
+            steps = json.loads(game_table.steps, object_hook=json_hook)
+            cards = json.loads(game_table.cards, object_hook=json_hook)
+            return Game(table=game_table, roles=roles, steps=steps, cards=cards,
                         last_modified=game_table.last_modified)
         else:
             return None
@@ -306,9 +306,9 @@ class Game(object):
 
     def commit(self) -> (bool, GameEnum):
         assert self._last_modified == self.table.last_modified
-        self.table.roles = json.dumps([r.uid for r in self.roles], cls=ExtendJSONEncoder)
-        self.table.steps = json.dumps(self.steps, cls=ExtendJSONEncoder)
-        self.table.card_dict = json.dumps(stringify_keys(self.card_dict), cls=ExtendJSONEncoder)
+        self.table.roles = json.dumps([r.uid for r in self.roles], cls=ExtendedJSONEncoder)
+        self.table.steps = json.dumps(self.steps, cls=ExtendedJSONEncoder)
+        self.table.cards = json.dumps(self.cards, cls=ExtendedJSONEncoder)
         db.session.add(self.table)
         db.session.commit()
         return True, None
@@ -332,8 +332,8 @@ class Game(object):
     #             return success, message
 
     def get_seat_num(self):
-        cnt = sum(Counter(self.card_dict).values())
-        if GameEnum.ROLE_TYPE_THIEF in self.card_dict:
+        cnt = len(self.cards)
+        if GameEnum.ROLE_TYPE_THIEF in self.cards:
             cnt -= 2
         return cnt
 
@@ -348,15 +348,15 @@ class Game(object):
             return None
 
     @staticmethod
-    def _get_init_steps(card_dict, captain_mode):
-        return Game._reset_steps(1, card_dict, captain_mode)
+    def _get_init_steps(cards, captain_mode):
+        return Game._reset_steps(1, cards, captain_mode)
 
     @staticmethod
-    def _reset_steps(day, card_dict, captain_mode):
+    def _reset_steps(day, cards, captain_mode):
         steps = []
-        if day == 1 and GameEnum.ROLE_TYPE_THIEF in card_dict:
+        if day == 1 and GameEnum.ROLE_TYPE_THIEF in cards:
             pass
-        if day == 1 and GameEnum.ROLE_TYPE_CUPID in card_dict:
+        if day == 1 and GameEnum.ROLE_TYPE_CUPID in cards:
             pass
         # TODO: 恋人互相确认身份
         steps.append(GameEnum.ROLE_TYPE_ALL_WOLF)

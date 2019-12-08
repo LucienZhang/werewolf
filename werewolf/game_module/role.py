@@ -7,9 +7,9 @@
 from werewolf.db import db
 # from werewolf.utils.enums import RoleType, GroupType
 # from werewolf.utils.game_message import GameMessage
-from werewolf.utils.enums import GameEnum,EnumMember
+from werewolf.utils.enums import GameEnum, EnumMember
 import json
-from werewolf.utils.json_utils import ExtendJSONEncoder, JsonHook
+from werewolf.utils.json_utils import ExtendedJSONEncoder, json_hook
 
 
 class RoleTable(db.Model):
@@ -39,9 +39,9 @@ class RoleTable(db.Model):
     #     self.speakable = speakable
     #     self.position = position
     #     if history is None:
-    #         self.history = json.dumps([], cls=ExtendJSONEncoder)
+    #         self.history = json.dumps([], cls=ExtendedJSONEncoder)
     #     else:
-    #         self.history = json.dumps(history, cls=ExtendJSONEncoder)
+    #         self.history = json.dumps(history, cls=ExtendedJSONEncoder)
 
     def reset(self):
         self.role_type = GameEnum.ROLE_TYPE_UNKNOWN.value
@@ -53,7 +53,7 @@ class RoleTable(db.Model):
         self.position = -1
         self.tags = '[]'
         self.args = '{}'
-        # self.history = json.dumps([], cls=ExtendJSONEncoder)
+        # self.history = json.dumps([], cls=ExtendedJSONEncoder)
 
 
 class Role(object):
@@ -168,7 +168,7 @@ class Role(object):
     #     self.table.voteable = self.voteable
     #     self.table.speakable = self.speakable
     #     self.table.position = self.position
-    #     self.table.history = json.dumps(self.history, cls=ExtendJSONEncoder)
+    #     self.table.history = json.dumps(self.history, cls=ExtendedJSONEncoder)
     #
     # def _sync_from_table(self):
     #     if self.table is None:
@@ -188,7 +188,7 @@ class Role(object):
     #         if name in ['role_type', 'group_type']:
     #             self.table.__setattr__(name, value.value)
     #         elif name in ['history']:
-    #             self.table.__setattr__(name, json.dumps(value, cls=ExtendJSONEncoder))
+    #             self.table.__setattr__(name, json.dumps(value, cls=ExtendedJSONEncoder))
     #         else:
     #             self.table.__setattr__(name, value)
     #     return super().__setattr__(name, value)
@@ -222,7 +222,7 @@ class Role(object):
             role_table.reset()
         db.session.add(role_table)
         db.session.commit()
-        args = json.loads(role_table.args, object_hook=JsonHook())
+        args = json.loads(role_table.args)
         role = Role(role_table, args=args)
         return role
 
@@ -230,13 +230,13 @@ class Role(object):
     def get_role_by_uid(uid):
         role_table = RoleTable.query.get(uid)
         if role_table is not None:
-            args = json.loads(role_table.args, object_hook=JsonHook())
+            args = json.loads(role_table.args)
             return Role(role_table, args)
         else:
             return None
 
     def commit(self) -> (bool, GameEnum):
-        self.table.args = json.dumps(self._args, cls=ExtendJSONEncoder)
+        self.table.args = json.dumps(self._args, cls=ExtendedJSONEncoder)
         db.session.add(self.table)
         db.session.commit()
         return True, None

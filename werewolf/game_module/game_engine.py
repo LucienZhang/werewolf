@@ -7,7 +7,7 @@
 from flask import request, current_app
 from flask_login import current_user
 import json
-from werewolf.utils.json_utils import JsonHook, ExtendJSONEncoder
+# from werewolf.utils.json_utils import JsonHook, ExtendedJSONEncoder
 # from werewolf.utils.enums import GameStatus, RoleType, TurnStep, CaptainMode
 # from werewolf.utils.game_message import GameMessage
 from werewolf.utils.enums import GameEnum
@@ -31,7 +31,7 @@ def take_action() -> (bool, GameEnum):
         if len(positions) != game.get_seat_num():
             return False, GameEnum('GAME_MESSAGE_CANNOT_START')
 
-        cards = list(Counter(game.card_dict).elements())
+        cards = game.cards.copy()
         random.shuffle(cards)
         for r, c in zip(game.roles, cards):
             r.role_type = c
@@ -46,17 +46,17 @@ def take_action() -> (bool, GameEnum):
     game.commit()
 
 
-def _next_step(turn_dict, card_dict, captain_mode) -> (dict, GameEnum):
+def _next_step(turn_dict, cards, captain_mode) -> (dict, GameEnum):
     if turn_dict is None:
-        turn = _reset_turn(1, card_dict, captain_mode)
+        turn = _reset_turn(1, cards, captain_mode)
         return turn, GameEnum.GAME_STATUS_NIGHT
 
 
-def _reset_turn(day, card_dict, captain_mode):
+def _reset_turn(day, cards, captain_mode):
     steps = []
-    if day == 1 and GameEnum.ROLE_TYPE_THIEF in card_dict:
+    if day == 1 and GameEnum.ROLE_TYPE_THIEF in cards:
         pass
-    if day == 1 and GameEnum.ROLE_TYPE_CUPID in card_dict:
+    if day == 1 and GameEnum.ROLE_TYPE_CUPID in cards:
         pass
     # TODO: 恋人互相确认身份
     steps.append(GameEnum.ROLE_TYPE_ALL_WOLF)

@@ -14,6 +14,7 @@ from werewolf.utils.enums import GameEnum
 # from werewolf.utils.enums import VictoryMode, RoleType, CaptainMode, WitchMode
 # from werewolf.utils.game_message import GameMessage
 from werewolf.game_module import game_engine
+from collections import Counter
 
 werewolf_api = Blueprint('werewolf_api', __name__, template_folder='templates', static_folder='static')
 
@@ -35,13 +36,15 @@ def setup():
         witch_mode = GameEnum('WITCH_MODE_{}'.format(request.form['witchMode'].upper()))
         villager_cnt = int(request.form['villager'])
         normal_wolf_cnt = int(request.form['normal_wolf'])
-        card_dict = {GameEnum.ROLE_TYPE_VILLAGER: villager_cnt, GameEnum.ROLE_TYPE_NORMAL_WOLF: normal_wolf_cnt}
+        cards = [GameEnum.ROLE_TYPE_VILLAGER] * villager_cnt + [GameEnum.ROLE_TYPE_NORMAL_WOLF] * normal_wolf_cnt
+        # card_dict = {GameEnum.ROLE_TYPE_VILLAGER: villager_cnt, GameEnum.ROLE_TYPE_NORMAL_WOLF: normal_wolf_cnt}
 
         single_roles = request.form.getlist('single_roles')
         for r in single_roles:
-            card_dict[GameEnum(f'ROLE_TYPE_{r.upper()}')] = 1
+            cards.append(GameEnum(f'ROLE_TYPE_{r.upper()}'))
+            # card_dict[] = 1
 
-        new_game = Game.create_new_game(host=current_user, victory_mode=victory_mode, card_dict=card_dict,
+        new_game = Game.create_new_game(host=current_user, victory_mode=victory_mode, cards=cards,
                                         captain_mode=captain_mode, witch_mode=witch_mode)
 
         current_user.game = new_game
@@ -59,7 +62,7 @@ def game():
     current_setting.append('警长模式为：' + current_game.captain_mode.message)
     current_setting.append('女巫模式为：' + current_game.witch_mode.message)
     current_setting.append('游戏总人数为：' + str(current_game.get_seat_num()) + '人')
-    for role, cnt in current_game.card_dict.items():
+    for role, cnt in Counter(current_game.cards).items():
         current_setting.append(role.message + ' = ' + str(cnt))
 
     return render_template("werewolf_game.html", ishost=current_user.ishost, name=current_user.name,
