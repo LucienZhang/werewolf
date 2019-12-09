@@ -13,6 +13,8 @@ from werewolf.login import do_login, do_logout, do_register
 from werewolf.utils.enums import GameEnum
 from werewolf.game_module import game_engine
 from collections import Counter
+from werewolf.utils.scheduler import scheduler
+import datetime
 
 werewolf_api = Blueprint('werewolf_api', __name__, template_folder='templates', static_folder='static')
 
@@ -75,8 +77,7 @@ def game():
 @werewolf_api.route('/action')
 @login_required
 def action():
-    ret_message = game_engine.take_action()
-    return ret_message.parse()
+    return game_engine.take_action()
 
 
 @werewolf_api.route('/login', methods=['GET', 'POST'])
@@ -129,9 +130,20 @@ def test():
 
 @werewolf_api.route('/send')
 def send():
-    gid = request.args.get('gid')
-    sse.publish(json.dumps([url_for('werewolf_api.static', filename='audio/seer_start_voice.mp3'),
-                            url_for('werewolf_api.static', filename='audio/night_bgm.mp3'), ]),
-                type='music',
-                channel=gid)
+    # gid = request.args.get('gid')
+    # sse.publish_music(json.dumps([url_for('werewolf_api.static', filename='audio/seer_start_voice.mp3'),
+    #                         url_for('werewolf_api.static', filename='audio/night_bgm.mp3'), ]),
+    #             type='music',
+    #             channel=gid)
+    seconds = request.args.get('s')
+    msg = request.args.get('msg')
+    scheduler.add_job(id='test_job', func=test_func, args=(msg,),
+                      next_run_time=datetime.datetime.now() + datetime.timedelta(seconds=int(seconds)))
+    test_func('ping')
+    return "Message sent!"
+
+
+def test_func(msg='default message'):
+    with scheduler.app.app_context():
+        sse.publish({"message": msg}, type='greeting')
     return "Message sent!"

@@ -20,7 +20,8 @@ class EnumMember(object):
     def __str__(self):
         return self.name
 
-#todo: add messages!
+
+# todo: add messages!
 class GameEnumMeta(type):
     _enum_dict = {
         # 0
@@ -31,7 +32,7 @@ class GameEnumMeta(type):
         'GAME_STATUS_ELECTING': EnumMember('GAME_STATUS_ELECTING', 4, ''),
         'GAME_STATUS_VOTING': EnumMember('GAME_STATUS_VOTING', 5, ''),
         'GAME_STATUS_VOTING_FOR_CAPTAIN': EnumMember('GAME_STATUS_VOTING_FOR_CAPTAIN', 6, ''),
-        'GAME_STATUS_WAITING': EnumMember('GAME_STATUS_WAITING', 7, ''), # TODO: what is this for?????
+        'GAME_STATUS_WAITING': EnumMember('GAME_STATUS_WAITING', 7, ''),  # TODO: what is this for?????
         # 100
         'VICTORY_MODE_UNKNOWN': EnumMember('VICTORY_MODE_UNKNOWN', 100, ''),
         'VICTORY_MODE_KILL_GROUP': EnumMember('VICTORY_MODE_KILL_GROUP', 101, ''),
@@ -91,6 +92,8 @@ class GameEnumMeta(type):
         'GAME_MESSAGE_ROLE_NOT_EXIST': EnumMember('GAME_MESSAGE_ROLE_NOT_EXIST', 703, '角色不存在'),
         'GAME_MESSAGE_NOT_IN_GAME': EnumMember('GAME_MESSAGE_NOT_IN_GAME', 704, '你不在游戏中'),
         'GAME_MESSAGE_CANNOT_START': EnumMember('GAME_MESSAGE_CANNOT_START', 705, '玩家不足，无法开始'),
+        'GAME_MESSAGE_UNKNOWN_OP': EnumMember('GAME_MESSAGE_UNKNOWN_OP', 706, '未知命令'),
+        'GAME_MESSAGE_DIE_IN_NIGHT': EnumMember('GAME_MESSAGE_DIE_IN_NIGHT', 707, '昨晚，以下位置的玩家倒下了，不分先后： {}'),
 
         'PLACE_HOLDER': EnumMember('PLACE_HOLDER', 9999, '')
     }
@@ -123,7 +126,6 @@ class GameEnum(metaclass=GameEnumMeta):
         k = args[0]
         return GameEnum.item(k)
 
-
 #
 #
 # class VictoryMode(Enum):
@@ -154,4 +156,3 @@ class GameEnum(metaclass=GameEnumMeta):
 #         return self.name
 #
 #
-

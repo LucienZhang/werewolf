@@ -24,6 +24,7 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     LOGIN_SECRET_KEY = '123456'
     REDIS_URL = "redis://localhost"
+    SCHEDULER_API_ENABLED = True
 
 
 class TestingConfig(Config):

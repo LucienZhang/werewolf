@@ -32,3 +32,9 @@ def json_hook(d):
         return GameEnum(d['__GameEnum__'])
     else:
         return d
+
+
+def response(success, message=None, **kwargs):
+    res = {'suc': success, 'msg': message}
+    res.update(kwargs)
+    return json.dumps(res)

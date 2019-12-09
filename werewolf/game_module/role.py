@@ -148,5 +148,11 @@ class Role(object):
         return True, None
 
     def prepare(self):
-        # if self.role_type is RoleType.
-        pass
+        if self.role_type is GameEnum.ROLE_TYPE_SEER:
+            pass
+        elif self.role_type is GameEnum.ROLE_TYPE_WITCH:
+            self.args = {'elixir': True, 'toxic': True}
+        elif self.role_type is GameEnum.ROLE_TYPE_HUNTER:
+            self.args = {'shootable': True}
+        else:
+            raise TypeError(f'Cannot prepare for role type {self.role_type}')

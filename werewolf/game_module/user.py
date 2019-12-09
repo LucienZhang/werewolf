@@ -27,10 +27,8 @@ class UserTable(db.Model):
 
 
 class User(UserMixin):
-    def __init__(self, table: UserTable = None, game: Game = None, role=None):
+    def __init__(self, table: UserTable = None):
         self.table = table
-        self._game = game
-        self._role = role
 
     @property
     def uid(self):
@@ -53,18 +51,6 @@ class User(UserMixin):
         self.table.avatar = avatar
 
     @property
-    def game(self):
-        return self._game
-
-    @game.setter
-    def game(self, game: Game):
-        self._game = game
-        if game is not None:
-            self.table.gid = game.gid
-        else:
-            self.table.gid = -1
-
-    @property
     def ishost(self):
         return self.table.ishost
 
@@ -73,36 +59,31 @@ class User(UserMixin):
         self.table.ishost = ishost
 
     @property
-    def role(self):
-        return self._role
+    def gid(self):
+        return self.table.gid
 
-    @role.setter
-    def role(self, role: Role):
-        self._role = role
+    @gid.setter
+    def gid(self, gid: int):
+        self.table.gid = gid
 
     @staticmethod
     def create_new_user(username, password, name, avatar):
         if UserTable.query.filter_by(username=username).first() is not None:
             # username exists
+            # todo: return view
             return None
         user_table = UserTable(username=username, password=password, name=name, avatar=avatar, gid=-1, ishost=False)
         db.session.add(user_table)
         db.session.commit()
-        role = Role.create_new_role(user_table.uid)
-        user = User(table=user_table, role=role)
+        # Role.create_new_role(user_table.uid) todo :does not need
+        user = User(table=user_table)
         return user
 
     @staticmethod
     def get_user_by_uid(uid):
         user_table = UserTable.query.get(uid)
         if user_table is not None:
-            game = Game.get_game_by_gid(user_table.gid)
-            role = None
-            if game is not None:
-                role = game.get_role_by_uid(user_table.uid)
-                if role is None:
-                    role = Role.get_role_by_uid(user_table.uid)
-            return User(table=user_table, role=role, game=game)
+            return User(table=user_table)
         else:
             return None
 
@@ -112,13 +93,7 @@ class User(UserMixin):
             return None
         user_table = UserTable.query.filter_by(login_token=login_token).first()
         if user_table is not None:
-            game = Game.get_game_by_gid(user_table.gid)
-            role = None
-            if game is not None:
-                role = game.get_role_by_uid(user_table.uid)
-                if role is None:
-                    role = Role.get_role_by_uid(user_table.uid)
-            return User(table=user_table, role=role, game=game)
+            return User(table=user_table)
         else:
             return None
 
@@ -128,27 +103,18 @@ class User(UserMixin):
             return None
         user_table = UserTable.query.filter_by(username=username).first()
         if user_table is not None:
-            game = Game.get_game_by_gid(user_table.gid)
-            role = None
-            if game is not None:
-                role = game.get_role_by_uid(user_table.uid)
-                if role is None:
-                    role = Role.get_role_by_uid(user_table.uid)
-            return User(table=user_table, role=role, game=game)
+            return User(table=user_table)
         else:
             return None
 
     def join_game(self, gid: int) -> (bool, GameEnum):
-        game_table = GameTable.query.with_for_update().get(gid)
-        if game_table is None:
+        game = Game.get_game_by_gid(gid, lock=True)
+        if game is None:
             return False, GameEnum.GAME_MESSAGE_GAME_NOT_EXIST
-        game = Game.create_game_from_table(game_table)
-        if len(game_table.roles) >= game.get_seat_num():
-            db.session.add(game_table)
+        if len(game.roles) >= game.get_seat_num():
             db.session.commit()
             return False, GameEnum.GAME_MESSAGE_GAME_FULL
         if game.get_role_by_uid(self.uid) is not None:
-            db.session.add(game_table)
             db.session.commit()
             return False, GameEnum.GAME_MESSAGE_ALREADY_IN
 
@@ -156,22 +122,29 @@ class User(UserMixin):
         new_role = Role.create_new_role(self.uid)
         game.roles.append(new_role)
         game.commit()
-        self.role = new_role
-        self.game = game
+        self.gid = game.gid
         self.ishost = self.uid == game.host_id
-        self.role.position = len(game.roles)
-        self.role.commit()
         self.commit()
+        new_role.position = len(game.roles)
+        new_role.commit()
         return True, None
 
     def quit_game(self) -> (bool, GameEnum):
-        if self.game is None:
+        game = Game.get_game_by_gid(self.gid)
+        if game is None:
             return False, GameEnum.GAME_MESSAGE_NOT_IN_GAME
-        self.game = None
+        index, my_role = game.get_role_by_uid(self.uid, with_index=True)
+        if my_role is None:
+            return False, GameEnum.GAME_MESSAGE_NOT_IN_GAME
+
+        del game.roles[index]
+        game.commit()
+
         self.ishost = False
+        self.gid = -1
+        self.commit()
         # TODO: role reset??
         # self.role.reset
-        self.role = None
         return True, None
 
     def commit(self) -> (bool, GameEnum):
