@@ -9,6 +9,8 @@ from flask_login import current_user, login_required
 from flask_sse import sse
 from werewolf.game_module.game import Game
 import json
+
+from werewolf.game_module.role import Role
 from werewolf.login import do_login, do_logout, do_register
 from werewolf.utils.enums import GameEnum
 from werewolf.game_module import game_engine
@@ -45,8 +47,8 @@ def setup():
         new_game = Game.create_new_game(host=current_user, victory_mode=victory_mode, cards=cards,
                                         captain_mode=captain_mode, witch_mode=witch_mode)
 
-        current_user.game = new_game
-        current_user.commit()
+        # current_user.game = new_game
+        # current_user.commit()
 
         return redirect(url_for('werewolf_api.join', gid=new_game.gid))
 
@@ -55,7 +57,7 @@ def setup():
 @login_required
 def game():
     current_setting = []
-    current_game = current_user.game
+    current_game = Game.get_game_by_gid(current_user.gid)
     current_setting.append('游戏模式为：' + current_game.victory_mode.message)
     current_setting.append('警长模式为：' + current_game.captain_mode.message)
     current_setting.append('女巫模式为：' + current_game.witch_mode.message)
@@ -63,15 +65,16 @@ def game():
     for role, cnt in Counter(current_game.cards).items():
         current_setting.append(role.message + ' = ' + str(cnt))
 
+    current_role = Role.get_role_by_uid(current_user.uid)
     return render_template("werewolf_game.html", ishost=current_user.ishost, name=current_user.name,
                            gid=current_game.gid,
                            current_setting=current_setting,
-                           role_name=current_user.role.role_type.message,
-                           role_type=current_user.role.role_type.name.lower(),
+                           role_name=current_role.role_type.message,
+                           role_type=current_role.role_type.name.lower(),
                            seat_cnt=current_game.get_seat_num(),
-                           dbtxt=(str(current_user.game.roles) + str(
-                               type(current_user.game.roles)) + '\n<br />\n' + str(
-                               current_user.game.days) + str(type(current_user.game.steps))))
+                           dbtxt=(str(current_game.roles) + str(
+                               type(current_game.roles)) + '\n<br />\n' + str(
+                               current_game.days) + str(type(current_game.steps))))
 
 
 @werewolf_api.route('/action')
