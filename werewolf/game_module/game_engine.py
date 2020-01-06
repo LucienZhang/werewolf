@@ -23,30 +23,71 @@ def take_action() -> str:  # return json to user
     op = request.args.get('op')
     if op == 'start':
         # TODO: with lock!
-        game = Game.get_game_by_gid(me.gid)
-        positions = set()
-        for r in game.roles:
-            positions.add(r.position)
-        if len(positions) != game.get_seat_num():
-            return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            positions = set()
+            for r in game.roles:
+                positions.add(r.position)
+            if len(positions) != game.get_seat_num():
+                return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
 
-        cards = game.cards.copy()
-        random.shuffle(cards)
-        for r, c in zip(game.roles, cards):
-            r.role_type = c
-            r.prepare()
-            r.commit()
-        game.status = GameEnum.GAME_STATUS_NIGHT
-        game.go_next_step()
-        return response(True)
+            cards = game.cards.copy()
+            random.shuffle(cards)
+            for r, c in zip(game.roles, cards):
+                r.role_type = c
+                r.prepare()
+                r.commit()
+            game.status = GameEnum.GAME_STATUS_NIGHT
+            game.go_next_step()
+            return response(True)
     elif op == 'wolf_kill':
-        # set kill
+        target = request.args.get('target')
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            history = game.history
+            my_role = game.get_role_by_uid(me.uid)
+            if game.status != GameEnum.ROLE_TYPE_ALL_WOLF or GameEnum.ROLE_TYPE_ALL_WOLF not in my_role.tags:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if my_role.position not in history['wolf_kill'] or \
+                    history['wolf_kill'][my_role.position] != GameEnum.TARGET_NOT_ACTED:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            history['wolf_kill'][my_role.position] = target
+            if all([t != GameEnum.TARGET_NOT_ACTED for t in history['wolf_kill'].values()]):
+                game.go_next_step()
+            return response(True)
+    elif op == 'sit':
+        position = request.args.get('position')
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            if game.status != GameEnum.GAME_STATUS_WAIT_TO_START:
+                return response(False, GameEnum('GAME_MESSAGE_ALREADY_STARTED').message)
+            if game.get_role_by_pos(position):
+                return response(False, GameEnum('GAME_MESSAGE_POSITION_OCCUPIED').message)
+            my_role = game.get_role_by_uid(me.uid)
+            if not my_role:
+                return response(False, GameEnum('GAME_MESSAGE_ROLE_NOT_EXIST').message)
+            my_role.position = position
+            my_role.commit()
+            # todo: publish position info
+            return response(True)
+    elif op == 'discover':
+        target = request.args.get('target')
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            history = game.history
+            my_role = game.get_role_by_uid(me.uid)
+            if game.status != GameEnum.ROLE_TYPE_SEER or my_role.role_type != GameEnum.ROLE_TYPE_SEER:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if history['discover'] != GameEnum.TARGET_NOT_ACTED:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            history['discover'] = target
+            return response(True, game.get_role_by_pos(target).group_type.message)
+    elif op == 'elixir':
+        pass
+    elif op == 'toxic':
+        pass
+    elif op == 'guard':
+        pass
+    elif op == 'shoot':
         pass
     else:
         return response(False, GameEnum.GAME_MESSAGE_UNKNOWN_OP.message)
-
-
-
 
 #
 #

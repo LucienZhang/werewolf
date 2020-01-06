@@ -41,6 +41,8 @@ class GameTable(db.Model):
     repeat = db.Column(db.Integer, nullable=False)
     steps = db.Column(db.String(length=1023), nullable=False)
     history = db.Column(db.String(length=1023), nullable=False)
+    #todo
+    #global_step_num=db.Column(db.Integer, nullable=False)
 
 
 class Game(object):
@@ -58,6 +60,13 @@ class Game(object):
         else:
             self._history = history
         self._last_modified = last_modified
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.commit()
+        return True
 
     @property
     def gid(self):
@@ -133,6 +142,16 @@ class Game(object):
 
     @history.setter
     def history(self, history: dict):
+        """
+        pos: -1=no one, -2=not acted
+        {
+            'wolf_kill':{wolf_pos:target_pos,...},
+            'elixir':pos,
+            'guard':pos,
+            'toxic':pos,
+            'discover':pos
+        }
+        """
         self.table._history = history
 
     @staticmethod
@@ -286,6 +305,7 @@ class Game(object):
             return self.go_next_step()
         elif now is GameEnum.ROLE_TYPE_ALL_WOLF:
             publish_music('wolf_start_voice', 'wolf_bgm', f'{self.gid}-host')
+            # todo: add random job if there is not wolf (third party situation)
             scheduler.add_job(id=f'{self.gid}_WOLF_KILL', func=action_timeout, args=(self.gid,),
                               next_run_time=datetime.now() + timedelta(seconds=30))
             return True, None
@@ -343,7 +363,7 @@ class Game(object):
         # game.commit()
 
 
-def action_timeout(gid):
+def action_timeout(gid, global_step_num):
     game = Game.get_game_by_gid(gid)
     game.go_next_step()
     game.commit()

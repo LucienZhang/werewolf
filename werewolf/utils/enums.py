@@ -24,6 +24,10 @@ class EnumMember(object):
 # todo: add messages!
 class GameEnumMeta(type):
     _enum_dict = {
+        # negative positions
+        'TARGET_NOT_ACTED': EnumMember('TARGET_NOT_ACTED', -2, ''),
+        'TARGET_NO_ONE': EnumMember('TARGET_NO_ONE', -1, ''),
+
         # 0
         'GAME_STATUS_UNKNOWN': EnumMember('GAME_STATUS_UNKNOWN', 0, ''),
         'GAME_STATUS_WAIT_TO_START': EnumMember('GAME_STATUS_WAIT_TO_START', 1, ''),
@@ -94,6 +98,9 @@ class GameEnumMeta(type):
         'GAME_MESSAGE_CANNOT_START': EnumMember('GAME_MESSAGE_CANNOT_START', 705, '玩家不足，无法开始'),
         'GAME_MESSAGE_UNKNOWN_OP': EnumMember('GAME_MESSAGE_UNKNOWN_OP', 706, '未知命令'),
         'GAME_MESSAGE_DIE_IN_NIGHT': EnumMember('GAME_MESSAGE_DIE_IN_NIGHT', 707, '昨晚，以下位置的玩家倒下了，不分先后： {}'),
+        'GAME_MESSAGE_ALREADY_STARTED': EnumMember('GAME_MESSAGE_ALREADY_STARTED', 708, '游戏已经开始了'),
+        'GAME_MESSAGE_POSITION_OCCUPIED': EnumMember('GAME_MESSAGE_POSITION_OCCUPIED', 709, '那个位置已经有人了'),
+        'GAME_MESSAGE_CANNOT_ACT': EnumMember('GAME_MESSAGE_CANNOT_ACT', 710, '当前无法操作'),
 
         'PLACE_HOLDER': EnumMember('PLACE_HOLDER', 9999, '')
     }
