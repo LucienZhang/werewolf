@@ -41,19 +41,20 @@ class GameTable(db.Model):
     repeat = db.Column(db.Integer, nullable=False)
     steps = db.Column(db.String(length=1023), nullable=False)
     history = db.Column(db.String(length=1023), nullable=False)
-    #todo
-    #global_step_num=db.Column(db.Integer, nullable=False)
 
 
 class Game(object):
-    def __init__(self, table: GameTable = None, roles: List[Role] = None, steps: list = None, cards: list = None,
+    def __init__(self, table: GameTable = None, roles: List[Role] = None, steps: dict = None, cards: list = None,
                  last_modified: datetime = None, history: dict = None):
         self.table = table
         if roles is None:
             self._roles = []
         else:
             self._roles = roles
-        self._steps = steps
+        if steps is None:
+            self._steps = {}
+        else:
+            self._steps = steps
         self._cards = cards
         if history is None:
             self._history = {}
@@ -129,7 +130,13 @@ class Game(object):
         return self._steps
 
     @steps.setter
-    def steps(self, steps: list):
+    def steps(self, steps: dict):
+        """
+        {
+            'global_steps':0,
+            'step_list':[EnumMember,...]
+        }
+        """
         self.table._steps = steps
 
     @property
@@ -265,34 +272,39 @@ class Game(object):
             return (None, None) if with_index else None
 
     @staticmethod
-    def _get_init_steps(cards, captain_mode):
-        return Game._reset_steps(1, cards, captain_mode)
+    def _get_init_steps(cards, captain_mode) -> dict:
+        return {
+            'global_steps': 0,
+            'step_list': Game._reset_step_list(1, cards, captain_mode)
+        }
 
     @staticmethod
-    def _reset_steps(day, cards, captain_mode):
-        steps = []
+    def _reset_step_list(day, cards, captain_mode) -> list:
+        step_list = []
         if day == 1 and GameEnum.ROLE_TYPE_THIEF in cards:
             pass
         if day == 1 and GameEnum.ROLE_TYPE_CUPID in cards:
             pass
         # TODO: 恋人互相确认身份
-        steps.append(GameEnum.TURN_STEP_TURN_NIGHT)
-        steps.append(GameEnum.ROLE_TYPE_ALL_WOLF)
-        steps.append(GameEnum.ROLE_TYPE_SEER)
-        steps.append(GameEnum.ROLE_TYPE_WITCH)
-        steps.append(GameEnum.ROLE_TYPE_SAVIOR)
-        steps.append(GameEnum.TURN_STEP_CHECK_VICTORY)
-        steps.append(GameEnum.TURN_STEP_TURN_DAY)
+        step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
+        step_list.append(GameEnum.ROLE_TYPE_ALL_WOLF)
+        step_list.append(GameEnum.ROLE_TYPE_SEER)
+        step_list.append(GameEnum.ROLE_TYPE_WITCH)
+        step_list.append(GameEnum.ROLE_TYPE_SAVIOR)
+        step_list.append(GameEnum.TURN_STEP_CHECK_VICTORY)
+        step_list.append(GameEnum.TURN_STEP_TURN_DAY)
         if day == 1 and captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
-            steps.append(GameEnum.TURN_STEP_ELECT)
-            steps.append(GameEnum.TURN_STEP_TALK)
-            steps.append(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
-        steps.append(GameEnum.TURN_STEP_ANNOUNCE_AND_TALK)
-        # steps.append(GameEnum.TURN_STEP_TURN_NIGHT)
+            step_list.append(GameEnum.TURN_STEP_ELECT)
+            step_list.append(GameEnum.TURN_STEP_TALK)
+            step_list.append(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
+        step_list.append(GameEnum.TURN_STEP_ANNOUNCE_AND_TALK)
+        # step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
 
-        return steps
+        return step_list
 
     def go_next_step(self) -> (bool, GameEnum):
+        self.steps['global_steps'] += 1
+
         if self.repeat > 0:
             self.repeat -= 1
         else:
@@ -306,7 +318,8 @@ class Game(object):
         elif now is GameEnum.ROLE_TYPE_ALL_WOLF:
             publish_music('wolf_start_voice', 'wolf_bgm', f'{self.gid}-host')
             # todo: add random job if there is not wolf (third party situation)
-            scheduler.add_job(id=f'{self.gid}_WOLF_KILL', func=action_timeout, args=(self.gid,),
+            scheduler.add_job(id=f'{self.gid}_WOLF_KILL', func=action_timeout,
+                              args=(self.gid, self.steps['global_steps']),
                               next_run_time=datetime.now() + timedelta(seconds=30))
             return True, None
 
@@ -365,8 +378,11 @@ class Game(object):
 
 def action_timeout(gid, global_step_num):
     game = Game.get_game_by_gid(gid)
+    if global_step_num != game.steps['global_steps']:
+        return
     game.go_next_step()
     game.commit()
+    return
 
 # if self.now == len(self.steps) - 1:
 #             self._reset(card_dict, captain_mode)
