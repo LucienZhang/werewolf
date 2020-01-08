@@ -6,10 +6,11 @@
 
 
 class EnumMember(object):
-    def __init__(self, name, value, message):
+    def __init__(self, name, value, message, args=None):
         self.name = name
         self.value = value
         self.message = message
+        self.args = args
 
     def __hash__(self):
         return hash(self.value)
@@ -37,6 +38,7 @@ class GameEnumMeta(type):
         'GAME_STATUS_VOTING': EnumMember('GAME_STATUS_VOTING', 5, ''),
         'GAME_STATUS_VOTING_FOR_CAPTAIN': EnumMember('GAME_STATUS_VOTING_FOR_CAPTAIN', 6, ''),
         'GAME_STATUS_WAITING': EnumMember('GAME_STATUS_WAITING', 7, ''),  # TODO: what is this for?????
+        'GAME_STATUS_SHOOT_AVAILABLE': EnumMember('GAME_STATUS_SHOOT_AVAILABLE', 8, '', set()),
         # 100
         'VICTORY_MODE_UNKNOWN': EnumMember('VICTORY_MODE_UNKNOWN', 100, ''),
         'VICTORY_MODE_KILL_GROUP': EnumMember('VICTORY_MODE_KILL_GROUP', 101, ''),

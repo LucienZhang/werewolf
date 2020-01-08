@@ -38,9 +38,16 @@ class RoleTable(db.Model):
 class Role(object):
     """Base Class"""
 
-    def __init__(self, table: RoleTable, args: dict = None):
+    def __init__(self, table: RoleTable, tags: list = None, args: dict = None):
         self.table = table
-        self._args = args
+        if tags is None:
+            self._tags = []
+        else:
+            self._tags = tags
+        if args is None:
+            self._args = {}
+        else:
+            self._args = args
 
     @property
     def uid(self):
@@ -104,12 +111,11 @@ class Role(object):
 
     @property
     def tags(self):
-        # todo
-        return self.table.tags
+        return self._tags
 
     @tags.setter
-    def tags(self, tags: int):  # todo: tags:?? show be enum!!
-        self.table.tags = tags.value
+    def tags(self, tags: list):
+        self._tags = tags
 
     @property
     def args(self):
@@ -128,20 +134,23 @@ class Role(object):
             role_table.reset()
         db.session.add(role_table)
         db.session.commit()
-        args = json.loads(role_table.args)
-        role = Role(role_table, args=args)
+        tags = json.loads(role_table.tags, object_hook=json_hook)
+        args = json.loads(role_table.args, object_hook=json_hook)
+        role = Role(role_table, tags=tags, args=args)
         return role
 
     @staticmethod
     def get_role_by_uid(uid):
         role_table = RoleTable.query.get(uid)
         if role_table is not None:
-            args = json.loads(role_table.args)
-            return Role(role_table, args)
+            tags = json.loads(role_table.tags, object_hook=json_hook)
+            args = json.loads(role_table.args, object_hook=json_hook)
+            return Role(role_table, tags, args)
         else:
             return None
 
     def commit(self) -> (bool, GameEnum):
+        self.table.tags = json.dumps(self._tags, cls=ExtendedJSONEncoder)
         self.table.args = json.dumps(self._args, cls=ExtendedJSONEncoder)
         db.session.add(self.table)
         db.session.commit()
@@ -154,5 +163,7 @@ class Role(object):
             self.args = {'elixir': True, 'toxic': True}
         elif self.role_type is GameEnum.ROLE_TYPE_HUNTER:
             self.args = {'shootable': True}
+        elif self.role_type is GameEnum.ROLE_TYPE_SAVIOR:
+            self.args = {'guard': GameEnum.TARGET_NO_ONE}
         else:
             raise TypeError(f'Cannot prepare for role type {self.role_type}')

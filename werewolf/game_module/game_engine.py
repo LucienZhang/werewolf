@@ -76,48 +76,78 @@ def take_action() -> str:  # return json to user
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if history['discover'] != GameEnum.TARGET_NOT_ACTED:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            target_role = game.get_role_by_pos(target)
+            if not target_role.alive:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             history['discover'] = target
             return response(True, game.get_role_by_pos(target).group_type.message)
     elif op == 'elixir':
-        pass
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            history = game.history
+            my_role = game.get_role_by_uid(me.uid)
+            if game.status != GameEnum.ROLE_TYPE_WITCH or my_role.role_type != GameEnum.ROLE_TYPE_WITCH:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if my_role.args['elixir'] < 1:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if history['elixir'] or history['toxic'] != GameEnum.TARGET_NOT_ACTED:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if history['wolf_kill_decision'] is GameEnum.TARGET_NO_ONE:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            history['elixir'] = True
+            my_role.args['elixir'] -= 1
+            my_role.commit()
+            return response(True)
     elif op == 'toxic':
-        pass
+        target = request.args.get('target')
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            history = game.history
+            my_role = game.get_role_by_uid(me.uid)
+            if game.status != GameEnum.ROLE_TYPE_WITCH or my_role.role_type != GameEnum.ROLE_TYPE_WITCH:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if my_role.args['toxic'] < 1:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if history['elixir'] or history['toxic'] != GameEnum.TARGET_NOT_ACTED:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            target_role = game.get_role_by_pos(target)
+            if not target_role.alive:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            history['toxic'] = target
+            my_role.args['toxic'] -= 1
+            my_role.commit()
+            return response(True)
     elif op == 'guard':
-        pass
+        target = request.args.get('target')
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            history = game.history
+            my_role = game.get_role_by_uid(me.uid)
+            if game.status != GameEnum.ROLE_TYPE_SAVIOR or my_role.role_type != GameEnum.ROLE_TYPE_SAVIOR:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if my_role.args['guard'] != GameEnum.TARGET_NO_ONE and my_role.args['guard'] == target:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if history['guard'] != GameEnum.TARGET_NOT_ACTED:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            target_role = game.get_role_by_pos(target)
+            if not target_role.alive:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            history['guard'] = target
+            my_role.args['guard'] = target
+            my_role.commit()
+            return response(True)
     elif op == 'shoot':
-        pass
+        target = request.args.get('target')
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            history = game.history
+            my_role = game.get_role_by_uid(me.uid)
+            now = game.current_step()
+            if not (now is GameEnum.GAME_STATUS_SHOOT_AVAILABLE and me.uid in now.args):
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if not my_role.args['shootable']:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            kill(my_role, target)
+            return response(True)
     else:
         return response(False, GameEnum.GAME_MESSAGE_UNKNOWN_OP.message)
 
-#
-#
-# def _next_step(turn_dict, cards, captain_mode) -> (dict, GameEnum):
-#     if turn_dict is None:
-#         turn = _reset_turn(1, cards, captain_mode)
-#         return turn, GameEnum.GAME_STATUS_NIGHT
-#
-#
-# def _reset_turn(day, cards, captain_mode):
-#     steps = []
-#     if day == 1 and GameEnum.ROLE_TYPE_THIEF in cards:
-#         pass
-#     if day == 1 and GameEnum.ROLE_TYPE_CUPID in cards:
-#         pass
-#     # TODO: 恋人互相确认身份
-#     steps.append(GameEnum.ROLE_TYPE_ALL_WOLF)
-#     steps.append(GameEnum.ROLE_TYPE_SEER)
-#     steps.append(GameEnum.ROLE_TYPE_WITCH)
-#     steps.append(GameEnum.ROLE_TYPE_SAVIOR)
-#     steps.append(GameEnum.TURN_STEP_CHECK_VICTORY)
-#     steps.append(GameEnum.TURN_STEP_TURN_DAY)
-#     if day == 1 and captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
-#         steps.append(GameEnum.TURN_STEP_ELECT)
-#         steps.append(GameEnum.TURN_STEP_TALK)
-#         steps.append(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
-#     steps.append(GameEnum.TURN_STEP_ANNOUNCE_AND_TALK)
-#
-#     return {'day': day,
-#             'current_step': 0,
-#             'steps': steps,
-#             'repeat': 0
-#             }
+
+def kill(by, target):
+    pass

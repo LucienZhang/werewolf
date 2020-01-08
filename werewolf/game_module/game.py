@@ -145,20 +145,21 @@ class Game(object):
 
     @property
     def history(self):
+        """
+            pos: -1=no one, -2=not acted
+            {
+                'wolf_kill':{wolf_pos:target_pos,...},
+                'wolf_kill_decision':pos
+                'elixir':True / False,
+                'guard':pos,
+                'toxic':pos,
+                'discover':pos
+            }
+        """
         return self._history
 
     @history.setter
     def history(self, history: dict):
-        """
-        pos: -1=no one, -2=not acted
-        {
-            'wolf_kill':{wolf_pos:target_pos,...},
-            'elixir':pos,
-            'guard':pos,
-            'toxic':pos,
-            'discover':pos
-        }
-        """
         self.table._history = history
 
     @staticmethod
@@ -256,6 +257,7 @@ class Game(object):
         return cnt
 
     def get_role_by_pos(self, pos):
+        pos = int(pos)
         if pos < 0:
             return None
         for r in self.roles:
@@ -310,6 +312,11 @@ class Game(object):
         else:
             self.now_index += 1
 
+        if self.now_index >= len(self.steps['step_list']):
+            self.now_index = 0
+            self.days += 1
+            self.steps['step_list'] = Game._reset_step_list(self.days, self.cards, self.captain_mode)
+
         # current step
         now = self.current_step()
         if now is GameEnum.TURN_STEP_TURN_NIGHT:
@@ -324,7 +331,11 @@ class Game(object):
             return True, None
 
     def current_step(self):
-        return self.steps[self.now_index]
+        return self.steps['step_list'][self.now_index]
+
+    def insert_step(self, step):
+        self.steps['step_list'].insert(self.now_index + 1, step)
+        return
 
     def get_alive_roles(self, role_type=None):
         roles = []
