@@ -130,6 +130,7 @@ class Role(object):
         role_table = RoleTable.query.get(uid)
         if role_table is None:
             role_table = RoleTable(uid=uid, tags='[]', args='{}')
+            role_table.reset()
         else:
             role_table.reset()
         db.session.add(role_table)
