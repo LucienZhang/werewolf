@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import pytest
+import json
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from werewolf import create_app
@@ -44,8 +45,10 @@ class Player(object):
 
 @pytest.mark.game
 def test_seer_witch_hunter():
-    players = [Player(f'test{i}', f'test{i}') for i in range(9)]
-    host = players[0].client
+    print('START to test the seer witch hunter')
+    players = [Player(f'test{i}', f'test{i}').client for i in range(9)]
+    print('All players logged in, OK')
+    host = players[0]
     rv = host.post('/werewolf/setup', data=dict(
         victoryMode='KILL_GROUP',
         captainMode='WITH_CAPTAIN',
@@ -55,3 +58,50 @@ def test_seer_witch_hunter():
         single_roles=['seer', 'witch', 'hunter']
     ), follow_redirects=True)
     assert rv.status == '200 OK'
+    print('Game established, OK!')
+    rv = host.get('werewolf/test?cmd=get_info')
+    assert rv.status_code == 200
+    info = rv.data
+    info = json.loads(info)
+    gid = info['user']['gid']
+    print(f'New game gid={gid}')
+
+    for player in players[1:]:
+        rv = player.get(f'/werewolf/join?gid={gid}', follow_redirects=True)
+        assert rv.status == '200 OK'
+    print('All players joined the game, OK!')
+    rv = host.get('werewolf/action?op=start')
+    assert rv.status_code == 200
+    print('Game started, OK!')
+    normal_wolf = []
+    villager = []
+    seer = None
+    witch = None
+    hunter = None
+    for player in players:
+        rv = player.get('werewolf/test?cmd=get_info')
+        assert rv.status_code == 200
+        info = rv.data
+        info = json.loads(info)
+        role_type = info['role']['role_type']
+        if role_type == 'ROLE_TYPE_SEER':
+            print('Seer got, OK!')
+            seer = player
+            continue
+        elif role_type == 'ROLE_TYPE_WITCH':
+            print('Witch got, OK!')
+            witch = player
+            continue
+        elif role_type == 'ROLE_TYPE_HUNTER':
+            print('Hunter got, OK!')
+            hunter = player
+            continue
+        elif role_type == 'ROLE_TYPE_NORMAL_WOLF':
+            print('Normal wolf got, OK!')
+            normal_wolf.append(player)
+            continue
+        elif role_type == 'ROLE_TYPE_VILLAGER':
+            print('Villager got, OK!')
+            villager.append(player)
+            continue
+    assert seer and witch and hunter and len(normal_wolf) == 3 and len(villager) == 3

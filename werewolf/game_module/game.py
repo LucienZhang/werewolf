@@ -18,6 +18,7 @@ from typing import List
 from werewolf.utils.publisher import publish_music, publish_history
 from werewolf.utils.scheduler import scheduler
 import collections
+from copy import deepcopy
 
 if typing.TYPE_CHECKING:
     from werewolf.game_module.user import User
@@ -68,6 +69,26 @@ class Game(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
         return True
+
+    def to_json(self) -> dict:
+        return {'gid': self.gid,
+                'host_id': self.host_id,
+                'status': self.status.name,
+                'victory_mode': self.victory_mode.name,
+                'captain_mode': self.captain_mode.name,
+                'witch_mode': self.witch_mode.name,
+                'roles': [role.uid for role in self.roles],
+                'end_time': str(self.table.end_time),
+                'last_modified': str(self.table.last_modified),
+                'cards': [card.name for card in self.cards],
+                'days': self.days,
+                'now_index': self.now_index,
+                'repeat': self.repeat,
+                'steps': {
+                    'global_steps': self.steps['global_steps'],
+                    'step_list': [step.name for step in self.steps['step_list']]
+                },
+                'history': self.history}
 
     @property
     def gid(self):

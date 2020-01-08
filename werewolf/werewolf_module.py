@@ -13,6 +13,7 @@ import json
 from werewolf.game_module.role import Role
 from werewolf.login import do_login, do_logout, do_register
 from werewolf.utils.enums import GameEnum
+from werewolf.utils.json_utils import ExtendedJSONEncoder
 from werewolf.game_module import game_engine
 from collections import Counter
 from werewolf.utils.scheduler import scheduler
@@ -126,8 +127,25 @@ def quit_game():
             return e.message
 
 
+#######################################
+# Test API
+#######################################
 @werewolf_api.route('/test')
 def test():
+    cmd = request.args.get('cmd')
+    if cmd == 'get_info':
+        game = Game.get_game_by_gid(current_user.gid)
+        role = Role.get_role_by_uid(current_user.uid)
+        ret = {'user': current_user.to_json()}
+        if game:
+            ret['game'] = game.to_json()
+        if role:
+            ret['role'] = role.to_json()
+        return json.dumps(ret)
+
+
+@werewolf_api.route('/test_page')
+def test_page():
     return render_template('test.html')
 
 

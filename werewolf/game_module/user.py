@@ -7,10 +7,10 @@
 
 from werewolf.game_module.game import Game
 from flask_login import UserMixin
-from werewolf.game_module.game import GameTable
 from werewolf.game_module.role import Role
 from werewolf.db import db
 from werewolf.utils.enums import GameEnum
+from copy import deepcopy
 
 
 class UserTable(db.Model):
@@ -29,6 +29,16 @@ class UserTable(db.Model):
 class User(UserMixin):
     def __init__(self, table: UserTable = None):
         self.table = table
+
+    def to_json(self) -> dict:
+        return {'uid': self.uid,
+                'username': self.table.username,
+                'password': self.table.password,
+                'login_token': self.table.login_token,
+                'name': self.name,
+                'avatar': self.avatar,
+                'gid': self.gid,
+                'ishost': self.ishost}
 
     @property
     def uid(self):

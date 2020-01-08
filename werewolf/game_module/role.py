@@ -8,6 +8,7 @@ from werewolf.db import db
 from werewolf.utils.enums import GameEnum, EnumMember
 import json
 from werewolf.utils.json_utils import ExtendedJSONEncoder, json_hook
+from copy import deepcopy
 
 
 class RoleTable(db.Model):
@@ -48,6 +49,18 @@ class Role(object):
             self._args = {}
         else:
             self._args = args
+
+    def to_json(self) -> dict:
+        return {'uid': self.uid,
+                'role_type': self.role_type.name,
+                'group_type': self.group_type.name,
+                'alive': self.alive,
+                'iscaptain': self.iscaptain,
+                'voteable': self.voteable,
+                'speakable': self.speakable,
+                'position': self.position,
+                'tags': [tag.name for tag in self.tags],
+                'args': self.args}
 
     @property
     def uid(self):
