@@ -1,17 +1,22 @@
+from pathlib import Path
 import sys
 import json
 
-sys.path.append('..')
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 from werewolf.utils.enums import GameEnum, GameEnumMeta, EnumMember
 from werewolf.utils.json_utils import ExtendedJSONEncoder, json_hook
 
 
 def test_enum_unique():
     d = GameEnumMeta._enum_dict
-    s = set()
-    for member in d.values():
-        assert member.value not in s
-        s.add(member.value)
+    v = set()
+    n = set()
+    for key, member in d.items():
+        assert member.value not in v
+        assert member.name not in n
+        assert key == member.name
+        v.add(member.value)
+        n.add(member.name)
 
 
 def test_enum_valid():
