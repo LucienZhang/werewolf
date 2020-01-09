@@ -179,5 +179,9 @@ class Role(object):
             self.args = {'shootable': True}
         elif self.role_type is GameEnum.ROLE_TYPE_SAVIOR:
             self.args = {'guard': GameEnum.TARGET_NO_ONE}
+        elif self.role_type is GameEnum.ROLE_TYPE_VILLAGER:
+            pass
+        elif self.role_type is GameEnum.ROLE_TYPE_NORMAL_WOLF:
+            pass
         else:
             raise TypeError(f'Cannot prepare for role type {self.role_type}')

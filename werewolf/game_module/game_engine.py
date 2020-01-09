@@ -22,7 +22,6 @@ def take_action() -> str:  # return json to user
     me = current_user
     op = request.args.get('op')
     if op == 'start':
-        # TODO: with lock!
         with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
             positions = set()
             for r in game.roles:

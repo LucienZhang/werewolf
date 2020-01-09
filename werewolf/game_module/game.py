@@ -68,7 +68,7 @@ class Game(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.commit()
-        return True
+        return True if exc_type is None else False
 
     def to_json(self) -> dict:
         return {'gid': self.gid,
