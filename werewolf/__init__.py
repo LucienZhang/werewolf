@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-09-16 17:43:45
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-02 15:53:05
-
 import os
 from flask import Flask, redirect, url_for
 from flask_sse import sse

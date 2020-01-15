@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-09-30 14:38:30
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-06 20:40:04
-
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, current_user, login_user, logout_user
 from werewolf.game_module.user import User, UserTable

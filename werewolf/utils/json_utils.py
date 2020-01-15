@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-10-05 16:03:18
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-09 13:14:10
 import json
 
 from functools import singledispatch

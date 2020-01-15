@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-09-28 21:59:40
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-16 17:24:49
-
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -342,6 +336,7 @@ class Game(object):
         now = self.current_step()
         if now is GameEnum.TURN_STEP_TURN_NIGHT:
             publish_music('night_start_voice', 'night_bgm', f'{self.gid}-host')
+            self.status = GameEnum.GAME_STATUS_NIGHT
             return self.go_next_step()
         elif now is GameEnum.ROLE_TYPE_ALL_WOLF:
             publish_music('wolf_start_voice', 'wolf_bgm', f'{self.gid}-host')

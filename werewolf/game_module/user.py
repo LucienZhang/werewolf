@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-09-28 22:05:35
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-16 16:17:38
-
-
 from werewolf.game_module.game import Game
 from flask_login import UserMixin
 from werewolf.game_module.role import Role

@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-10-16 14:41:14
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-16 17:30:29
-
 from flask import request, current_app
 from flask_login import current_user
 import json
@@ -35,7 +29,6 @@ def take_action() -> str:  # return json to user
                 r.role_type = c
                 r.prepare()
                 r.commit()
-            game.status = GameEnum.GAME_STATUS_NIGHT
             game.go_next_step()
             return response(True)
     elif op == 'wolf_kill':

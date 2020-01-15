@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-09-28 20:38:09
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-16 17:26:30
-
 from werewolf.db import db
 from werewolf.utils.enums import GameEnum, EnumMember
 import json

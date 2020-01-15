@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lucien Zhang
-# @Date:   2019-09-16 17:44:43
-# @Last Modified by:   Lucien Zhang
-# @Last Modified time: 2019-10-16 15:01:42
-
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import current_user, login_required
 from flask_sse import sse
