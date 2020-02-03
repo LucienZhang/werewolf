@@ -9,7 +9,7 @@ from werewolf.game_module.role import Role
 from sqlalchemy.dialects.mysql import DATETIME
 import typing
 from typing import List
-from werewolf.utils.publisher import publish_music, publish_history
+from werewolf.utils.publisher import publish_music, publish_info
 from werewolf.utils.scheduler import scheduler
 import collections
 from copy import deepcopy
@@ -20,7 +20,8 @@ if typing.TYPE_CHECKING:
 
 class GameTable(db.Model):
     __tablename__ = 'game'
-    gid = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
+    gid = db.Column(db.Integer, primary_key=True,
+                    nullable=False, autoincrement=True)
     host_id = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Integer, nullable=False)
     victory_mode = db.Column(db.Integer, nullable=False)
@@ -71,7 +72,7 @@ class Game(object):
                 'victory_mode': self.victory_mode.name,
                 'captain_mode': self.captain_mode.name,
                 'witch_mode': self.witch_mode.name,
-                'roles': [role.uid for role in self.roles],
+                'roles': [[role.uid, role.position, role.name] for role in self.roles],
                 'end_time': str(self.table.end_time),
                 'last_modified': str(self.table.last_modified),
                 'cards': [card.name for card in self.cards],
@@ -186,13 +187,15 @@ class Game(object):
                                victory_mode=victory_mode.value,
                                roles='[]',
                                end_time=datetime.utcnow() + timedelta(days=1),
-                               cards=json.dumps(cards, cls=ExtendedJSONEncoder),
+                               cards=json.dumps(
+                                   cards, cls=ExtendedJSONEncoder),
                                captain_mode=captain_mode.value,
                                witch_mode=witch_mode.value,
-                               days=1,
+                               days=0,
                                now_index=-1,
                                repeat=0,
-                               steps=json.dumps(steps, cls=ExtendedJSONEncoder),
+                               steps=json.dumps(
+                                   steps, cls=ExtendedJSONEncoder),
                                history='{}')
         db.session.add(game_table)
         db.session.commit()
@@ -257,7 +260,8 @@ class Game(object):
 
     def commit(self) -> (bool, GameEnum):
         assert self._last_modified == self.table.last_modified
-        self.table.roles = json.dumps([r.uid for r in self.roles], cls=ExtendedJSONEncoder)
+        self.table.roles = json.dumps(
+            [r.uid for r in self.roles], cls=ExtendedJSONEncoder)
         self.table.steps = json.dumps(self.steps, cls=ExtendedJSONEncoder)
         self.table.cards = json.dumps(self.cards, cls=ExtendedJSONEncoder)
         self.table.history = json.dumps(self.history)
@@ -279,7 +283,7 @@ class Game(object):
             if r.position == pos:
                 return r
         else:
-            raise KeyError(f'Cannot find role with pos={pos}')
+            None
 
     def get_role_by_uid(self, uid, with_index=False):
         for i, r in enumerate(self.roles):
@@ -330,7 +334,8 @@ class Game(object):
         if self.now_index >= len(self.steps['step_list']):
             self.now_index = 0
             self.days += 1
-            self.steps['step_list'] = Game._reset_step_list(self.days, self.cards, self.captain_mode)
+            self.steps['step_list'] = Game._reset_step_list(
+                self.days, self.cards, self.captain_mode)
 
         # current step
         now = self.current_step()
@@ -370,7 +375,8 @@ class Game(object):
     def calculate_result(self):
         dead = set()
         # wolf kill
-        targets = collections.Counter([t for _, t in self.history['wolf_kill']])
+        targets = collections.Counter(
+            [t for _, t in self.history['wolf_kill']])
         wolf_kill_pos = targets.most_common(1)
         if not wolf_kill_pos:
             wolf_kill_pos = -1
@@ -394,7 +400,8 @@ class Game(object):
             r = self.get_role_by_pos(p)
             r.alive = False
             r.commit()
-        publish_history(GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.message.format('，'.join(dead)), str(self.gid))
+        publish_info(str(self.gid), json.dumps({'history': GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.message.format(
+            '，'.join(dead))}))
         # else:
         # role = self.get_role_by_pos(die_pos)
         # role.alive = False

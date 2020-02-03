@@ -37,14 +37,14 @@ def test_enum_valid():
     assert a is b
     assert a == b
 
-    l = [a, GameEnum(1)]
-    dumped_l = json.dumps(l, cls=ExtendedJSONEncoder)
+    enum_l = [a, GameEnum(1)]
+    dumped_l = json.dumps(enum_l, cls=ExtendedJSONEncoder)
     assert dumped_l == '[{"__GameEnum__": "GAME_STATUS_UNKNOWN"}, {"__GameEnum__": "GAME_STATUS_WAIT_TO_START"}]'
     recovered_l = json.loads(dumped_l, object_hook=json_hook)
     assert isinstance(recovered_l, list)
     assert len(recovered_l) == 2
     assert isinstance(recovered_l[0], EnumMember)
-    assert recovered_l == l
+    assert recovered_l == enum_l
     assert recovered_l[0] is a
     assert recovered_l[1] == GameEnum(1)
 

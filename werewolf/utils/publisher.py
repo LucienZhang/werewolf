@@ -10,7 +10,13 @@ def publish_music(instruction, bgm, channel):
                 channel=channel)
 
 
-def publish_history(message, channel):
-    sse.publish({"message": message},
-                type='history',
+# def publish_history(message, channel):
+#     sse.publish({"message": message},
+#                 type='history',
+#                 channel=channel)
+
+
+def publish_info(channel, message):
+    sse.publish(message,
+                type='game_info',
                 channel=channel)

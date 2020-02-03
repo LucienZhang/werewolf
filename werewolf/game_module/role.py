@@ -8,6 +8,7 @@ from copy import deepcopy
 class RoleTable(db.Model):
     __tablename__ = 'role'
     uid = db.Column(db.Integer, primary_key=True, nullable=False)
+    name = db.Column(db.String(length=255), nullable=False)
     role_type = db.Column(db.Integer)
     group_type = db.Column(db.Integer)
     alive = db.Column(db.Boolean)
@@ -46,6 +47,7 @@ class Role(object):
 
     def to_json(self) -> dict:
         return {'uid': self.uid,
+                'name': self.name,
                 'role_type': self.role_type.name,
                 'group_type': self.group_type.name,
                 'alive': self.alive,
@@ -59,6 +61,10 @@ class Role(object):
     @property
     def uid(self):
         return self.table.uid
+
+    @property
+    def name(self):
+        return self.table.name
 
     @property
     def role_type(self):
@@ -133,12 +139,13 @@ class Role(object):
         self._args = args
 
     @staticmethod
-    def create_new_role(uid):
+    def create_new_role(uid, name):
         role_table = RoleTable.query.get(uid)
         if role_table is None:
-            role_table = RoleTable(uid=uid, tags='[]', args='{}')
+            role_table = RoleTable(uid=uid, name=name, tags='[]', args='{}')
             role_table.reset()
         else:
+            role_table.name = name
             role_table.reset()
         db.session.add(role_table)
         db.session.commit()
@@ -179,3 +186,17 @@ class Role(object):
             pass
         else:
             raise TypeError(f'Cannot prepare for role type {self.role_type}')
+
+    def get_skills(self):
+        skills = [GameEnum.SKILL_VOTE]
+        if self.role_type is GameEnum.ROLE_TYPE_SEER:
+            skills.append(GameEnum.SKILL_DISCOVER)
+        if self.role_type is GameEnum.ROLE_TYPE_WITCH:
+            skills.append(GameEnum.SKILL_WITCH)
+        if self.role_type is GameEnum.ROLE_TYPE_HUNTER:
+            skills.append(GameEnum.SKILL_SHOOT)
+        if self.role_type is GameEnum.ROLE_TYPE_SAVIOR:
+            skills.append(GameEnum.SKILL_GUARD)
+        if GameEnum.ROLE_TYPE_ALL_WOLF in self.tags:
+            skills.append(GameEnum.SKILL_WOLF_KILL)
+        return skills

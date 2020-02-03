@@ -7,6 +7,7 @@ from collections import Counter
 import random
 from werewolf.utils.json_utils import response
 from werewolf.utils.scheduler import scheduler
+from werewolf.utils.publisher import publish_info
 import datetime
 
 
@@ -57,7 +58,8 @@ def take_action() -> str:  # return json to user
                 return response(False, GameEnum('GAME_MESSAGE_ROLE_NOT_EXIST').message)
             my_role.position = position
             my_role.commit()
-            # todo: publish position info
+            publish_info(game.gid, json.dumps(
+                {'seats': {str(role.position): role.name for role in game.roles if role.position > 0}}))
             return response(True)
     elif op == 'discover':
         target = request.args.get('target')

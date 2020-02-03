@@ -65,11 +65,13 @@ def game():
                            gid=current_game.gid,
                            current_setting=current_setting,
                            role_name=current_role.role_type.message,
-                           role_type=current_role.role_type.name.lower(),
+                           role_type=current_role.role_type.name.lower().replace('role_type_', '', 1),
                            seat_cnt=current_game.get_seat_num(),
+                           days=current_game.days,
+                           game_status=current_game.status,
+                           #    skills=current_role.get_skills(),
                            dbtxt=(str(current_game.roles) + str(
-                               type(current_game.roles)) + '\n<br />\n' + str(
-                               current_game.days) + str(type(current_game.steps))))
+                               type(current_game.roles)) + '\n<br />\n' + str(type(current_game.steps))))
 
 
 @werewolf_api.route('/action')
@@ -119,6 +121,18 @@ def quit_game():
             return redirect(url_for('werewolf_api.home'))
         else:
             return e.message
+
+@werewolf_api.route('/get_game_info')
+@login_required
+def get_game_info():
+    game = Game.get_game_by_gid(current_user.gid)
+    role = Role.get_role_by_uid(current_user.uid)
+    ret = {'user': current_user.to_json()}
+    if game:
+        ret['game'] = game.to_json()
+    if role:
+        ret['role'] = role.to_json()
+    return json.dumps(ret)
 
 
 #######################################

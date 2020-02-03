@@ -9,8 +9,10 @@ from copy import deepcopy
 class UserTable(db.Model):
     __tablename__ = 'user'
     # name 'id' is preserved!
-    uid = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
-    username = db.Column(db.String(length=255), nullable=False, unique=True, index=True)
+    uid = db.Column(db.Integer, primary_key=True,
+                    nullable=False, autoincrement=True)
+    username = db.Column(db.String(length=255),
+                         nullable=False, unique=True, index=True)
     password = db.Column(db.String(length=255), nullable=False)
     login_token = db.Column(db.String(length=255), index=True)
     name = db.Column(db.String(length=255), nullable=False)
@@ -75,7 +77,8 @@ class User(UserMixin):
             # username exists
             # todo: return view
             return None
-        user_table = UserTable(username=username, password=password, name=name, avatar=avatar, gid=-1, ishost=False)
+        user_table = UserTable(username=username, password=password,
+                               name=name, avatar=avatar, gid=-1, ishost=False)
         db.session.add(user_table)
         db.session.commit()
         # Role.create_new_role(user_table.uid) todo :does not need
@@ -122,13 +125,13 @@ class User(UserMixin):
             return False, GameEnum.GAME_MESSAGE_ALREADY_IN
 
         # fine to join the game
-        new_role = Role.create_new_role(self.uid)
+        new_role = Role.create_new_role(self.uid, self.name)
         game.roles.append(new_role)
         game.commit()
         self.gid = game.gid
         self.ishost = self.uid == game.host_id
         self.commit()
-        new_role.position = len(game.roles)
+        new_role.position = -1  # not sit
         new_role.commit()
         return True, None
 

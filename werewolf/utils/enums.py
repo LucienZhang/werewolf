@@ -24,12 +24,12 @@ class GameEnumMeta(type):
 
         # 0
         EnumMember('GAME_STATUS_UNKNOWN', 0, ''),
-        EnumMember('GAME_STATUS_WAIT_TO_START', 1, ''),
-        EnumMember('GAME_STATUS_DAY', 2, ''),
-        EnumMember('GAME_STATUS_NIGHT', 3, ''),
-        EnumMember('GAME_STATUS_ELECTING', 4, ''),
-        EnumMember('GAME_STATUS_VOTING', 5, ''),
-        EnumMember('GAME_STATUS_VOTING_FOR_CAPTAIN', 6, ''),
+        EnumMember('GAME_STATUS_WAIT_TO_START', 1, '等待开始'),
+        EnumMember('GAME_STATUS_DAY', 2, '白天'),
+        EnumMember('GAME_STATUS_NIGHT', 3, '夜晚'),
+        EnumMember('GAME_STATUS_ELECTING', 4, '竞选警长'),
+        EnumMember('GAME_STATUS_VOTING', 5, '公投'),
+        EnumMember('GAME_STATUS_VOTING_FOR_CAPTAIN', 6, '警长公投'),
         EnumMember('GAME_STATUS_WAITING', 7, ''),  # TODO: what is this for?????
         EnumMember('GAME_STATUS_SHOOT_AVAILABLE', 8, '', set()),
         # 100
@@ -96,6 +96,15 @@ class GameEnumMeta(type):
         EnumMember('GAME_MESSAGE_ALREADY_STARTED', 708, '游戏已经开始了'),
         EnumMember('GAME_MESSAGE_POSITION_OCCUPIED', 709, '那个位置已经有人了'),
         EnumMember('GAME_MESSAGE_CANNOT_ACT', 710, '当前无法操作'),
+
+        # 800
+        EnumMember('SKILL_VOTE', 800, '投票'),
+        EnumMember('SKILL_WOLF_KILL', 801, '狼刀'),
+        EnumMember('SKILL_DISCOVER', 802, '查验'),
+        EnumMember('SKILL_WITCH', 803, '用药'),
+        EnumMember('SKILL_GUARD', 804, '守护'),
+        EnumMember('SKILL_SHOOT', 805, '开枪'),
+        EnumMember('SKILL_EXPLODE', 806, '自爆'),
 
         EnumMember('PLACE_HOLDER', 9999, '')
     ]

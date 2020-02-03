@@ -32,7 +32,7 @@
     <div id="info" class="area">
         <div class="notice">
             <div class="status" style="display: inline-block;">
-                第1天 白天讨论
+                第{{ days }}天 {{ game_status.message }}
             </div>
             <div class="setting float-right">
                 <button data-toggle="modal" data-target="#history" class="btn btn-primary btn-xs">历史信息</button>
@@ -41,7 +41,7 @@
         </div>
         <div class="ope-player">
             <button data-toggle="modal" data-target="#check-role-dialog" class="btn btn-warning">查看身份</button>
-            <button class="btn btn-warning float-right">使用技能</button>
+            <button data-toggle="modal" data-target="#skills" class="btn btn-warning float-right">使用技能</button>
         </div>
     </div>
     <div id="ope-panel">
@@ -82,6 +82,8 @@
             </div>
         </div>
     </div>
+    <button data-toggle="modal" data-target="#nothing" class="btn btn-warning host-button">发起投票</button>
+    <button class="btn btn-warning host-button">入夜</button>
 </div>
 <div class="modal fade" id="check-setting" tabindex="-1" role="dialog" aria-labelledby="checkSettingLabel"
      aria-hidden="true">
@@ -170,8 +172,27 @@
         </div>
     </div>
 </div>
-<button data-toggle="modal" data-target="#nothing" class="btn btn-warning">发起投票</button>
-<button class="btn btn-warning">入夜</button>
+<div class="modal fade" id="skills" tabindex="-1" role="dialog" aria-labelledby="skillsLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="skillsLabel">技能</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="skills-model-content" class="modal-body">
+                    <!-- {% for skill in skills %}
+                        <div id="{{ skill.name }}" type="button" class="btn">{{ skill.message }}</div>
+                    {% endfor %} -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 {{ dbtxt }}
