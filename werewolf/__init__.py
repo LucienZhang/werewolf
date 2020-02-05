@@ -13,6 +13,10 @@ def init_app(app):
     init_db(app)
     init_scheduler(app)
     app.register_blueprint(sse, url_prefix='/stream')
+    # todo: access control
+    # def check_access():
+    # if request.args.get("channel") == "analytics" and not g.user.is_admin():
+    #     abort(403)
 
 
 def create_app(config_name=None):

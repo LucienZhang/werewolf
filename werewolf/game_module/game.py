@@ -41,7 +41,7 @@ class GameTable(db.Model):
 
 class Game(object):
     def __init__(self, table: GameTable = None, roles: List[Role] = None, steps: dict = None, cards: list = None,
-                 last_modified: datetime = None, history: dict = None):
+                 last_modified: datetime = None, history: dict = None, roles_loaded=False):
         self.table = table
         if roles is None:
             self._roles = []
@@ -58,6 +58,8 @@ class Game(object):
             self._history = history
         self._last_modified = last_modified
 
+        self.roles_loaded = roles_loaded
+
     def __enter__(self):
         return self
 
@@ -68,7 +70,7 @@ class Game(object):
     def to_json(self) -> dict:
         return {'gid': self.gid,
                 'host_id': self.host_id,
-                'status': self.status.name,
+                'status': [self.status.name, self.status.message],
                 'victory_mode': self.victory_mode.name,
                 'captain_mode': self.captain_mode.name,
                 'witch_mode': self.witch_mode.name,
@@ -161,17 +163,6 @@ class Game(object):
 
     @property
     def history(self):
-        """
-            pos: -1=no one, -2=not acted
-            {
-                'wolf_kill':{wolf_pos:target_pos,...},
-                'wolf_kill_decision':pos
-                'elixir':True / False,
-                'guard':pos,
-                'toxic':pos,
-                'discover':pos
-            }
-        """
         return self._history
 
     @history.setter
@@ -200,7 +191,7 @@ class Game(object):
         db.session.add(game_table)
         db.session.commit()
         game = Game(table=game_table, roles=None, steps=steps, cards=cards,
-                    last_modified=game_table.last_modified, history=None)
+                    last_modified=game_table.last_modified, history=None, roles_loaded=True)
         return game
 
     # @staticmethod
@@ -219,7 +210,7 @@ class Game(object):
     #         return None
 
     @staticmethod
-    def get_game_by_gid(gid, lock=False, load_roles=True):
+    def get_game_by_gid(gid, lock=False, load_roles=False):
         if gid is None or gid == -1:
             return None
         if not lock:
@@ -236,7 +227,7 @@ class Game(object):
                 history = json.loads(game_table.history)
                 return Game(table=game_table, roles=roles, steps=steps, cards=cards,
                             history=history,
-                            last_modified=game_table.last_modified)
+                            last_modified=game_table.last_modified, roles_loaded=load_roles)
             else:
                 return None
         else:
@@ -253,15 +244,16 @@ class Game(object):
                 history = json.loads(game_table.history)
                 return Game(table=game_table, roles=roles, steps=steps, cards=cards,
                             history=history,
-                            last_modified=game_table.last_modified)
+                            last_modified=game_table.last_modified, roles_loaded=load_roles)
             else:
                 db.session.commit()
                 return None
 
     def commit(self) -> (bool, GameEnum):
-        assert self._last_modified == self.table.last_modified
-        self.table.roles = json.dumps(
-            [r.uid for r in self.roles], cls=ExtendedJSONEncoder)
+        # assert self._last_modified == self.table.last_modified
+        if self.roles_loaded:
+            self.table.roles = json.dumps(
+                [r.uid for r in self.roles], cls=ExtendedJSONEncoder)
         self.table.steps = json.dumps(self.steps, cls=ExtendedJSONEncoder)
         self.table.cards = json.dumps(self.cards, cls=ExtendedJSONEncoder)
         self.table.history = json.dumps(self.history)
@@ -279,18 +271,27 @@ class Game(object):
         pos = int(pos)
         if pos < 0:
             return None
-        for r in self.roles:
-            if r.position == pos:
-                return r
+        if not self.roles_loaded:
+            uid = json.loads(self.table.roles)[pos - 1]
+            return self.get_role_by_uid(uid)
         else:
-            None
+            for r in self.roles:
+                if r.position == pos:
+                    return r
+            else:
+                None
 
     def get_role_by_uid(self, uid, with_index=False):
-        for i, r in enumerate(self.roles):
-            if r.uid == uid:
-                return (i, r) if with_index else r
+        uid = int(uid)
+        if not self.roles_loaded:
+            r = Role.get_role_by_uid(uid)
+            return (None, r) if with_index else r
         else:
-            return (None, None) if with_index else None
+            for i, r in enumerate(self.roles):
+                if r.uid == uid:
+                    return (i, r) if with_index else r
+            else:
+                return (None, None) if with_index else None
 
     @staticmethod
     def _get_init_steps(cards, captain_mode) -> dict:
@@ -302,28 +303,31 @@ class Game(object):
     @staticmethod
     def _reset_step_list(day, cards, captain_mode) -> list:
         step_list = []
+        step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
         if day == 1 and GameEnum.ROLE_TYPE_THIEF in cards:
             pass
         if day == 1 and GameEnum.ROLE_TYPE_CUPID in cards:
             pass
         # TODO: 恋人互相确认身份
-        step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
         step_list.append(GameEnum.ROLE_TYPE_ALL_WOLF)
         step_list.append(GameEnum.ROLE_TYPE_SEER)
         step_list.append(GameEnum.ROLE_TYPE_WITCH)
         step_list.append(GameEnum.ROLE_TYPE_SAVIOR)
-        step_list.append(GameEnum.TURN_STEP_CHECK_VICTORY)
         step_list.append(GameEnum.TURN_STEP_TURN_DAY)
         if day == 1 and captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
             step_list.append(GameEnum.TURN_STEP_ELECT)
             step_list.append(GameEnum.TURN_STEP_TALK)
             step_list.append(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
-        step_list.append(GameEnum.TURN_STEP_ANNOUNCE_AND_TALK)
+        step_list.append(GameEnum.TURN_STEP_ANNOUNCE)
+        step_list.append(GameEnum.TURN_STEP_TALK)
+        step_list.append(GameEnum.TURN_STEP_VOTE)
+
         # step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
 
         return step_list
 
     def go_next_step(self) -> (bool, GameEnum):
+        # todo: many things to do, check vote, check result
         self.steps['global_steps'] += 1
 
         if self.repeat > 0:
@@ -340,11 +344,10 @@ class Game(object):
         # current step
         now = self.current_step()
         if now is GameEnum.TURN_STEP_TURN_NIGHT:
-            publish_music('night_start_voice', 'night_bgm', f'{self.gid}-host')
-            self.status = GameEnum.GAME_STATUS_NIGHT
+            publish_music('night_start_voice', 'night_bgm', self.gid)
             return self.go_next_step()
         elif now is GameEnum.ROLE_TYPE_ALL_WOLF:
-            publish_music('wolf_start_voice', 'wolf_bgm', f'{self.gid}-host')
+            publish_music('wolf_start_voice', 'wolf_bgm', self.gid)
             # todo: add random job if there is not wolf (third party situation)
             scheduler.add_job(id=f'{self.gid}_WOLF_KILL', func=action_timeout,
                               args=(self.gid, self.steps['global_steps']),
@@ -370,7 +373,33 @@ class Game(object):
         return roles
 
     def _reset_history(self):
-        pass
+        """
+            pos: -1=no one, -2=not acted
+            {
+                'wolf_kill':{wolf_pos:target_pos,...},
+                'wolf_kill_decision':pos,
+                'elixir':True / False,
+                'guard':pos,
+                'toxic':pos,
+                'discover':pos,
+                'vote_for_captain':{voter_pos:votee_pos,...},
+                'vote':{voter_pos:votee_pos,...},
+                'pk':[[voter_pos,...],[votee_pos,...]],
+                'captain_pk':[[voter_pos,...],[votee_pos,...]],
+            }
+        """
+        self.history = {
+            'wolf_kill': {},
+            'wolf_kill_decision': -2,
+            'elixir': False,
+            'guard': -2,
+            'toxic': -2,
+            'discover': -2,
+            'vote_for_captain': {},
+            'vote': {},
+            'pk': [[], []],
+            'captain_pk': [[], []],
+        }
 
     def calculate_result(self):
         dead = set()

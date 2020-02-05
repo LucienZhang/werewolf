@@ -1,7 +1,8 @@
 body {
     overscroll-behavior-y: contain;
     overscroll-behavior-x: none;
-    background: url(../images/werewolf/game_bg.jpg) no-repeat center center #CCCCCC;
+    background: url(../images/werewolf/game_bg.jpg) no-repeat center center
+        #cccccc;
     background-size: cover;
     background-attachment: fixed;
 
@@ -55,10 +56,10 @@ body {
 
 .btn-group-xs > .btn,
 .btn-xs {
-    padding: .5rem .4rem;
-    font-size: .875rem;
-    line-height: .5;
-    border-radius: .2rem;
+    padding: 0.5rem 0.4rem;
+    font-size: 0.875rem;
+    line-height: 0.5;
+    border-radius: 0.2rem;
 }
 
 #ope-panel {
@@ -126,4 +127,15 @@ body {
 .host-button {
     margin-left: 10px;
     margin-right: 10px;
+}
+
+.skill-button {
+    margin: 10px;
+    color: #212529;
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+#skills-model-content {
+    text-align: center;
 }

@@ -1,9 +1,8 @@
 class EnumMember(object):
-    def __init__(self, name, value, message, args=None):
+    def __init__(self, name, value, message):
         self.name = name
         self.value = value
         self.message = message
-        self.args = args
 
     def __hash__(self):
         return hash(self.value)
@@ -25,13 +24,8 @@ class GameEnumMeta(type):
         # 0
         EnumMember('GAME_STATUS_UNKNOWN', 0, ''),
         EnumMember('GAME_STATUS_WAIT_TO_START', 1, '等待开始'),
-        EnumMember('GAME_STATUS_DAY', 2, '白天'),
-        EnumMember('GAME_STATUS_NIGHT', 3, '夜晚'),
-        EnumMember('GAME_STATUS_ELECTING', 4, '竞选警长'),
-        EnumMember('GAME_STATUS_VOTING', 5, '公投'),
-        EnumMember('GAME_STATUS_VOTING_FOR_CAPTAIN', 6, '警长公投'),
-        EnumMember('GAME_STATUS_WAITING', 7, ''),  # TODO: what is this for?????
-        EnumMember('GAME_STATUS_SHOOT_AVAILABLE', 8, '', set()),
+        EnumMember('GAME_STATUS_RUNNING', 2, '游戏进行中'),
+
         # 100
         EnumMember('VICTORY_MODE_UNKNOWN', 100, ''),
         EnumMember('VICTORY_MODE_KILL_GROUP', 101, '屠边'),
@@ -75,14 +69,17 @@ class GameEnumMeta(type):
         EnumMember('GROUP_TYPE_THIRD_PARTY', 504, '第三方势力'),
         # 600
         EnumMember('TURN_STEP_UNKNOWN', 600, ''),
-        EnumMember('TURN_STEP_CHECK_VICTORY', 601, ''),
+        EnumMember('TURN_STEP_DEAL', 601, '发牌'),
         EnumMember('TURN_STEP_TURN_NIGHT', 602, ''),
         EnumMember('TURN_STEP_TURN_DAY', 603, ''),
         EnumMember('TURN_STEP_ELECT', 604, ''),
         EnumMember('TURN_STEP_VOTE_FOR_CAPTAIN', 605, ''),
         EnumMember('TURN_STEP_VOTE', 606, ''),
         EnumMember('TURN_STEP_TALK', 607, ''),
-        EnumMember('TURN_STEP_ANNOUNCE_AND_TALK', 608, ''),
+        EnumMember('TURN_STEP_ANNOUNCE', 608, ''),
+        EnumMember('TURN_STEP_WAITING_FOR_SHOOT', 609, ''),
+        EnumMember('TURN_STEP_PK', 610, ''),
+        EnumMember('TURN_STEP_CAPTAIN_PK', 611, ''),
 
         # 700
         EnumMember('GAME_MESSAGE_GAME_NOT_EXIST', 700, '房间不存在'),
@@ -105,6 +102,12 @@ class GameEnumMeta(type):
         EnumMember('SKILL_GUARD', 804, '守护'),
         EnumMember('SKILL_SHOOT', 805, '开枪'),
         EnumMember('SKILL_EXPLODE', 806, '自爆'),
+
+        # 900
+        EnumMember('TAG_ELECT', 900, '上警'),
+        EnumMember('TAG_NOT_ELECT', 901, '不上警'),
+        EnumMember('TAG_GIVE_UP_ELECT', 902, '退水'),
+
 
         EnumMember('PLACE_HOLDER', 9999, '')
     ]
@@ -129,4 +132,5 @@ class GameEnum(metaclass=GameEnumMeta):
         elif isinstance(key, int):
             return cls._enum_dict[key]
         else:
-            raise TypeError(f'Expecting string or int, got {key} with format {type(key)}')
+            raise TypeError(
+                f'Expecting string or int, got {key} with format {type(key)}')

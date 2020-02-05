@@ -5,69 +5,72 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport"
-          content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+        content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>狼人杀房间</title>
     <link rel="stylesheet" type="text/css"
-          href="{{ url_for('werewolf_api.static', filename='css/bootstrap.min.css') }}">
+        href="{{ url_for('werewolf_api.static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" type="text/css"
-          href="{{ url_for('werewolf_api.static', filename='css/werewolf_game.css') }}">
+        href="{{ url_for('werewolf_api.static', filename='css/werewolf_game.css') }}">
 </head>
 
 <body>
-<div class="container">
-    <div class="logo"><img src="{{ url_for('werewolf_api.static',filename='images/werewolf/logo.png') }}" alt="Logo">
-    </div>
-    <div class="navbar">
-        <span id="current_user">{{ name }}</span>
-        <div class="float-right">
-            <a href="{{ url_for('werewolf_api.quit_game') }}">
-                退出
-            </a>
+    <div class="container">
+        <div class="logo"><img src="{{ url_for('werewolf_api.static',filename='images/werewolf/logo.png') }}"
+                alt="Logo">
         </div>
-    </div>
-    <div id="gid">房间号：{{ gid }}</div>
-    <div class="progress">
-        <div class="progress-bar progress-bar-info" role="progressbar" style="width: 130%;"></div>
-    </div>
-    <div id="info" class="area">
-        <div class="notice">
-            <div class="status" style="display: inline-block;">
-                第{{ days }}天 {{ game_status.message }}
-            </div>
-            <div class="setting float-right">
-                <button data-toggle="modal" data-target="#history" class="btn btn-primary btn-xs">历史信息</button>
-                <button data-toggle="modal" data-target="#check-setting" class="btn btn-primary btn-xs">查看配置</button>
+        <div class="navbar">
+            <span id="current_user">{{ name }}</span>
+            <div class="float-right">
+                <a href="{{ url_for('werewolf_api.quit_game') }}">
+                    退出
+                </a>
             </div>
         </div>
-        <div class="ope-player">
-            <button data-toggle="modal" data-target="#check-role-dialog" class="btn btn-warning">查看身份</button>
-            <button data-toggle="modal" data-target="#skills" class="btn btn-warning float-right">使用技能</button>
+        <div id="gid">房间号：{{ gid }}</div>
+        <div class="progress">
+            <div class="progress-bar progress-bar-info" role="progressbar" style="width: 130%;"></div>
         </div>
-    </div>
-    <div id="ope-panel">
-        <div class="area tip-panel">
-            <div class="tips">test tips</div>
-            <div class="panel-buttons">
-                <button>test1</button>
-                <button>test2</button>
+        <div id="info" class="area">
+            <div class="notice">
+                <div class="status" style="display: inline-block;">
+                    第<span id="status-days">{{ days }}</span>天 <span
+                        id="status-message">{{ game_status.message }}</span>
+                </div>
+                <div class="setting float-right">
+                    <button data-toggle="modal" data-target="#history" class="btn btn-primary btn-xs">历史信息</button>
+                    <button data-toggle="modal" data-target="#check-setting"
+                        class="btn btn-primary btn-xs">查看配置</button>
+                </div>
+            </div>
+            <div class="ope-player">
+                <button data-toggle="modal" data-target="#check-role-dialog" class="btn btn-warning">查看身份</button>
+                <button data-toggle="modal" data-target="#skills" class="btn btn-warning float-right">使用技能</button>
             </div>
         </div>
-        <div class="area player-panel">
-            <div id="all_players">
-                {% for i in range(1, seat_cnt + 1) %}
+        <div id="ope-panel">
+            <div class="area tip-panel">
+                <div class="tips"></div>
+                <div class="panel-buttons">
+                    <!-- <button>test1</button>
+                    <button>test2</button> -->
+                </div>
+            </div>
+            <div class="area player-panel">
+                <div id="all_players">
+                    {% for i in range(1, seat_cnt + 1) %}
                     {% if i is odd %}
-                        <div class="player">
-                            <button pos="{{ i }}" class="btn">{{ i }}号</button>
-                            <span></span>
-                        </div>
+                    <div class="player">
+                        <button pos="{{ i }}" class="btn">{{ i }}号</button>
+                        <span></span>
+                    </div>
                     {% else %}
-                        <div class="player player-right-side">
-                            <span></span>
-                            <button pos="{{ i }}" class="btn">{{ i }}号</button>
-                        </div>
+                    <div class="player player-right-side">
+                        <span></span>
+                        <button pos="{{ i }}" class="btn">{{ i }}号</button>
+                    </div>
                     {% endif %}
-                {% endfor %}
-                <!-- <div class="player">
+                    {% endfor %}
+                    <!-- <div class="player">
                     <a href="#" pos="1" status="alive" class="btn">1号</a>
                     <span>1</span>
                 </div>
@@ -79,141 +82,165 @@
                     <a href="#" pos="2" status="alive" class="btn">2号</a>
                     <span>2</span>
                 </div> -->
+                </div>
             </div>
         </div>
+        {% if ishost %}
+        <button class="btn btn-warning host-button" id="deal">发牌</button>
+        <button class="btn btn-warning host-button" id="next-step">下一阶段</button>
+        <!-- <button data-toggle="modal" data-target="#nothing" class="btn btn-warning host-button">发起投票</button> -->
+        {% endif %}
     </div>
-    <button data-toggle="modal" data-target="#nothing" class="btn btn-warning host-button">发起投票</button>
-    <button class="btn btn-warning host-button">入夜</button>
-</div>
-<div class="modal fade" id="check-setting" tabindex="-1" role="dialog" aria-labelledby="checkSettingLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="checkSettingLabel">当前配置</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                {% for row in current_setting %}
+    <div class="modal fade" id="check-setting" tabindex="-1" role="dialog" aria-labelledby="checkSettingLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="checkSettingLabel">当前配置</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {% for row in current_setting %}
                     <p>{{ row }}</p>
-                {% endfor %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">好的</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="history" tabindex="-1" role="dialog" aria-labelledby="historyLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="historyLabel">历史信息</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div id="history-model-content" class="modal-body">
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>nothing yet</p>
-                <p>yes!</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">好的</button>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">好的</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<div class="modal fade" id="check-role-dialog" tabindex="-1" role="dialog" aria-labelledby="checkRolLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="checkRolLabel">游戏身份</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+    <div class="modal fade" id="history" tabindex="-1" role="dialog" aria-labelledby="historyLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="historyLabel">历史信息</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="history-model-content" class="modal-body">
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>nothing yet</p>
+                    <p>yes!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">好的</button>
+                </div>
             </div>
-            <div class="modal-body">
-                <p>
-                    你的身份是：{{ role_name }}
-                </p>
-                {% if role_type!='unknown' %}
+        </div>
+    </div>
+    <div class="modal fade" id="check-role-dialog" tabindex="-1" role="dialog" aria-labelledby="checkRolLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="checkRolLabel">游戏身份</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        你的身份是：{{ role_name }}
+                    </p>
+                    {% if role_type!='unknown' %}
                     <div class="role-img">
                         <img src="{{ url_for('werewolf_api.static', filename='images/werewolf/cards/' + role_type + '.jpg') }}"
-                             alt="{{ role_name }}" width="274" height="389">
+                            alt="{{ role_name }}" width="274" height="389">
                     </div>
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">好的</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="skills" tabindex="-1" role="dialog" aria-labelledby="skillsLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="skillsLabel">技能</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div id="skills-model-content" class="modal-body">
-                    <!-- {% for skill in skills %}
-                        <div id="{{ skill.name }}" type="button" class="btn">{{ skill.message }}</div>
-                    {% endfor %} -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">取消</button>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">好的</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    <div class="modal fade" id="skills" tabindex="-1" role="dialog" aria-labelledby="skillsLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="skillsLabel">技能</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="skills-model-content" class="modal-body">
+                    {% for skill in skills %}
+                    <div>
+                        <button id="{{ skill.name.lower() }}" type="button" class="btn-lg skill-button"
+                            onclick="skills.{{ skill.name.lower() }}();">{{ skill.message }}</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="message" tabindex="-1" role="dialog" aria-labelledby="messageLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="messageLabel">信息</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="message-model-content"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">好的</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
+    <!-- {{ dbtxt }} -->
 
-{{ dbtxt }}
 
-
-<script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/jquery-3.4.1.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/bootstrap.min.js') }}"></script>
-<!-- <script type="text/javascript" src="../static/js/ajax-utils.js"></script> -->
-<script>
-    const common_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
-</script>
-<script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/werewolf_game.js') }}"></script>
-{% if ishost %}
+    <script type="text/javascript"
+        src="{{ url_for('werewolf_api.static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/bootstrap.min.js') }}"></script>
+    <!-- <script type="text/javascript" src="../static/js/ajax-utils.js"></script> -->
+    <script>
+        const common_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
+    </script>
+    <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/werewolf_game.js') }}"></script>
+    {% if ishost %}
     <audio id="back_audio" loop></audio>
     <audio id="step_audio"></audio>
     <script>
         const host_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
     </script>
     <script type="text/javascript"
-            src="{{ url_for('werewolf_api.static', filename='js/werewolf_game_host.js') }}"></script>
-{% endif %}
+        src="{{ url_for('werewolf_api.static', filename='js/werewolf_game_host.js') }}"></script>
+    {% endif %}
 </body>
 
 </html>

@@ -48,13 +48,14 @@ class Role(object):
     def to_json(self) -> dict:
         return {'uid': self.uid,
                 'name': self.name,
-                'role_type': self.role_type.name,
+                'role_type': [self.role_type.name, self.role_type.message],
                 'group_type': self.group_type.name,
                 'alive': self.alive,
                 'iscaptain': self.iscaptain,
                 'voteable': self.voteable,
                 'speakable': self.speakable,
                 'position': self.position,
+                'skills': [[skill.name, skill.message] for skill in self.get_skills()],
                 'tags': [tag.name for tag in self.tags],
                 'args': self.args}
 
@@ -173,17 +174,20 @@ class Role(object):
 
     def prepare(self):
         if self.role_type is GameEnum.ROLE_TYPE_SEER:
-            pass
+            self.tags.append(GameEnum.GROUP_TYPE_GODS)
         elif self.role_type is GameEnum.ROLE_TYPE_WITCH:
             self.args = {'elixir': True, 'toxic': True}
+            self.tags.append(GameEnum.GROUP_TYPE_GODS)
         elif self.role_type is GameEnum.ROLE_TYPE_HUNTER:
             self.args = {'shootable': True}
+            self.tags.append(GameEnum.GROUP_TYPE_GODS)
         elif self.role_type is GameEnum.ROLE_TYPE_SAVIOR:
             self.args = {'guard': GameEnum.TARGET_NO_ONE}
+            self.tags.append(GameEnum.GROUP_TYPE_GODS)
         elif self.role_type is GameEnum.ROLE_TYPE_VILLAGER:
-            pass
+            self.tags.append(GameEnum.GROUP_TYPE_VILLAGERS)
         elif self.role_type is GameEnum.ROLE_TYPE_NORMAL_WOLF:
-            pass
+            self.tags.append(GameEnum.GROUP_TYPE_WOLVES)
         else:
             raise TypeError(f'Cannot prepare for role type {self.role_type}')
 

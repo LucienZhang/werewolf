@@ -13,7 +13,8 @@ from collections import Counter
 from werewolf.utils.scheduler import scheduler
 import datetime
 
-werewolf_api = Blueprint('werewolf_api', __name__, template_folder='templates', static_folder='static')
+werewolf_api = Blueprint('werewolf_api', __name__,
+                         template_folder='templates', static_folder='static')
 
 
 @werewolf_api.route('/')
@@ -28,12 +29,16 @@ def setup():
         # TODO: ask to quick existing game if user is in a game!
         return render_template("werewolf_setup.html")
     else:
-        victory_mode = GameEnum('VICTORY_MODE_{}'.format(request.form['victoryMode'].upper()))
-        captain_mode = GameEnum('CAPTAIN_MODE_{}'.format(request.form['captainMode'].upper()))
-        witch_mode = GameEnum('WITCH_MODE_{}'.format(request.form['witchMode'].upper()))
+        victory_mode = GameEnum('VICTORY_MODE_{}'.format(
+            request.form['victoryMode'].upper()))
+        captain_mode = GameEnum('CAPTAIN_MODE_{}'.format(
+            request.form['captainMode'].upper()))
+        witch_mode = GameEnum('WITCH_MODE_{}'.format(
+            request.form['witchMode'].upper()))
         villager_cnt = int(request.form['villager'])
         normal_wolf_cnt = int(request.form['normal_wolf'])
-        cards = [GameEnum.ROLE_TYPE_VILLAGER] * villager_cnt + [GameEnum.ROLE_TYPE_NORMAL_WOLF] * normal_wolf_cnt
+        cards = [GameEnum.ROLE_TYPE_VILLAGER] * villager_cnt + \
+            [GameEnum.ROLE_TYPE_NORMAL_WOLF] * normal_wolf_cnt
 
         single_roles = request.form.getlist('single_roles')
         for r in single_roles:
@@ -52,7 +57,7 @@ def setup():
 @login_required
 def game():
     current_setting = []
-    current_game = Game.get_game_by_gid(current_user.gid)
+    current_game = Game.get_game_by_gid(current_user.gid, load_roles=True)
     current_setting.append('游戏模式为：' + current_game.victory_mode.message)
     current_setting.append('警长模式为：' + current_game.captain_mode.message)
     current_setting.append('女巫模式为：' + current_game.witch_mode.message)
@@ -61,6 +66,9 @@ def game():
         current_setting.append(role.message + ' = ' + str(cnt))
 
     current_role = Role.get_role_by_uid(current_user.uid)
+    skills = []
+    if current_role:
+        skills = current_role.get_skills()
     return render_template("werewolf_game.html", ishost=current_user.ishost, name=current_user.name,
                            gid=current_game.gid,
                            current_setting=current_setting,
@@ -69,7 +77,7 @@ def game():
                            seat_cnt=current_game.get_seat_num(),
                            days=current_game.days,
                            game_status=current_game.status,
-                           #    skills=current_role.get_skills(),
+                           skills=skills,
                            dbtxt=(str(current_game.roles) + str(
                                type(current_game.roles)) + '\n<br />\n' + str(type(current_game.steps))))
 
@@ -122,10 +130,11 @@ def quit_game():
         else:
             return e.message
 
+
 @werewolf_api.route('/get_game_info')
 @login_required
 def get_game_info():
-    game = Game.get_game_by_gid(current_user.gid)
+    game = Game.get_game_by_gid(current_user.gid, load_roles=True)
     role = Role.get_role_by_uid(current_user.uid)
     ret = {'user': current_user.to_json()}
     if game:
@@ -142,7 +151,7 @@ def get_game_info():
 def test():
     cmd = request.args.get('cmd')
     if cmd == 'get_info':
-        game = Game.get_game_by_gid(current_user.gid)
+        game = Game.get_game_by_gid(current_user.gid, load_roles=True)
         role = Role.get_role_by_uid(current_user.uid)
         ret = {'user': current_user.to_json()}
         if game:

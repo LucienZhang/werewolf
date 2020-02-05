@@ -37,6 +37,19 @@
         back_audio.pause();
         step_audio.pause();
     }, false);
+
+    $("#next-step").on("click", function () {
+        $.ajax({
+            url: "action?op=next_step"
+        });
+    });
+
+    $("#deal").on("click", function () {
+        $.ajax({
+            url: "action?op=deal"
+        });
+    });
+
 })();
 
 

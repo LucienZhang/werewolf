@@ -114,7 +114,7 @@ class User(UserMixin):
             return None
 
     def join_game(self, gid: int) -> (bool, GameEnum):
-        game = Game.get_game_by_gid(gid, lock=True)
+        game = Game.get_game_by_gid(gid, lock=True, load_roles=True)
         if game is None:
             return False, GameEnum.GAME_MESSAGE_GAME_NOT_EXIST
         if len(game.roles) >= game.get_seat_num():
@@ -136,7 +136,7 @@ class User(UserMixin):
         return True, None
 
     def quit_game(self) -> (bool, GameEnum):
-        game = Game.get_game_by_gid(self.gid)
+        game = Game.get_game_by_gid(self.gid, load_roles=True)
         if game is None:
             return False, GameEnum.GAME_MESSAGE_NOT_IN_GAME
         index, my_role = game.get_role_by_uid(self.uid, with_index=True)

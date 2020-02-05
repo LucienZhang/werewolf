@@ -12,32 +12,99 @@ import datetime
 
 
 def take_action() -> str:  # return json to user
-    # /action?op=start
+    # /action?op=next_step
     # /action?op=see&target=1
     me = current_user
     op = request.args.get('op')
-    if op == 'start':
+    if op == 'deal':
         with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            if game.status is not GameEnum.GAME_STATUS_WAIT_TO_START:
+                return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
             positions = set()
             for r in game.roles:
                 positions.add(r.position)
             if len(positions) != game.get_seat_num():
                 return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
 
+            game.status = GameEnum.GAME_STATUS_RUNNING
+            game.roles.sort(key=lambda r: r.position)
             cards = game.cards.copy()
             random.shuffle(cards)
             for r, c in zip(game.roles, cards):
                 r.role_type = c
                 r.prepare()
                 r.commit()
+            publish_info(game.gid, json.dumps({'cards': True}))
+            return response(True)
+    elif op == 'next_step':
+        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            if game.status is not GameEnum.GAME_STATUS_RUNNING:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             game.go_next_step()
             return response(True)
+    elif op == 'vote':
+        target = int(request.args.get('target'))
+
+        with Game.get_game_by_gid(me.gid, lock=True) as game:
+            history = game.history
+            now = game.current_step()
+            my_role = game.get_role_by_uid(me.uid)
+            if not my_role.voteable:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+
+            if now is GameEnum.TURN_STEP_PK:
+                voters, votees = history['pk']
+                if target == -1:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                if my_role.pos not in voters:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                if target not in votees:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                history['vote'][my_role.position] = target
+                return response(True)
+            elif now is GameEnum.TURN_STEP_CAPTAIN_PK:
+                voters, votees = history['captain_pk']
+                if target == -1:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                if my_role.pos not in voters:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                if target not in votees:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                history['vote_for_captain'][my_role.position] = target
+                return response(True)
+            elif now is GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN:
+                if target == -1:
+                    history['vote_for_captain'][my_role.position] = target
+                    return response(True)
+                else:
+                    target_role = game.get_role_by_pos(target)
+                    if not target_role.alive:
+                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                    if GameEnum.TAG_NOT_ELECT not in my_role.tags:
+                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                    if GameEnum.TAG_ELECT not in target_role.tags or GameEnum.TAG_GIVE_UP_ELECT in target_role.tags:
+                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                    history['vote_for_captain'][my_role.position] = target
+                    return response(True)
+            elif now is GameEnum.TURN_STEP_VOTE:
+                if target == -1:
+                    history['vote_for_captain'][my_role.position] = target
+                    return response(True)
+                else:
+                    target_role = game.get_role_by_pos(target)
+                    if not target_role.alive:
+                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                    history['vote_for_captain'][my_role.position] = target
+                    return response(True)
+            else:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
     elif op == 'wolf_kill':
         target = request.args.get('target')
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+        with Game.get_game_by_gid(me.gid, lock=True) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
-            if game.status != GameEnum.ROLE_TYPE_ALL_WOLF or GameEnum.ROLE_TYPE_ALL_WOLF not in my_role.tags:
+            now = game.current_step()
+            if now != GameEnum.ROLE_TYPE_ALL_WOLF or GameEnum.ROLE_TYPE_ALL_WOLF not in my_role.tags:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if my_role.position not in history['wolf_kill'] or \
                     history['wolf_kill'][my_role.position] != GameEnum.TARGET_NOT_ACTED:
@@ -63,10 +130,11 @@ def take_action() -> str:  # return json to user
             return response(True)
     elif op == 'discover':
         target = request.args.get('target')
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+        with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
-            if game.status != GameEnum.ROLE_TYPE_SEER or my_role.role_type != GameEnum.ROLE_TYPE_SEER:
+            now = game.current_step()
+            if now != GameEnum.ROLE_TYPE_SEER or my_role.role_type != GameEnum.ROLE_TYPE_SEER:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if history['discover'] != GameEnum.TARGET_NOT_ACTED:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
@@ -76,10 +144,11 @@ def take_action() -> str:  # return json to user
             history['discover'] = target
             return response(True, game.get_role_by_pos(target).group_type.message)
     elif op == 'elixir':
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+        with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
-            if game.status != GameEnum.ROLE_TYPE_WITCH or my_role.role_type != GameEnum.ROLE_TYPE_WITCH:
+            now = game.current_step()
+            if now != GameEnum.ROLE_TYPE_WITCH or my_role.role_type != GameEnum.ROLE_TYPE_WITCH:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if my_role.args['elixir'] < 1:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
@@ -93,10 +162,11 @@ def take_action() -> str:  # return json to user
             return response(True)
     elif op == 'toxic':
         target = request.args.get('target')
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+        with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
-            if game.status != GameEnum.ROLE_TYPE_WITCH or my_role.role_type != GameEnum.ROLE_TYPE_WITCH:
+            now = game.current_step()
+            if now != GameEnum.ROLE_TYPE_WITCH or my_role.role_type != GameEnum.ROLE_TYPE_WITCH:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if my_role.args['toxic'] < 1:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
@@ -111,10 +181,11 @@ def take_action() -> str:  # return json to user
             return response(True)
     elif op == 'guard':
         target = request.args.get('target')
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+        with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
-            if game.status != GameEnum.ROLE_TYPE_SAVIOR or my_role.role_type != GameEnum.ROLE_TYPE_SAVIOR:
+            now = game.current_step()
+            if now != GameEnum.ROLE_TYPE_SAVIOR or my_role.role_type != GameEnum.ROLE_TYPE_SAVIOR:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if my_role.args['guard'] != GameEnum.TARGET_NO_ONE and my_role.args['guard'] == target:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
@@ -129,19 +200,20 @@ def take_action() -> str:  # return json to user
             return response(True)
     elif op == 'shoot':
         target = request.args.get('target')
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+        with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
+            target = game.get_role_by_pos(target)
             now = game.current_step()
-            if not (now is GameEnum.GAME_STATUS_SHOOT_AVAILABLE and me.uid in now.args):
+            if now is not GameEnum.TURN_STEP_WAITING_FOR_SHOOT:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            if not my_role.args['shootable']:
+            if 'shootable' not in my_role.args or not my_role.args['shootable']:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            kill(my_role, target)
+            kill(target, GameEnum.SKILL_SHOOT)
             return response(True)
     else:
         return response(False, GameEnum.GAME_MESSAGE_UNKNOWN_OP.message)
 
 
-def kill(by, target):
+def kill(target, how):
     pass
