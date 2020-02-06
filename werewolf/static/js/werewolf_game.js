@@ -24,7 +24,7 @@
             }
         });
         buttons.children("button.skill-confirm").on("click", function () {
-            if (candidates.length != num_of_can) {
+            if (candidates.length !== num_of_can) {
                 show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
                 return;
             }
@@ -38,7 +38,7 @@
                 }
             });
         });
-    }
+    };
 
 
     window.skills = skills
@@ -103,7 +103,7 @@
             });
             update_seats(seats);
             let game_status = info.game.status;
-            if (game_status === "GAME_STATUS_WAIT_TO_START") {
+            if (game_status[0] === "GAME_STATUS_WAIT_TO_START") {
                 $(".player > button").on("click", function () {
                     $.ajax({
                         url: "action?op=sit&position=" + $(this).attr("pos")

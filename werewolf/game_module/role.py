@@ -192,6 +192,9 @@ class Role(object):
             raise TypeError(f'Cannot prepare for role type {self.role_type}')
 
     def get_skills(self):
+        if self.role_type is GameEnum.ROLE_TYPE_UNKNOWN:
+            return []
+
         skills = [GameEnum.SKILL_VOTE]
         if self.role_type is GameEnum.ROLE_TYPE_SEER:
             skills.append(GameEnum.SKILL_DISCOVER)
