@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, redirect, url_for
 from flask_sse import sse
 from werewolf.werewolf_module import werewolf_api
@@ -36,6 +37,11 @@ def create_app(config_name=None):
             response.headers["Expires"] = 0
             response.headers["Pragma"] = "no-cache"
             return response
+
+    if app.config["GUNICORN"]:
+        gunicorn_logger = logging.getLogger('gunicorn.error')
+        app.logger.handlers = gunicorn_logger.handlers
+        app.logger.setLevel(gunicorn_logger.level)
 
     app.register_blueprint(werewolf_api, url_prefix='/werewolf')
     init_app(app)
