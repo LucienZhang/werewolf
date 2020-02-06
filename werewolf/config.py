@@ -13,7 +13,8 @@ class DevelopmentConfig(Config):
     PORT = 1000
     SECRET_KEY = '123456'
     # SQLALCHEMY_DATABASE_URI = "mysql://username:%s@127.0.0.1:3306/database?charset=utf8" % quote('password')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     LOGIN_SECRET_KEY = '123456'
@@ -29,9 +30,21 @@ class ProductionConfig(Config):
     pass
 
 
+class DBConfig(Config):
+    DEBUG = False
+    PORT = 1000
+    SECRET_KEY = '123456'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    LOGIN_SECRET_KEY = '123456'
+    REDIS_URL = "redis://localhost"
+    SCHEDULER_API_ENABLED = True
+
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig
+    'default': DevelopmentConfig,
+    'db': DBConfig
 }
