@@ -16,11 +16,9 @@
 
 <body>
     <div class="container">
-        <div class="logo"><img src="{{ url_for('werewolf_api.static',filename='images/werewolf/logo.png') }}"
-                alt="Logo">
-        </div>
-        <div class="navbar">
-            <span id="current_user">{{ name }}</span>
+        <div class="logo">
+            <div class="float-left" id="current_user">{{ name }}</div>
+            <img src="{{ url_for('werewolf_api.static',filename='images/werewolf/logo.png') }}" alt="Logo">
             <div class="float-right">
                 <a href="{{ url_for('werewolf_api.quit_game') }}">
                     退出

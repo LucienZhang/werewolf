@@ -13,12 +13,10 @@ body {
     text-align: center;
 }
 
-.navbar {
-    position: absolute;
-    top: 25px;
+.logo div {
+    position: relative;
+    top: 30px;
     padding: 0;
-    width: 93%;
-    line-height: 34px;
     color: #fff;
     font-size: 15px;
     font-weight: bold;
@@ -108,6 +106,7 @@ body {
 
 .player.player-right-side {
     text-align: right;
+    float: right;
 }
 
 .modal {
