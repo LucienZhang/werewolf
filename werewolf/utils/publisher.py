@@ -10,13 +10,12 @@ def publish_music(instruction, bgm, channel):
                 channel=channel)
 
 
-# def publish_history(message, channel):
-#     sse.publish({"message": message},
-#                 type='history',
-#                 channel=channel)
+def publish_history(channel, message, show=True):
+    publish_info(channel, json.dumps({'history': message, 'show': show}))
 
 
 def publish_info(channel, message):
+    # message has to be a JSON string
     sse.publish(message,
                 type='game_info',
                 channel=channel)

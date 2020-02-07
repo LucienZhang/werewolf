@@ -24,7 +24,7 @@
         play()
     };
 
-    host_source.addEventListener('music', function (event) {
+    gid_source.addEventListener('music', function (event) {
         let data = JSON.parse(event.data);
         audio_queue.push(data);
         if (step_audio.paused) {
@@ -32,7 +32,7 @@
         }
     }, false);
 
-    host_source.addEventListener('music_stop', function (event) {
+    gid_source.addEventListener('music_stop', function (event) {
         audio_queue = [];
         back_audio.pause();
         step_audio.pause();

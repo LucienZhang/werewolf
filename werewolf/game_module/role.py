@@ -188,6 +188,8 @@ class Role(object):
             self.tags.append(GameEnum.GROUP_TYPE_VILLAGERS)
         elif self.role_type is GameEnum.ROLE_TYPE_NORMAL_WOLF:
             self.tags.append(GameEnum.GROUP_TYPE_WOLVES)
+        elif self.role_type is GameEnum.ROLE_TYPE_IDIOT:
+            self.args = {'exposed': False}
         else:
             raise TypeError(f'Cannot prepare for role type {self.role_type}')
 

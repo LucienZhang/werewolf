@@ -230,15 +230,13 @@
     <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/bootstrap.min.js') }}"></script>
     <!-- <script type="text/javascript" src="../static/js/ajax-utils.js"></script> -->
     <script>
-        const common_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
+        const gid_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
+        const uid_source = new EventSource("{{ url_for('sse.stream',channel='u'+uid|string) }}");
     </script>
     <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/werewolf_game.js') }}"></script>
     {% if ishost %}
     <audio id="back_audio" loop></audio>
     <audio id="step_audio"></audio>
-    <script>
-        const host_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
-    </script>
     <script type="text/javascript"
         src="{{ url_for('werewolf_api.static', filename='js/werewolf_game_host.js') }}"></script>
     {% endif %}

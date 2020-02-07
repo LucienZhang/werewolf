@@ -45,6 +45,8 @@
 })(window);
 
 (function (window) {
+    let history = $("#history-model-content");
+
     document.querySelector("#history").onfocus = function () {
         $("#history-model-content").scrollTop($(this).prop("scrollHeight"));
     };
@@ -59,8 +61,9 @@
         }
     }
 
-    common_source.addEventListener('game_info', function (event) {
+    gid_source.addEventListener('game_info', function (event) {
         let data = JSON.parse(event.data);
+        let show = data.show
         if ("seats" in data) {
             update_seats(data.seats);
         }
@@ -90,6 +93,40 @@
                 }
             });
         }
+        if (data.history) {
+            let content = '';
+            data.history.split('\n').forEach(element => {
+                content += '<p>' + element + '</p>'
+            });
+            if (show) {
+                show_message(content);
+            }
+            history.html(history.html() + content)
+        }
+
+        if ("days" in data) {
+            $("#status-days").text(data.days)
+        }
+
+        if ("game_status" in data) {
+            $("#status-message").text(data.game_status)
+        }
+
+    }, false);
+
+    uid_source.addEventListener('game_info', function (event) {
+        let data = JSON.parse(event.data);
+        let show = data.show
+        if (data.history) {
+            let content = '';
+            data.history.split('\n').forEach(element => {
+                content += '<p>' + element + '</p>'
+            });
+            if (show) {
+                show_message(content);
+            }
+            history.html(history.html() + content)
+        }
     }, false);
 
     $.ajax({
@@ -117,34 +154,3 @@
 
 })(window);
 
-
-
-
-
-
-
-
-
-
-
-
-
-/*
- * @Author: Lucien Zhang
- * @Date:   2019-09-29 18:02:32
- * @Last Modified by:   Lucien Zhang
- * @Last Modified time: 2019-10-09 14:30:35
- */
-
-// document.querySelector("#history-btn").onclick = function() { $("#history-model-content").scrollTop($("#history-model-content").prop("scrollHeight")); };
-
-
-// $.ajax({
-//         url: "werewolf/game_process",
-//         type: "GET",
-//         dataType: "json",
-//         success: function (data) {
-//             let info=$.parseJSON(data);
-
-//         }
-//         });

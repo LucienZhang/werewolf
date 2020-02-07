@@ -24,7 +24,9 @@ class GameEnumMeta(type):
         # 0
         EnumMember('GAME_STATUS_UNKNOWN', 0, ''),
         EnumMember('GAME_STATUS_WAIT_TO_START', 1, '等待开始'),
-        EnumMember('GAME_STATUS_RUNNING', 2, '游戏进行中'),
+        EnumMember('GAME_STATUS_READY', 2, '游戏已准备好'),
+        EnumMember('GAME_STATUS_DAY', 3, '白天'),
+        EnumMember('GAME_STATUS_NIGHT', 4, '夜晚'),
 
         # 100
         EnumMember('VICTORY_MODE_UNKNOWN', 100, ''),
@@ -77,9 +79,10 @@ class GameEnumMeta(type):
         EnumMember('TURN_STEP_VOTE', 606, ''),
         EnumMember('TURN_STEP_TALK', 607, ''),
         EnumMember('TURN_STEP_ANNOUNCE', 608, ''),
-        EnumMember('TURN_STEP_WAITING_FOR_SHOOT', 609, ''),
+        # EnumMember('TURN_STEP_WAITING_FOR_SHOOT', 609, ''),
         EnumMember('TURN_STEP_PK', 610, ''),
         EnumMember('TURN_STEP_CAPTAIN_PK', 611, ''),
+        EnumMember('TURN_STEP_LAST_WORDS', 612, ''),
 
         # 700
         EnumMember('GAME_MESSAGE_GAME_NOT_EXIST', 700, '房间不存在'),
@@ -102,6 +105,7 @@ class GameEnumMeta(type):
         EnumMember('SKILL_GUARD', 804, '守护'),
         EnumMember('SKILL_SHOOT', 805, '开枪'),
         EnumMember('SKILL_EXPLODE', 806, '自爆'),
+        EnumMember('SKILL_TOXIC', 807, '毒杀'),
 
         # 900
         EnumMember('TAG_ELECT', 900, '上警'),

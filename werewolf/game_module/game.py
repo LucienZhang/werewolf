@@ -9,7 +9,7 @@ from werewolf.game_module.role import Role
 from sqlalchemy.dialects.mysql import DATETIME
 import typing
 from typing import List
-from werewolf.utils.publisher import publish_music, publish_info
+from werewolf.utils.publisher import publish_music, publish_history, publish_info
 from werewolf.utils.scheduler import scheduler
 import collections
 from copy import deepcopy
@@ -155,7 +155,7 @@ class Game(object):
             'step_list':[EnumMember,...]
         }
         """
-        self.table._steps = steps
+        self._steps = steps
 
     @property
     def cards(self):
@@ -167,7 +167,7 @@ class Game(object):
 
     @history.setter
     def history(self, history: dict):
-        self.table._history = history
+        self._history = history
 
     @staticmethod
     def create_new_game(host: User, victory_mode: GameEnum, cards: list, captain_mode: GameEnum,
@@ -321,58 +321,234 @@ class Game(object):
         step_list.append(GameEnum.TURN_STEP_ANNOUNCE)
         step_list.append(GameEnum.TURN_STEP_TALK)
         step_list.append(GameEnum.TURN_STEP_VOTE)
+        step_list.append(GameEnum.TURN_STEP_LAST_WORDS)
 
         # step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
 
         return step_list
 
-    def go_next_step(self) -> (bool, GameEnum):
-        # todo: many things to do, check vote, check result
+    def _process_vote(self, vote_type):
+        # pos: -1=no one, -2=not acted
+        # 'vote_for_captain_result': {voter_pos:votee_pos,...},
+        # 'vote_result': {voter_pos:votee_pos,...},
+        assert vote_type in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN]
+        msg = ""
+        result = {}
+        history_result = self.history['vote_result']
+        if vote_type is GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN:
+            history_result = self.history['vote_for_captain_result']
+
+        for voter, votee in history_result.items():
+            if votee in result:
+                result[votee].append(voter)
+            else:
+                result[votee] = [voter]
+        for votee in sorted(result.keys()):
+            msg += f'{votee} <= {",".join(list(sorted(result[votee])))}\n'
+
+        most_voted = []
+        max_ticket = 0
+        for votee in result:
+            ticket = len(result[votee])
+            if ticket == max_ticket:
+                most_voted.append(votee)
+            elif ticket > max_ticket:
+                max_ticket = ticket
+                most_voted = [votee]
+            else:
+                continue
+        if len(most_voted) == 1:
+            if vote_type is GameEnum.TURN_STEP_VOTE:
+                self.kill(most_voted[0], GameEnum.SKILL_VOTE)
+                msg += f'{most_voted[0]}号玩家以{max_ticket}票被公投出局'
+            else:
+                captain = self.get_role_by_pos(most_voted[0])
+                captain.iscaptain = True
+                captain.commit()
+                msg += f'{most_voted[0]}号玩家以{max_ticket}票当选警长'
+            publish_history(self.gid, msg)
+            return
+        else:
+            # PK
+            if self.repeat == 0:
+                self.repeat = 1
+                if vote_type is GameEnum.TURN_STEP_VOTE:
+                    self.insert_step(GameEnum.TURN_STEP_VOTE)
+                    self.insert_step(GameEnum.TURN_STEP_PK)
+                else:
+                    self.insert_step(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
+                    self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK)
+                # 'voter':[[voter_pos,...],[votee_pos,...]],
+                # 'voter_for_captain':[[voter_pos,...],[votee_pos,...]]
+                votees = most_voted
+                votees.sort()
+                voters = [p for p in range(1, self.get_seat_num() + 1) if p not in votees]  # todo: can vote?
+                if vote_type is GameEnum.TURN_STEP_VOTE:
+                    self.history['voter'] = [voters, votees]
+                else:
+                    self.history['voter_for_captain'] = [voters, votees]
+                msg += f'以下玩家以{max_ticket}票平票进入PK：{",".join(votees)}'
+                publish_history(self.gid, msg)
+                return
+            else:
+                votees = most_voted
+                votees.sort()
+                msg += f'以下玩家以{max_ticket}票再次平票：{",".join(votees)}\n'
+                if vote_type is GameEnum.TURN_STEP_VOTE:
+                    msg += '今天是平安日，无人被公投出局'
+                else:
+                    msg += '警徽流失，本局游戏无警长'
+                publish_history(self.gid, msg)
+                return
+
+    def _leave_current_step(self):
+        now = self.current_step()
+        if not now:
+            return
+        if now is GameEnum.TURN_STEP_ELECT:
+            elect = []
+            for r in self.roles:
+                if GameEnum.TAG_ELECT in r.tags:
+                    elect.append(r)
+            if len(elect) == 0:
+                # no captain
+                self.omit_step(2)
+                publish_history(self.gid, '没有人竞选警长，本局游戏无警长')
+                return
+            elif len(elect) == self.get_seat_num():
+                # no captain
+                self.omit_step(2)
+                publish_history(self.gid, '所有人都竞选警长，本局游戏无警长')
+                return
+            elif len(elect) == 1:
+                # auto win captain
+                self.omit_step(2)
+                captain = elect[0]
+                captain.iscaptain = True
+                captain.commit()
+                publish_history(self.gid, f'只有{captain.position}号玩家竞选警长，自动当选')
+            else:
+                elect = [r.position for r in elect]
+                no_elect = [p for p in range(1, self.get_seat_num() + 1) if p not in elect]
+                elect.sort()
+                no_elect.sort()
+                publish_history(self.gid, f"竞选警长的玩家为：{','.join(elect)}\n未竞选警长的玩家为：{','.join(no_elect)}")
+                self.history['voter_for_captain'] = [no_elect, elect]
+        elif now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN]:
+            self._process_vote(now)
+
+    def kill(self, target_pos: int, how: GameEnum):
+        if target_pos < 1 or target_pos > self.get_seat_num():
+            return
+        target_role = self.get_role_by_pos(target_pos)
+
+        # todo 长老?
+
+        if target_role is GameEnum.ROLE_TYPE_IDIOT and how is GameEnum.SKILL_VOTE and not target_role.args['exposed']:
+            target_role.args['exposed'] = True
+            target_role.voteable = False
+            target_role.commit()
+            return
+
+        dying = self.history['dying']
+        dying[target_role.position] = True
+
+        if how is GameEnum.SKILL_TOXIC and target_role is GameEnum.ROLE_TYPE_HUNTER:
+            target_role.args['shootable'] = False
+            target_role.commit()
+
+        # todo: other link die
+
+        self.check_win()
+
+    def _get_voter_votee(self):
+        # only used for normal vote, not for captain
+        assert self.roles_loaded
+        voters = []
+        votees = []
+        for r in self.roles:
+            if r.alive and r.voteable:
+                voters.append(r.position)
+            if r.alive:
+                votees.append(r.position)
+        return voters, votees
+
+    def _execute_next_step(self):
         self.steps['global_steps'] += 1
 
-        if self.repeat > 0:
-            self.repeat -= 1
-        else:
-            self.now_index += 1
-
+        self.now_index += 1
         if self.now_index >= len(self.steps['step_list']):
             self.now_index = 0
-            self.days += 1
             self.steps['step_list'] = Game._reset_step_list(
                 self.days, self.cards, self.captain_mode)
 
         # current step
         now = self.current_step()
         if now is GameEnum.TURN_STEP_TURN_NIGHT:
+            for d in self.history['dying']:
+                r = self.get_role_by_pos(d)
+                r.alive = False
+                r.commit()
+            self.history['dying'].clear()
+
             publish_music('night_start_voice', 'night_bgm', self.gid)
+            self.reset_history()
+            self.status = GameEnum.GAME_STATUS_NIGHT
+            self.days += 1
+            publish_info(self.gid, json.dumps({'days': self.days, 'game_status': self.status.message}))
             return self.go_next_step()
         elif now is GameEnum.ROLE_TYPE_ALL_WOLF:
             publish_music('wolf_start_voice', 'wolf_bgm', self.gid)
             # todo: add random job if there is not wolf (third party situation)
-            scheduler.add_job(id=f'{self.gid}_WOLF_KILL', func=action_timeout,
-                              args=(self.gid, self.steps['global_steps']),
-                              next_run_time=datetime.now() + timedelta(seconds=30))
+            # scheduler.add_job(id=f'{self.gid}_WOLF_KILL', func=action_timeout,
+            #                   args=(self.gid, self.steps['global_steps']),
+            #                   next_run_time=datetime.now() + timedelta(seconds=30))
+
+            # two mode:
+            # 1. without third party: any wolf kill is fine
+            # 2. with thrid party: all wolf kill is needed
+            return True, None
+        elif now is GameEnum.TURN_STEP_TALK:
+            self.repeat = 0
+        elif now is GameEnum.TURN_STEP_ANNOUNCE:
+            publish_history(self.gid, GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.message.format(
+                '，'.join(list(sorted(self.history['dying'])))))
+            self.history['voter'] = self._get_voter_votee()
+            return self.go_next_step()
+        elif now is GameEnum.TURN_STEP_TURN_DAY:
+            publish_music('day_start_voice', 'day_bgm', self.gid)
+            publish_info(self.gid, json.dumps({'game_status': self.status.message}))
+            self.status = GameEnum.GAME_STATUS_DAY
+            self.calculate_die_in_night()
+            return self.go_next_step()
+        elif now is GameEnum.ROLE_TYPE_SEER:
+            publish_music('seer_start_voice', 'seer_bgm', self.gid)
+            return True, None
+        elif now is GameEnum.ROLE_TYPE_WITCH:
+            publish_music('witch_start_voice', 'witch_bgm', self.gid)
+            return True, None
+        elif now is GameEnum.ROLE_TYPE_SAVIOR:
+            publish_music('savior_start_voice', 'savior_bgm', self.gid)
             return True, None
 
+    def go_next_step(self) -> (bool, GameEnum):
+        self._leave_current_step()
+        self._execute_next_step()
+
     def current_step(self):
+        if self.now_index < 0:
+            return None
         return self.steps['step_list'][self.now_index]
 
     def insert_step(self, step):
         self.steps['step_list'].insert(self.now_index + 1, step)
         return
 
-    def get_alive_roles(self, role_type=None):
-        roles = []
-        for r in self.roles:
-            if not r.alive:
-                continue
-            elif role_type is not None and r.role_type is not role_type:
-                continue
-            else:
-                roles.append(r)
-        return roles
+    def omit_step(self, num):
+        for _ in range(num):
+            self.steps['step_list'].pop(self.now_index + 1)
 
-    def _reset_history(self):
+    def reset_history(self):
         """
             pos: -1=no one, -2=not acted
             {
@@ -382,10 +558,11 @@ class Game(object):
                 'guard':pos,
                 'toxic':pos,
                 'discover':pos,
-                'vote_for_captain':{voter_pos:votee_pos,...},
-                'vote':{voter_pos:votee_pos,...},
-                'pk':[[voter_pos,...],[votee_pos,...]],
-                'captain_pk':[[voter_pos,...],[votee_pos,...]],
+                'voter':[[voter_pos,...],[votee_pos,...]],
+                'voter_for_captain':[[voter_pos,...],[votee_pos,...]],
+                'vote_result': {voter_pos:votee_pos,...},
+                'vote_for_captain_result': {voter_pos:votee_pos,...},
+                'dying':{pos:True},
             }
         """
         self.history = {
@@ -395,14 +572,14 @@ class Game(object):
             'guard': -2,
             'toxic': -2,
             'discover': -2,
-            'vote_for_captain': {},
-            'vote': {},
-            'pk': [[], []],
-            'captain_pk': [[], []],
+            'voter': [[], []],
+            'voter_for_captain': [[], []],
+            'vote_result': {},
+            'vote_for_captain_result': {},
+            'dying': {},
         }
 
-    def calculate_result(self):
-        dead = set()
+    def calculate_die_in_night(self):
         # wolf kill
         targets = collections.Counter(
             [t for _, t in self.history['wolf_kill']])
@@ -419,24 +596,45 @@ class Game(object):
         if guard == wolf_kill_pos:
             killed = not killed
         if killed:
-            dead.add(wolf_kill_pos)
-        toxic = self.history['toxic']
-        dead.add(toxic)
-        # todo others
-        dead = list(dead)
-        dead.sort()
-        for p in dead:
-            r = self.get_role_by_pos(p)
-            r.alive = False
-            r.commit()
-        publish_info(str(self.gid), json.dumps({'history': GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.message.format(
-            '，'.join(dead))}))
-        # else:
-        # role = self.get_role_by_pos(die_pos)
-        # role.alive = False
-        # role.commit()
-        # game.go_next_step()
-        # game.commit()
+            self.kill(wolf_kill_pos, GameEnum.SKILL_WOLF_KILL)
+
+        self.kill(self.history['toxic'], GameEnum.SKILL_TOXIC)
+        # todo: other death way in night?
+
+    def check_win(self):
+        gods = wolves = villagers = 0
+        # todo third party?
+
+        for r in self.roles:
+            if not r.alive:
+                continue
+
+            if GameEnum.GROUP_TYPE_VILLAGERS in r.tags:
+                villagers += 1
+            elif GameEnum.GROUP_TYPE_WOLVES in r.tags:
+                wolves += 1
+            elif GameEnum.GROUP_TYPE_GODS in r.tags:
+                if r.role_type is GameEnum.ROLE_TYPE_IDIOT and r.args['exposed']:
+                    continue
+                gods += 1
+            else:
+                raise Exception('Unknown Group!')
+
+        ended = False
+        if wolves == 0:
+            ended = True
+            publish_history(self.gid, '游戏结束，好人阵营胜利')
+            # todo result analysis
+        if gods == 0 and villagers == 0:
+            ended = True
+            publish_history(self.gid, '游戏结束，狼人阵营胜利')
+        elif self.witch_mode is GameEnum.VICTORY_MODE_KILL_GROUP and (gods == 0 or villagers == 0):
+            ended = True
+            publish_history(self.gid, '游戏结束，狼人阵营胜利')
+
+        # prepare for next round
+        if ended:
+            pass  # todo
 
 
 def action_timeout(gid, global_step_num):
@@ -446,9 +644,3 @@ def action_timeout(gid, global_step_num):
     game.go_next_step()
     game.commit()
     return
-
-# if self.now == len(self.steps) - 1:
-#             self._reset(card_dict, captain_mode)
-#         else:
-#             self.now += 1
-#         return self.current_step()

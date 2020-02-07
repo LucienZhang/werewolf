@@ -71,6 +71,7 @@ def game():
         skills = current_role.get_skills()
     return render_template("werewolf_game.html", ishost=current_user.ishost, name=current_user.name,
                            gid=current_game.gid,
+                           uid=current_user.uid,
                            current_setting=current_setting,
                            role_name=current_role.role_type.message,
                            role_type=current_role.role_type.name.lower().replace('role_type_', '', 1),
@@ -163,7 +164,7 @@ def test():
 
 @werewolf_api.route('/test_page')
 def test_page():
-    return render_template('test.html')
+    return render_template('test.html', uid=1)
 
 
 @werewolf_api.route('/send')
@@ -183,5 +184,5 @@ def send():
 
 def test_func(msg='default message'):
     with scheduler.app.app_context():
-        sse.publish({"message": msg}, type='greeting')
+        sse.publish({"message": msg}, type='greeting', channel='u1')
     return "Message sent!"

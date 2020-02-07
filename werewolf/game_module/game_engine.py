@@ -8,7 +8,7 @@ import random
 from werewolf.utils.json_utils import response
 from werewolf.utils.scheduler import scheduler
 from werewolf.utils.publisher import publish_info
-import datetime
+from datetime import datetime, timedelta
 
 
 def take_action() -> str:  # return json to user
@@ -26,7 +26,8 @@ def take_action() -> str:  # return json to user
             if len(positions) != game.get_seat_num():
                 return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
 
-            game.status = GameEnum.GAME_STATUS_RUNNING
+            game.status = GameEnum.GAME_STATUS_READY
+            game.table.end_time = datetime.utcnow() + timedelta(days=1)
             game.roles.sort(key=lambda r: r.position)
             cards = game.cards.copy()
             random.shuffle(cards)
@@ -38,8 +39,14 @@ def take_action() -> str:  # return json to user
             return response(True)
     elif op == 'next_step':
         with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
-            if game.status is not GameEnum.GAME_STATUS_RUNNING:
+            if game.status not in [GameEnum.GAME_STATUS_READY, GameEnum.GAME_STATUS_DAY]:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if game.status is GameEnum.GAME_STATUS_READY:
+                game.reset_history()
+            else:
+                now = game.current_step()
+                if now not in [GameEnum.TURN_STEP_DEAL, GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_PK, GameEnum.TURN_STEP_CAPTAIN_PK, GameEnum.TURN_STEP_LAST_WORDS]:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             game.go_next_step()
             return response(True)
     elif op == 'vote':
@@ -199,21 +206,34 @@ def take_action() -> str:  # return json to user
             my_role.commit()
             return response(True)
     elif op == 'shoot':
-        target = request.args.get('target')
+        target = int(request.args.get('target'))
         with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
-            target = game.get_role_by_pos(target)
             now = game.current_step()
-            if now is not GameEnum.TURN_STEP_WAITING_FOR_SHOOT:
+            if now is not GameEnum.TURN_STEP_LAST_WORDS:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            if 'shootable' not in my_role.args or not my_role.args['shootable']:
+            if not my_role.args['shootable'] or my_role.position not in game.history['dying']:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            kill(target, GameEnum.SKILL_SHOOT)
+            if not my_role.alive:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            game.kill(target, GameEnum.SKILL_SHOOT)
             return response(True)
+    elif op == 'explode':
+        # if useless explode? my role in dying?
+        pass
+        # target = int(request.args.get('target'))
+        # with Game.get_game_by_gid(me.gid) as game:
+        #     history = game.history
+        #     my_role = game.get_role_by_uid(me.uid)
+        #     now = game.current_step()
+        #     if now is not GameEnum.TURN_STEP_LAST_WORDS:
+        #         return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+        #     if not my_role.args['shootable'] or my_role.position not in game.history['dying']:
+        #         return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+        #     if not my_role.alive:
+        #         return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+        #     game.kill(target, GameEnum.SKILL_SHOOT)
+        #     return response(True)
     else:
         return response(False, GameEnum.GAME_MESSAGE_UNKNOWN_OP.message)
-
-
-def kill(target, how):
-    pass
