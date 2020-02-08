@@ -12,22 +12,30 @@
         message.modal("show");
     }
 
+    skills.select = function () {
+        $(this).addClass("selected");
+        candidates.push($(this));
+        if (candidates.length > num_of_can) {
+            candidates.shift().removeClass("selected");
+        }
+    };
+
+    function reset_panel() {
+        tips.text("");
+        buttons.html("");
+    }
+
     skills.skill_vote = function () {
         $("#skills").modal("hide");
+        tips.text("选择玩家并投票");
         num_of_can = 1;
         buttons.html('<button class="btn btn-warning skill-confirm">投票</button>' + '<button class="btn btn-warning skill-cancel">弃票</button>');
-        seats.on("click", function () {
-            $(this).addClass("vote-selected");
-            candidates.push($(this));
-            if (candidates.length > num_of_can) {
-                candidates.shift().removeClass("vote-selected");
-            }
-        });
         buttons.children("button.skill-confirm").on("click", function () {
             if (candidates.length !== num_of_can) {
                 show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
                 return;
             }
+            reset_panel();
             $.ajax({
                 url: "action?op=vote&target=" + candidates.shift().attr("pos"),
                 dataType: "json",
@@ -38,8 +46,61 @@
                 }
             });
         });
+        buttons.children("button.skill-cancel").on("click", function () {
+            reset_panel();
+            $.ajax({
+                url: "action?op=vote&target=-1",
+                dataType: "json",
+                success: function (info) {
+                    if (info.suc !== true) {
+                        show_message(info.msg);
+                    }
+                }
+            });
+        });
     };
 
+    skills.skill_captain = function () {
+        $("#skills").modal("hide");
+        num_of_can = 0;
+        buttons.html('<button class="btn btn-warning skill-elect">竞选</button>' + '<button class="btn btn-warning skill-no-elect">不竞选</button>' + '<button class="btn btn-warning skill-give-up">退水</button>');
+        buttons.children("button.skill-elect").on("click", function () {
+            reset_panel();
+            $.ajax({
+                url: "action?op=elect&choice=yes",
+                dataType: "json",
+                success: function (info) {
+                    if (info.suc !== true) {
+                        show_message(info.msg);
+                    }
+                }
+            });
+        });
+        buttons.children("button.skill-no-elect").on("click", function () {
+            reset_panel();
+            $.ajax({
+                url: "action?op=elect&choice=no",
+                dataType: "json",
+                success: function (info) {
+                    if (info.suc !== true) {
+                        show_message(info.msg);
+                    }
+                }
+            });
+        });
+        buttons.children("button.skill-give-up").on("click", function () {
+            reset_panel();
+            $.ajax({
+                url: "action?op=elect&choice=quit",
+                dataType: "json",
+                success: function (info) {
+                    if (info.suc !== true) {
+                        show_message(info.msg);
+                    }
+                }
+            });
+        });
+    };
 
     window.skills = skills
 })(window);
@@ -73,7 +134,7 @@
                 url: "get_game_info",
                 dataType: "json",
                 success: function (info) {
-                    $(".player > button").on("click", null);
+                    $(".player > button").on("click", skills.select);
                     let role = info.role;
                     $("#check-role-dialog .modal-body").html(
                         '<p>' +
@@ -84,11 +145,11 @@
                         'alt="' + role.role_type[1] + '" width="274" height="389">' +
                         '</div>'
                     );
-                    let skills = ""
+                    let skills_html = ""
                     role.skills.forEach(element => {
-                        skills += '<div><button id="' + element[0].toLowerCase() + '" type="button" class="btn-lg skill-button onclick="skills.' + element[0].toLowerCase() + '();">' + element[1] + '</button></div>'
+                        skills_html += '<div><button id="' + element[0].toLowerCase() + '" type="button" class="btn-lg skill-button" onclick="skills.' + element[0].toLowerCase() + '();">' + element[1] + '</button></div>'
                     });
-                    $("#skills-model-content").html(skills);
+                    $("#skills-model-content").html(skills_html);
                     $("#status-message").text(info.game.status[1])
                 }
             });

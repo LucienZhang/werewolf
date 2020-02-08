@@ -316,8 +316,8 @@ class Game(object):
         step_list.append(GameEnum.TURN_STEP_TURN_DAY)
         if day == 1 and captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
             step_list.append(GameEnum.TURN_STEP_ELECT)
-            step_list.append(GameEnum.TURN_STEP_TALK)
-            step_list.append(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
+            step_list.append(GameEnum.TURN_STEP_ELECT_TALK)
+            step_list.append(GameEnum.TURN_STEP_CAPTAIN_VOTE)
         step_list.append(GameEnum.TURN_STEP_ANNOUNCE)
         step_list.append(GameEnum.TURN_STEP_TALK)
         step_list.append(GameEnum.TURN_STEP_VOTE)
@@ -329,22 +329,32 @@ class Game(object):
 
     def _process_vote(self, vote_type):
         # pos: -1=no one, -2=not acted
-        # 'vote_for_captain_result': {voter_pos:votee_pos,...},
         # 'vote_result': {voter_pos:votee_pos,...},
-        assert vote_type in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN]
+        assert vote_type in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE,
+                             GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_CAPTAIN_PK_VOTE]
         msg = ""
         result = {}
         history_result = self.history['vote_result']
-        if vote_type is GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN:
-            history_result = self.history['vote_for_captain_result']
+
+        no_one = []
+        all_voters = set(self.history['voter_votee'][0])
 
         for voter, votee in history_result.items():
+            all_voters.remove(voter)
+            if votee in [-1, -2]:
+                no_one.append(voter)
+                continue
             if votee in result:
                 result[votee].append(voter)
             else:
                 result[votee] = [voter]
+
+        no_one.extend(list(all_voters))
+        no_one.sort()
+
         for votee in sorted(result.keys()):
             msg += f'{votee} <= {",".join(list(sorted(result[votee])))}\n'
+        msg += f'弃票： {",".join(no_one)}\n'
 
         most_voted = []
         max_ticket = 0
@@ -358,7 +368,7 @@ class Game(object):
             else:
                 continue
         if len(most_voted) == 1:
-            if vote_type is GameEnum.TURN_STEP_VOTE:
+            if vote_type in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_PK_VOTE]:
                 self.kill(most_voted[0], GameEnum.SKILL_VOTE)
                 msg += f'{most_voted[0]}号玩家以{max_ticket}票被公投出局'
             else:
@@ -370,23 +380,18 @@ class Game(object):
             return
         else:
             # PK
-            if self.repeat == 0:
-                self.repeat = 1
+            if vote_type in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE]:
                 if vote_type is GameEnum.TURN_STEP_VOTE:
-                    self.insert_step(GameEnum.TURN_STEP_VOTE)
-                    self.insert_step(GameEnum.TURN_STEP_PK)
+                    self.insert_step(GameEnum.TURN_STEP_PK_VOTE)
+                    self.insert_step(GameEnum.TURN_STEP_PK_TALK)
                 else:
-                    self.insert_step(GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN)
-                    self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK)
-                # 'voter':[[voter_pos,...],[votee_pos,...]],
-                # 'voter_for_captain':[[voter_pos,...],[votee_pos,...]]
+                    self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK_VOTE)
+                    self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK_TALK)
+                # 'voter_votee':[[voter_pos,...],[votee_pos,...]],
                 votees = most_voted
                 votees.sort()
                 voters = [p for p in range(1, self.get_seat_num() + 1) if p not in votees]  # todo: can vote?
-                if vote_type is GameEnum.TURN_STEP_VOTE:
-                    self.history['voter'] = [voters, votees]
-                else:
-                    self.history['voter_for_captain'] = [voters, votees]
+                self.history['voter_votee'] = [voters, votees]
                 msg += f'以下玩家以{max_ticket}票平票进入PK：{",".join(votees)}'
                 publish_history(self.gid, msg)
                 return
@@ -394,7 +399,7 @@ class Game(object):
                 votees = most_voted
                 votees.sort()
                 msg += f'以下玩家以{max_ticket}票再次平票：{",".join(votees)}\n'
-                if vote_type is GameEnum.TURN_STEP_VOTE:
+                if vote_type is GameEnum.TURN_STEP_PK_VOTE:
                     msg += '今天是平安日，无人被公投出局'
                 else:
                     msg += '警徽流失，本局游戏无警长'
@@ -433,8 +438,8 @@ class Game(object):
                 elect.sort()
                 no_elect.sort()
                 publish_history(self.gid, f"竞选警长的玩家为：{','.join(elect)}\n未竞选警长的玩家为：{','.join(no_elect)}")
-                self.history['voter_for_captain'] = [no_elect, elect]
-        elif now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN]:
+                self.history['voter_votee'] = [no_elect, elect]
+        elif now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_CAPTAIN_PK_VOTE]:
             self._process_vote(now)
 
     def kill(self, target_pos: int, how: GameEnum):
@@ -508,12 +513,12 @@ class Game(object):
             # 1. without third party: any wolf kill is fine
             # 2. with thrid party: all wolf kill is needed
             return True, None
-        elif now is GameEnum.TURN_STEP_TALK:
+        elif now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_ELECT_TALK]:
             self.repeat = 0
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             publish_history(self.gid, GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.message.format(
                 '，'.join(list(sorted(self.history['dying'])))))
-            self.history['voter'] = self._get_voter_votee()
+            self.history['voter_votee'] = self._get_voter_votee()
             return self.go_next_step()
         elif now is GameEnum.TURN_STEP_TURN_DAY:
             publish_music('day_start_voice', 'day_bgm', self.gid)
@@ -558,10 +563,8 @@ class Game(object):
                 'guard':pos,
                 'toxic':pos,
                 'discover':pos,
-                'voter':[[voter_pos,...],[votee_pos,...]],
-                'voter_for_captain':[[voter_pos,...],[votee_pos,...]],
+                'voter_votee':[[voter_pos,...],[votee_pos,...]],
                 'vote_result': {voter_pos:votee_pos,...},
-                'vote_for_captain_result': {voter_pos:votee_pos,...},
                 'dying':{pos:True},
             }
         """
@@ -572,10 +575,8 @@ class Game(object):
             'guard': -2,
             'toxic': -2,
             'discover': -2,
-            'voter': [[], []],
-            'voter_for_captain': [[], []],
+            'voter_votee': [[], []],
             'vote_result': {},
-            'vote_for_captain_result': {},
             'dying': {},
         }
 

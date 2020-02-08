@@ -7,7 +7,7 @@ from collections import Counter
 import random
 from werewolf.utils.json_utils import response
 from werewolf.utils.scheduler import scheduler
-from werewolf.utils.publisher import publish_info
+from werewolf.utils.publisher import publish_info, publish_history
 from datetime import datetime, timedelta
 
 
@@ -33,19 +33,25 @@ def take_action() -> str:  # return json to user
             random.shuffle(cards)
             for r, c in zip(game.roles, cards):
                 r.role_type = c
-                r.prepare()
+                r.prepare(game.captain_mode)
                 r.commit()
             publish_info(game.gid, json.dumps({'cards': True}))
             return response(True)
     elif op == 'next_step':
         with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+            now = game.current_step()
             if game.status not in [GameEnum.GAME_STATUS_READY, GameEnum.GAME_STATUS_DAY]:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if game.status is GameEnum.GAME_STATUS_READY:
                 game.reset_history()
+            elif now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_CAPTAIN_PK_VOTE]:
+                voters = set(game.history['voter_votee'][0])
+                voted = set(game.history['vote_result'])
+                if len(voters) != len(voted):
+                    return response(False, f'以下玩家尚未投票：{",".join(list(sorted(voters-voted)))}')
             else:
-                now = game.current_step()
-                if now not in [GameEnum.TURN_STEP_DEAL, GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_PK, GameEnum.TURN_STEP_CAPTAIN_PK, GameEnum.TURN_STEP_LAST_WORDS]:
+                if now not in [GameEnum.TURN_STEP_DEAL, GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_PK_TALK, GameEnum.TURN_STEP_PK_VOTE,
+                               GameEnum.TURN_STEP_CAPTAIN_PK_TALK, GameEnum.TURN_STEP_CAPTAIN_PK_VOTE, GameEnum.TURN_STEP_LAST_WORDS, GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE]:
                     return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             game.go_next_step()
             return response(True)
@@ -56,55 +62,57 @@ def take_action() -> str:  # return json to user
             history = game.history
             now = game.current_step()
             my_role = game.get_role_by_uid(me.uid)
-            if not my_role.voteable:
+            voters, votees = history['voter_votee']
+
+            if not my_role.voteable or my_role.position not in voters:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if target != -1 and target not in votees:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
 
-            if now is GameEnum.TURN_STEP_PK:
-                voters, votees = history['pk']
-                if target == -1:
-                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                if my_role.pos not in voters:
-                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                if target not in votees:
-                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                history['vote'][my_role.position] = target
+            if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE]:
+                history['vote_result'][my_role.position] = target
                 return response(True)
-            elif now is GameEnum.TURN_STEP_CAPTAIN_PK:
-                voters, votees = history['captain_pk']
+            elif now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_CAPTAIN_PK_VOTE]:
                 if target == -1:
                     return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                if my_role.pos not in voters:
-                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                if target not in votees:
-                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                history['vote_for_captain'][my_role.position] = target
+                history['vote_result'][my_role.position] = target
                 return response(True)
-            elif now is GameEnum.TURN_STEP_VOTE_FOR_CAPTAIN:
-                if target == -1:
-                    history['vote_for_captain'][my_role.position] = target
-                    return response(True)
-                else:
-                    target_role = game.get_role_by_pos(target)
-                    if not target_role.alive:
-                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                    if GameEnum.TAG_NOT_ELECT not in my_role.tags:
-                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                    if GameEnum.TAG_ELECT not in target_role.tags or GameEnum.TAG_GIVE_UP_ELECT in target_role.tags:
-                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                    history['vote_for_captain'][my_role.position] = target
-                    return response(True)
-            elif now is GameEnum.TURN_STEP_VOTE:
-                if target == -1:
-                    history['vote_for_captain'][my_role.position] = target
-                    return response(True)
-                else:
-                    target_role = game.get_role_by_pos(target)
-                    if not target_role.alive:
-                        return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-                    history['vote_for_captain'][my_role.position] = target
-                    return response(True)
             else:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+    elif op == 'elect':
+        choice = request.args.get('choice')
+        with Game.get_game_by_gid(me.gid, lock=True) as game:
+            my_role = game.get_role_by_uid(me.uid)
+            now = game.current_step()
+            if choice in ['yes', 'no'] and now is not GameEnum.TURN_STEP_ELECT:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if choice == 'quit' and now is not GameEnum.TURN_STEP_ELECT_TALK:
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if choice in ['yes', 'no'] and (GameEnum.TAG_ELECT in my_role.tags or GameEnum.TAG_NOT_ELECT in my_role.tags):
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+            if choice == 'quit' and (GameEnum.TAG_ELECT not in my_role.tags or GameEnum.TAG_GIVE_UP_ELECT in my_role.tags):
+                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+
+            if choice == 'yes':
+                my_role.tags.append(GameEnum.TAG_ELECT)
+            elif choice == 'no':
+                my_role.tags.append(GameEnum.TAG_NOT_ELECT)
+            elif choice == 'quit':
+                publish_history(game.gid, f'{my_role.position}号玩家退水')
+                my_role.tags.remove(GameEnum.TAG_ELECT)
+                my_role.tags.append(GameEnum.TAG_GIVE_UP_ELECT)
+                votee = game.history['voter_votee'][1]
+                votee.remove(my_role.position)
+                if len(votee) == 1:
+                    game.omit_step(1)
+                    captain = votee[0]
+                    captain.iscaptain = True
+                    captain.commit()
+                    publish_history(game.gid, f'仅剩一位警上玩家，{captain.position}号玩家自动当选警长')
+            else:
+                raise ValueError(f'Unknown choice: {choice}')
+            my_role.commit()
+            return response(True)
     elif op == 'wolf_kill':
         target = request.args.get('target')
         with Game.get_game_by_gid(me.gid, lock=True) as game:

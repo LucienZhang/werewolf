@@ -68,7 +68,7 @@ def game():
     current_role = Role.get_role_by_uid(current_user.uid)
     skills = []
     if current_role:
-        skills = current_role.get_skills()
+        skills = current_role.skills
     return render_template("werewolf_game.html", ishost=current_user.ishost, name=current_user.name,
                            gid=current_game.gid,
                            uid=current_user.uid,

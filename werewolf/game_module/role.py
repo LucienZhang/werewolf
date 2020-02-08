@@ -16,6 +16,7 @@ class RoleTable(db.Model):
     voteable = db.Column(db.Boolean)
     speakable = db.Column(db.Boolean)
     position = db.Column(db.Integer)
+    skills = db.Column(db.String(length=255), nullable=False)
     tags = db.Column(db.String(length=255), nullable=False)
     args = db.Column(db.String(length=255), nullable=False)
 
@@ -27,6 +28,7 @@ class RoleTable(db.Model):
         self.voteable = True
         self.speakable = True
         self.position = -1
+        self.skills = '[]'
         self.tags = '[]'
         self.args = '{}'
 
@@ -34,8 +36,12 @@ class RoleTable(db.Model):
 class Role(object):
     """Base Class"""
 
-    def __init__(self, table: RoleTable, tags: list = None, args: dict = None):
+    def __init__(self, table: RoleTable, skills: list = None, tags: list = None, args: dict = None):
         self.table = table
+        if skills is None:
+            self._skills = []
+        else:
+            self._skills = skills
         if tags is None:
             self._tags = []
         else:
@@ -55,7 +61,7 @@ class Role(object):
                 'voteable': self.voteable,
                 'speakable': self.speakable,
                 'position': self.position,
-                'skills': [[skill.name, skill.message] for skill in self.get_skills()],
+                'skills': [[skill.name, skill.message] for skill in self.skills],
                 'tags': [tag.name for tag in self.tags],
                 'args': self.args}
 
@@ -124,6 +130,14 @@ class Role(object):
         self.table.position = position
 
     @property
+    def skills(self):
+        return self._skills
+
+    @skills.setter
+    def skills(self, skills: list):
+        self._skills = skills
+
+    @property
     def tags(self):
         return self._tags
 
@@ -150,29 +164,34 @@ class Role(object):
             role_table.reset()
         db.session.add(role_table)
         db.session.commit()
+        skills = json.loads(role_table.skills, object_hook=json_hook)
         tags = json.loads(role_table.tags, object_hook=json_hook)
         args = json.loads(role_table.args, object_hook=json_hook)
-        role = Role(role_table, tags=tags, args=args)
+        role = Role(role_table, skills=skills, tags=tags, args=args)
         return role
 
     @staticmethod
     def get_role_by_uid(uid):
         role_table = RoleTable.query.get(uid)
         if role_table is not None:
+            skills = json.loads(role_table.skills, object_hook=json_hook)
             tags = json.loads(role_table.tags, object_hook=json_hook)
             args = json.loads(role_table.args, object_hook=json_hook)
-            return Role(role_table, tags, args)
+            return Role(role_table, skills, tags, args)
         else:
             return None
 
     def commit(self) -> (bool, GameEnum):
+        self.table.skills = json.dumps(self._skills, cls=ExtendedJSONEncoder)
         self.table.tags = json.dumps(self._tags, cls=ExtendedJSONEncoder)
         self.table.args = json.dumps(self._args, cls=ExtendedJSONEncoder)
         db.session.add(self.table)
         db.session.commit()
         return True, None
 
-    def prepare(self):
+    def prepare(self, captain_mode):
+        self._prepare_skills(captain_mode)
+
         if self.role_type is GameEnum.ROLE_TYPE_SEER:
             self.tags.append(GameEnum.GROUP_TYPE_GODS)
         elif self.role_type is GameEnum.ROLE_TYPE_WITCH:
@@ -193,11 +212,15 @@ class Role(object):
         else:
             raise TypeError(f'Cannot prepare for role type {self.role_type}')
 
-    def get_skills(self):
+    def _prepare_skills(self, captain_mode):
         if self.role_type is GameEnum.ROLE_TYPE_UNKNOWN:
-            return []
+            self.skills = []
+            return
 
         skills = [GameEnum.SKILL_VOTE]
+        if captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
+            skills.append(GameEnum.SKILL_CAPTAIN)
+
         if self.role_type is GameEnum.ROLE_TYPE_SEER:
             skills.append(GameEnum.SKILL_DISCOVER)
         if self.role_type is GameEnum.ROLE_TYPE_WITCH:
@@ -208,4 +231,6 @@ class Role(object):
             skills.append(GameEnum.SKILL_GUARD)
         if GameEnum.ROLE_TYPE_ALL_WOLF in self.tags:
             skills.append(GameEnum.SKILL_WOLF_KILL)
-        return skills
+
+        self.skills = skills
+        return

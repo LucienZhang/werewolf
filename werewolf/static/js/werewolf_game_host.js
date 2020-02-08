@@ -4,7 +4,6 @@
     let audio_queue = [];
 
     function play() {
-        console.log("play")
         let data = audio_queue.shift();
         if (data === undefined) {
             return;
@@ -40,13 +39,25 @@
 
     $("#next-step").on("click", function () {
         $.ajax({
-            url: "action?op=next_step"
+            url: "action?op=next_step",
+            dataType: "json",
+            success: function (info) {
+                if (!info.suc) {
+                    alert(info.msg)
+                }
+            }
         });
     });
 
     $("#deal").on("click", function () {
         $.ajax({
-            url: "action?op=deal"
+            url: "action?op=deal",
+            dataType: "json",
+            success: function (info) {
+                if (!info.suc) {
+                    alert(info.msg)
+                }
+            }
         });
     });
 

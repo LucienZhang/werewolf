@@ -75,14 +75,16 @@ class GameEnumMeta(type):
         EnumMember('TURN_STEP_TURN_NIGHT', 602, ''),
         EnumMember('TURN_STEP_TURN_DAY', 603, ''),
         EnumMember('TURN_STEP_ELECT', 604, ''),
-        EnumMember('TURN_STEP_VOTE_FOR_CAPTAIN', 605, ''),
+        EnumMember('TURN_STEP_CAPTAIN_VOTE', 605, ''),
         EnumMember('TURN_STEP_VOTE', 606, ''),
         EnumMember('TURN_STEP_TALK', 607, ''),
         EnumMember('TURN_STEP_ANNOUNCE', 608, ''),
-        # EnumMember('TURN_STEP_WAITING_FOR_SHOOT', 609, ''),
-        EnumMember('TURN_STEP_PK', 610, ''),
-        EnumMember('TURN_STEP_CAPTAIN_PK', 611, ''),
-        EnumMember('TURN_STEP_LAST_WORDS', 612, ''),
+        EnumMember('TURN_STEP_ELECT_TALK', 609, ''),
+        EnumMember('TURN_STEP_PK_TALK', 610, ''),
+        EnumMember('TURN_STEP_PK_VOTE', 611, ''),
+        EnumMember('TURN_STEP_CAPTAIN_PK_TALK', 612, ''),
+        EnumMember('TURN_STEP_CAPTAIN_PK_VOTE', 613, ''),
+        EnumMember('TURN_STEP_LAST_WORDS', 614, ''),
 
         # 700
         EnumMember('GAME_MESSAGE_GAME_NOT_EXIST', 700, '房间不存在'),
@@ -106,6 +108,7 @@ class GameEnumMeta(type):
         EnumMember('SKILL_SHOOT', 805, '开枪'),
         EnumMember('SKILL_EXPLODE', 806, '自爆'),
         EnumMember('SKILL_TOXIC', 807, '毒杀'),
+        EnumMember('SKILL_CAPTAIN', 808, '警长相关'),
 
         # 900
         EnumMember('TAG_ELECT', 900, '上警'),
