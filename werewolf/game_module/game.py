@@ -378,27 +378,43 @@ class Game(object):
                 msg += f'{most_voted[0]}号玩家以{max_ticket}票当选警长'
             publish_history(self.gid, msg)
             return
+        elif len(most_voted) == 0:
+            # all abstention, PK
+            if vote_type in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE]:
+                if vote_type is GameEnum.TURN_STEP_VOTE:
+                    self.insert_step(GameEnum.TURN_STEP_PK_VOTE)
+                    self.insert_step(GameEnum.TURN_STEP_PK_TALK)
+                    voters, votees = self._generate_voter_votee(GameEnum.TURN_STEP_PK_VOTE, self.history['voter_votee'][1])
+                else:
+                    self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK_VOTE)
+                    self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK_TALK)
+                    voters, votees = self._generate_voter_votee(GameEnum.TURN_STEP_CAPTAIN_PK_VOTE, self.history['voter_votee'][1])
+                # 'voter_votee':[[voter_pos,...],[votee_pos,...]],
+                self.history['voter_votee'] = [voters, votees]
+                msg += f'以下玩家以{max_ticket}票平票进入PK：{",".join(votees)}'
+                publish_history(self.gid, msg)
+                return
+            else:
+                raise Exception('It is impossible to have on one voted in PK')
         else:
             # PK
             if vote_type in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE]:
                 if vote_type is GameEnum.TURN_STEP_VOTE:
                     self.insert_step(GameEnum.TURN_STEP_PK_VOTE)
                     self.insert_step(GameEnum.TURN_STEP_PK_TALK)
+                    voters, votees = self._generate_voter_votee(GameEnum.TURN_STEP_PK_VOTE, most_voted)
                 else:
                     self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK_VOTE)
                     self.insert_step(GameEnum.TURN_STEP_CAPTAIN_PK_TALK)
+                    voters, votees = self._generate_voter_votee(GameEnum.TURN_STEP_CAPTAIN_PK_VOTE, most_voted)
                 # 'voter_votee':[[voter_pos,...],[votee_pos,...]],
-                votees = most_voted
-                votees.sort()
-                voters = [p for p in range(1, self.get_seat_num() + 1) if p not in votees]  # todo: can vote?
                 self.history['voter_votee'] = [voters, votees]
                 msg += f'以下玩家以{max_ticket}票平票进入PK：{",".join(votees)}'
                 publish_history(self.gid, msg)
                 return
             else:
-                votees = most_voted
-                votees.sort()
-                msg += f'以下玩家以{max_ticket}票再次平票：{",".join(votees)}\n'
+                most_voted.sort()
+                msg += f'以下玩家以{max_ticket}票再次平票：{",".join(most_voted)}\n'
                 if vote_type is GameEnum.TURN_STEP_PK_VOTE:
                     msg += '今天是平安日，无人被公投出局'
                 else:
@@ -411,34 +427,30 @@ class Game(object):
         if not now:
             return
         if now is GameEnum.TURN_STEP_ELECT:
-            elect = []
             for r in self.roles:
-                if GameEnum.TAG_ELECT in r.tags:
-                    elect.append(r)
-            if len(elect) == 0:
+                if GameEnum.TAG_ELECT not in r.tags and GameEnum.TAG_NOT_ELECT not in r.tags:
+                    r.tags.append(GameEnum.TAG_NOT_ELECT)
+            voters, votees = self._generate_voter_votee(GameEnum.TURN_STEP_CAPTAIN_VOTE)
+            if len(votees) == 0:
                 # no captain
                 self.omit_step(2)
                 publish_history(self.gid, '没有人竞选警长，本局游戏无警长')
                 return
-            elif len(elect) == self.get_seat_num():
+            elif len(voters) == 0:
                 # no captain
                 self.omit_step(2)
                 publish_history(self.gid, '所有人都竞选警长，本局游戏无警长')
                 return
-            elif len(elect) == 1:
+            elif len(votees) == 1:
                 # auto win captain
                 self.omit_step(2)
-                captain = elect[0]
+                captain = votees[0]
                 captain.iscaptain = True
                 captain.commit()
                 publish_history(self.gid, f'只有{captain.position}号玩家竞选警长，自动当选')
             else:
-                elect = [r.position for r in elect]
-                no_elect = [p for p in range(1, self.get_seat_num() + 1) if p not in elect]
-                elect.sort()
-                no_elect.sort()
-                publish_history(self.gid, f"竞选警长的玩家为：{','.join(elect)}\n未竞选警长的玩家为：{','.join(no_elect)}")
-                self.history['voter_votee'] = [no_elect, elect]
+                publish_history(self.gid, f"竞选警长的玩家为：{','.join(votees)}\n未竞选警长的玩家为：{','.join(voters)}")
+                self.history['voter_votee'] = [voters, votees]
         elif now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_CAPTAIN_PK_VOTE]:
             self._process_vote(now)
 
@@ -466,16 +478,40 @@ class Game(object):
 
         self.check_win()
 
-    def _get_voter_votee(self):
+    def _generate_voter_votee(self, purpose, even_votees: list = None):
         # only used for normal vote, not for captain
         assert self.roles_loaded
         voters = []
         votees = []
-        for r in self.roles:
-            if r.alive and r.voteable:
-                voters.append(r.position)
-            if r.alive:
-                votees.append(r.position)
+        if purpose is GameEnum.TURN_STEP_VOTE:
+            for r in self.roles:
+                if r.alive and r.voteable:
+                    voters.append(r.position)
+                if r.alive:
+                    votees.append(r.position)
+        elif purpose is GameEnum.TURN_STEP_PK_VOTE:
+            assert even_votees
+            votees = even_votees.copy()
+            for r in self.roles:
+                if r.alive and r.voteable and r.position not in votees:
+                    voters.append(r.position)
+        elif purpose is GameEnum.TURN_STEP_CAPTAIN_VOTE:
+            for r in self.roles:
+                if r.alive and GameEnum.TAG_ELECT in r.tags:
+                    votees.append(r.position)
+                elif r.alive and r.voteable and GameEnum.TAG_NOT_ELECT in r.tags:
+                    voters.append(r.position)
+        elif purpose is GameEnum.TURN_STEP_CAPTAIN_PK_VOTE:
+            assert even_votees
+            votees = even_votees.copy()
+            for r in self.roles:
+                if r.alive and r.voteable and r.position not in votees:
+                    voters.append(r.position)
+        else:
+            raise TypeError(f'Unknown purpose for voting: {purpose.name}')
+
+        voters.sort()
+        votees.sort()
         return voters, votees
 
     def _execute_next_step(self):
@@ -518,7 +554,7 @@ class Game(object):
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             publish_history(self.gid, GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.message.format(
                 '，'.join(list(sorted(self.history['dying'])))))
-            self.history['voter_votee'] = self._get_voter_votee()
+            self.history['voter_votee'] = self._generate_voter_votee(GameEnum.TURN_STEP_VOTE)
             return self.go_next_step()
         elif now is GameEnum.TURN_STEP_TURN_DAY:
             publish_music('day_start_voice', 'day_bgm', self.gid)
@@ -581,25 +617,21 @@ class Game(object):
         }
 
     def calculate_die_in_night(self):
-        # wolf kill
-        targets = collections.Counter(
-            [t for _, t in self.history['wolf_kill']])
-        wolf_kill_pos = targets.most_common(1)
-        if not wolf_kill_pos:
-            wolf_kill_pos = -1
-        else:
-            wolf_kill_pos = wolf_kill_pos[0][0]
+        wolf_kill_pos = self.history['wolf_kill_decision']
         elixir = self.history['elixir']
         guard = self.history['guard']
-        killed = True
-        if elixir:
-            killed = not killed
-        if guard == wolf_kill_pos:
-            killed = not killed
-        if killed:
-            self.kill(wolf_kill_pos, GameEnum.SKILL_WOLF_KILL)
 
-        self.kill(self.history['toxic'], GameEnum.SKILL_TOXIC)
+        if wolf_kill_pos > 0:
+            killed = True
+            if elixir:
+                killed = not killed
+            if guard == wolf_kill_pos:
+                killed = not killed
+
+            if killed:
+                self.kill(wolf_kill_pos, GameEnum.SKILL_WOLF_KILL)
+        if self.history['toxic'] > 0:
+            self.kill(self.history['toxic'], GameEnum.SKILL_TOXIC)
         # todo: other death way in night?
 
     def check_win(self):
