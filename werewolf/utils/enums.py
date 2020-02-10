@@ -115,6 +115,10 @@ class GameEnumMeta(type):
         EnumMember('TAG_NOT_ELECT', 901, '不上警'),
         EnumMember('TAG_GIVE_UP_ELECT', 902, '退水'),
 
+        # 1000
+        EnumMember('WOLF_MODE_FIRST', 1000, '第一狼刀有效'),
+        EnumMember('WOLF_MODE_ALL', 1001, '所有狼刀相同有效'),
+
 
         EnumMember('PLACE_HOLDER', 9999, '')
     ]

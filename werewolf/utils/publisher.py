@@ -3,9 +3,11 @@ from flask_sse import sse
 import json
 
 
-def publish_music(instruction, bgm, channel):
-    sse.publish(json.dumps([url_for('werewolf_api.static', filename=f'audio/{instruction}.mp3'),
-                            url_for('werewolf_api.static', filename=f'audio/{bgm}.mp3'), ]),
+def publish_music(instruction, bgm, channel, repeat=True):
+    instruction = url_for('werewolf_api.static', filename=f'audio/{instruction}.mp3')
+    if bgm not in ['same', 'stop']:
+        bgm = url_for('werewolf_api.static', filename=f'audio/{bgm}.mp3')
+    sse.publish(json.dumps([instruction, bgm, repeat]),
                 type='music',
                 channel=channel)
 

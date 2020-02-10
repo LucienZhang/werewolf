@@ -6,8 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>创建房间</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('werewolf_api.static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('werewolf_api.static', filename='css/werewolf_setup.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ url_for('werewolf_api.static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ url_for('werewolf_api.static', filename='css/werewolf_setup.css') }}">
 </head>
 
 <body>
@@ -18,7 +20,8 @@
                 <label for="victoryMode" class="col-sm-2 col-form-label">胜利模式</label>
                 <div class="col-sm-10">
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="victoryMode" id="killGroup" value="kill_group" checked="checked">
+                        <input class="form-check-input" type="radio" name="victoryMode" id="killGroup"
+                            value="kill_group" checked="checked">
                         <label class="form-check-label" for="killGroup">屠边</label>
                     </div>
                     <div class="form-check form-check-inline">
@@ -31,11 +34,13 @@
                 <label for="captainMode" class="col-sm-2 col-form-label">警长模式</label>
                 <div class="col-sm-10">
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="captainMode" id="with_captain" value="with_captain" checked="checked">
+                        <input class="form-check-input" type="radio" name="captainMode" id="with_captain"
+                            value="with_captain" checked="checked">
                         <label class="form-check-label" for="with_captain">有警长</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="captainMode" id="without_captain" value="without_captain">
+                        <input class="form-check-input" type="radio" name="captainMode" id="without_captain"
+                            value="without_captain">
                         <label class="form-check-label" for="without_captain">没有警长</label>
                     </div>
                 </div>
@@ -44,15 +49,18 @@
                 <label for="witchMode" class="col-sm-2 col-form-label">女巫模式</label>
                 <div class="col-sm-10">
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="witchMode" id="can_save_self" value="can_save_self" checked="checked">
+                        <input class="form-check-input" type="radio" name="witchMode" id="can_save_self"
+                            value="can_save_self">
                         <label class="form-check-label" for="can_save_self">全程可以自救</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="witchMode" id="first_night_only" value="first_night_only">
+                        <input class="form-check-input" type="radio" name="witchMode" id="first_night_only"
+                            value="first_night_only" checked="checked">
                         <label class="form-check-label" for="first_night_only">仅首夜可以自救</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="witchMode" id="cannot_save_self" value="cannot_save_self">
+                        <input class="form-check-input" type="radio" name="witchMode" id="cannot_save_self"
+                            value="cannot_save_self">
                         <label class="form-check-label" for="cannot_save_self">全程不可自救</label>
                     </div>
                 </div>
@@ -87,73 +95,90 @@
                 </select>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="white_wolf" name="single_roles" value="" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="white_wolf" name="single_roles" value=""
+                    disabled="disabled">
                 <label class="form-check-label" for="white_wolf">白狼王</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="raven" name="single_roles" value="raven" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="raven" name="single_roles" value="raven"
+                    disabled="disabled">
                 <label class="form-check-label" for="raven">乌鸦</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="pyromaniac" name="single_roles" value="pyromaniac" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="pyromaniac" name="single_roles" value="pyromaniac"
+                    disabled="disabled">
                 <label class="form-check-label" for="pyromaniac">火狼</label>
             </div>
             <h2>神民</h2>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="seer" name="single_roles" value="seer" checked="checked">
+                <input type="checkbox" class="form-check-input" id="seer" name="single_roles" value="seer"
+                    checked="checked">
                 <label class="form-check-label" for="seer">预言家</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="witch" name="single_roles" value="witch" checked="checked">
+                <input type="checkbox" class="form-check-input" id="witch" name="single_roles" value="witch"
+                    disabled="disabled">
                 <label class="form-check-label" for="witch">女巫</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="hunter" name="single_roles" value="hunter">
+                <input type="checkbox" class="form-check-input" id="hunter" name="single_roles" value="hunter"
+                    disabled="disabled">
                 <label class="form-check-label" for="hunter">猎人</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="savior" name="single_roles" value="savior">
+                <input type="checkbox" class="form-check-input" id="savior" name="single_roles" value="savior"
+                    disabled="disabled">
                 <label class="form-check-label" for="savior">守卫</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="idiot" name="single_roles" value="idiot">
+                <input type="checkbox" class="form-check-input" id="idiot" name="single_roles" value="idiot"
+                    disabled="disabled">
                 <label class="form-check-label" for="idiot">白痴</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="cupid" name="single_roles" value="cupid" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="cupid" name="single_roles" value="cupid"
+                    disabled="disabled">
                 <label class="form-check-label" for="cupid">丘比特</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="thief" name="single_roles" value="thief" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="thief" name="single_roles" value="thief"
+                    disabled="disabled">
                 <label class="form-check-label" for="thief">盗贼</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="ancient" name="single_roles" value="ancient" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="ancient" name="single_roles" value="ancient"
+                    disabled="disabled">
                 <label class="form-check-label" for="ancient">长老</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="scapegoat" name="single_roles" value="scapegoat" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="scapegoat" name="single_roles" value="scapegoat"
+                    disabled="disabled">
                 <label class="form-check-label" for="scapegoat">替罪羊</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="two_sisters" name="single_roles" value="two_sisters" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="two_sisters" name="single_roles" value="two_sisters"
+                    disabled="disabled">
                 <label class="form-check-label" for="two_sisters">两姐妹</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="three_brothers" name="single_roles" value="three_brothers" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="three_brothers" name="single_roles"
+                    value="three_brothers" disabled="disabled">
                 <label class="form-check-label" for="three_brothers">三兄弟</label>
             </div>
             <h2>其他角色</h2>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="piper" name="single_roles" value="piper" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="piper" name="single_roles" value="piper"
+                    disabled="disabled">
                 <label class="form-check-label" for="piper">吹笛者</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="little_girl" name="single_roles" value="little_girl" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="little_girl" name="single_roles" value="little_girl"
+                    disabled="disabled">
                 <label class="form-check-label" for="little_girl">小女孩</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="angel" name="single_roles" value="angel" disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="angel" name="single_roles" value="angel"
+                    disabled="disabled">
                 <label class="form-check-label" for="angel">天使</label>
             </div>
             <div class="button_row">
@@ -161,7 +186,8 @@
             </div>
         </form>
     </div>
-    <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ url_for('werewolf_api.static', filename='js/jquery-3.4.1.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/werewolf_setup.js') }}"></script>
     <!--     <script type="text/javascript" src="../static/js/jquery-3.4.1.min.js"></script>
     <script type="text/javascript" src="../static/js/bootstrap.min.js"></script> -->

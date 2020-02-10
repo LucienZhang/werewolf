@@ -102,6 +102,62 @@
         });
     };
 
+    skills.skill_wolf_kill = function () {
+        $("#skills").modal("hide");
+        tips.text("选择玩家落刀");
+        num_of_can = 1;
+        buttons.html('<button class="btn btn-warning skill-confirm">落刀</button>' + '<button class="btn btn-warning skill-cancel">空刀</button>');
+        buttons.children("button.skill-confirm").on("click", function () {
+            if (candidates.length !== num_of_can) {
+                show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
+                return;
+            }
+            reset_panel();
+            $.ajax({
+                url: "action?op=wolf_kill&target=" + candidates.shift().attr("pos"),
+                dataType: "json",
+                success: function (info) {
+                    if (info.suc !== true) {
+                        show_message(info.msg);
+                    }
+                }
+            });
+        });
+        buttons.children("button.skill-cancel").on("click", function () {
+            reset_panel();
+            $.ajax({
+                url: "action?op=wolf_kill&target=-1",
+                dataType: "json",
+                success: function (info) {
+                    if (info.suc !== true) {
+                        show_message(info.msg);
+                    }
+                }
+            });
+        });
+    };
+
+    skills.skill_discover = function () {
+        $("#skills").modal("hide");
+        tips.text("选择玩家查验");
+        num_of_can = 1;
+        buttons.html('<button class="btn btn-warning skill-confirm">查验</button>');
+        buttons.children("button.skill-confirm").on("click", function () {
+            if (candidates.length !== num_of_can) {
+                show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
+                return;
+            }
+            reset_panel();
+            $.ajax({
+                url: "action?op=discover&target=" + candidates.shift().attr("pos"),
+                dataType: "json",
+                success: function (info) {
+                    show_message(info.msg);
+                }
+            });
+        });
+    };
+
     window.skills = skills
 })(window);
 
@@ -208,8 +264,9 @@
                     });
                 }
                 );
+            } else {
+                $(".player > button").on("click", skills.select);
             }
-
         }
     });
 

@@ -190,27 +190,29 @@ class Role(object):
         return True, None
 
     def prepare(self, captain_mode):
-        self._prepare_skills(captain_mode)
-
         if self.role_type is GameEnum.ROLE_TYPE_SEER:
-            self.tags.append(GameEnum.GROUP_TYPE_GODS)
+            self.group_type = GameEnum.GROUP_TYPE_GODS
         elif self.role_type is GameEnum.ROLE_TYPE_WITCH:
             self.args = {'elixir': True, 'toxic': True}
-            self.tags.append(GameEnum.GROUP_TYPE_GODS)
+            self.group_type = GameEnum.GROUP_TYPE_GODS
         elif self.role_type is GameEnum.ROLE_TYPE_HUNTER:
             self.args = {'shootable': True}
-            self.tags.append(GameEnum.GROUP_TYPE_GODS)
+            self.group_type = GameEnum.GROUP_TYPE_GODS
         elif self.role_type is GameEnum.ROLE_TYPE_SAVIOR:
             self.args = {'guard': GameEnum.TARGET_NO_ONE}
-            self.tags.append(GameEnum.GROUP_TYPE_GODS)
+            self.group_type = GameEnum.GROUP_TYPE_GODS
         elif self.role_type is GameEnum.ROLE_TYPE_VILLAGER:
-            self.tags.append(GameEnum.GROUP_TYPE_VILLAGERS)
+            self.group_type = GameEnum.GROUP_TYPE_VILLAGERS
         elif self.role_type is GameEnum.ROLE_TYPE_NORMAL_WOLF:
-            self.tags.append(GameEnum.GROUP_TYPE_WOLVES)
+            self.group_type = GameEnum.GROUP_TYPE_WOLVES
+            self.tags.append(GameEnum.ROLE_TYPE_ALL_WOLF)
         elif self.role_type is GameEnum.ROLE_TYPE_IDIOT:
             self.args = {'exposed': False}
+            self.group_type = GameEnum.GROUP_TYPE_GODS
         else:
             raise TypeError(f'Cannot prepare for role type {self.role_type}')
+
+        self._prepare_skills(captain_mode)
 
     def _prepare_skills(self, captain_mode):
         if self.role_type is GameEnum.ROLE_TYPE_UNKNOWN:

@@ -48,9 +48,9 @@ def take_action() -> str:  # return json to user
                 voters = set(game.history['voter_votee'][0])
                 voted = set(game.history['vote_result'])
                 if len(voters) != len(voted):
-                    return response(False, f'以下玩家尚未投票：{",".join(list(sorted(voters-voted)))}')
+                    return response(False, f'以下玩家尚未投票：{",".join(map(str,list(sorted(voters-voted))))}')
             else:
-                if now not in [GameEnum.TURN_STEP_DEAL, GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_PK_TALK, GameEnum.TURN_STEP_PK_VOTE,
+                if now not in [GameEnum.TURN_STEP_DEAL, GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_ELECT, GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_PK_TALK, GameEnum.TURN_STEP_PK_VOTE,
                                GameEnum.TURN_STEP_CAPTAIN_PK_TALK, GameEnum.TURN_STEP_CAPTAIN_PK_VOTE, GameEnum.TURN_STEP_LAST_WORDS, GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_CAPTAIN_VOTE]:
                     return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             game.go_next_step()
@@ -114,22 +114,32 @@ def take_action() -> str:  # return json to user
             my_role.commit()
             return response(True)
     elif op == 'wolf_kill':
-        target = request.args.get('target')
+        target = int(request.args.get('target'))
         with Game.get_game_by_gid(me.gid, lock=True) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
             now = game.current_step()
             if now != GameEnum.ROLE_TYPE_ALL_WOLF or GameEnum.ROLE_TYPE_ALL_WOLF not in my_role.tags:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            if my_role.position not in history['wolf_kill'] or \
-                    history['wolf_kill'][my_role.position] != GameEnum.TARGET_NOT_ACTED:
-                return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            history['wolf_kill'][my_role.position] = target
-            if all([t != GameEnum.TARGET_NOT_ACTED for t in history['wolf_kill'].values()]):
+
+            if game.wolf_mode is GameEnum.WOLF_MODE_FIRST:
+                history['wolf_kill_decision'] = target
                 game.go_next_step()
+            else:
+                if my_role.position in history['wolf_kill'] and history['wolf_kill'][my_role.position] != GameEnum.TARGET_NOT_ACTED:
+                    return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
+                history['wolf_kill'][my_role.position] = target
+                attackable = game.get_attackable_wolf()
+                if len(attackable) == len(history['wolf_kill']):
+                    decision = set(history['wolf_kill'].values())
+                    if len(decision) == 1:
+                        history['wolf_kill_decision'] = decision.pop()
+                    else:
+                        history['wolf_kill_decision'] = -1
+                    game.go_next_step()
             return response(True)
     elif op == 'sit':
-        position = request.args.get('position')
+        position = int(request.args.get('position'))
         with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
             if game.status != GameEnum.GAME_STATUS_WAIT_TO_START:
                 return response(False, GameEnum('GAME_MESSAGE_ALREADY_STARTED').message)
@@ -144,20 +154,23 @@ def take_action() -> str:  # return json to user
                 {'seats': {str(role.position): role.name for role in game.roles if role.position > 0}}))
             return response(True)
     elif op == 'discover':
-        target = request.args.get('target')
+        target = int(request.args.get('target'))
         with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
             now = game.current_step()
             if now != GameEnum.ROLE_TYPE_SEER or my_role.role_type != GameEnum.ROLE_TYPE_SEER:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            if history['discover'] != GameEnum.TARGET_NOT_ACTED:
+            if history['discover'] != GameEnum.TARGET_NOT_ACTED.value:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             target_role = game.get_role_by_pos(target)
             if not target_role.alive:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             history['discover'] = target
-            return response(True, game.get_role_by_pos(target).group_type.message)
+            group = game.get_role_by_pos(target).group_type
+            group = "狼人" if group is GameEnum.GROUP_TYPE_WOLVES else "好人"
+            game.go_next_step()
+            return response(True, group)
     elif op == 'elixir':
         with Game.get_game_by_gid(me.gid) as game:
             history = game.history
@@ -169,14 +182,14 @@ def take_action() -> str:  # return json to user
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             if history['elixir'] or history['toxic'] != GameEnum.TARGET_NOT_ACTED:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
-            if history['wolf_kill_decision'] is GameEnum.TARGET_NO_ONE:
+            if history['wolf_kill_decision'] is GameEnum.TARGET_NO_ONE.value:
                 return response(False, GameEnum.GAME_MESSAGE_CANNOT_ACT.message)
             history['elixir'] = True
             my_role.args['elixir'] -= 1
             my_role.commit()
             return response(True)
     elif op == 'toxic':
-        target = request.args.get('target')
+        target = int(request.args.get('target'))
         with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
@@ -195,7 +208,7 @@ def take_action() -> str:  # return json to user
             my_role.commit()
             return response(True)
     elif op == 'guard':
-        target = request.args.get('target')
+        target = int(request.args.get('target'))
         with Game.get_game_by_gid(me.gid) as game:
             history = game.history
             my_role = game.get_role_by_uid(me.uid)
