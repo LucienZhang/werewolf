@@ -172,6 +172,8 @@ class Role(object):
 
     @staticmethod
     def get_role_by_uid(uid):
+        if uid < 0:
+            return None
         role_table = RoleTable.query.get(uid)
         if role_table is not None:
             skills = json.loads(role_table.skills, object_hook=json_hook)
