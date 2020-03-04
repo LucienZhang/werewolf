@@ -233,16 +233,16 @@
 
     uid_source.addEventListener('game_info', function (event) {
         let data = JSON.parse(event.data);
-        let show = data.show
+        let show = data.show;
         if (data.history) {
             let content = '';
             data.history.split('\n').forEach(element => {
-                content += '<p>' + element + '</p>'
+                content += '<p>' + element + '</p>';
             });
             if (show) {
                 show_message(content);
             }
-            history.html(history.html() + content)
+            history.html(history.html() + content);
         }
     }, false);
 
@@ -251,7 +251,7 @@
         type: "GET",
         dataType: "json",
         success: function (info) {
-            let seats = {}
+            let seats = {};
             info.game.roles.forEach(role => {
                 seats[role[1]] = role[2];
             });
