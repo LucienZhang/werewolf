@@ -6,19 +6,7 @@ from werewolf.utils.enums import GameEnum
 from copy import deepcopy
 
 
-class UserTable(db.Model):
-    __tablename__ = 'user'
-    # name 'id' is preserved!
-    uid = db.Column(db.Integer, primary_key=True,
-                    nullable=False, autoincrement=True)
-    username = db.Column(db.String(length=255),
-                         nullable=False, unique=True, index=True)
-    password = db.Column(db.String(length=255), nullable=False)
-    login_token = db.Column(db.String(length=255), index=True)
-    name = db.Column(db.String(length=255), nullable=False)
-    avatar = db.Column(db.Integer, nullable=False)
-    gid = db.Column(db.Integer, nullable=False)  # gid=-1 means not in game
-    ishost = db.Column(db.Boolean, nullable=False)
+
 
 
 class User(UserMixin):

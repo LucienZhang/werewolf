@@ -18,27 +18,7 @@ if typing.TYPE_CHECKING:
     from werewolf.game_module.user import User
 
 
-class GameTable(db.Model):
-    __tablename__ = 'game'
-    gid = db.Column(db.Integer, primary_key=True,
-                    nullable=False, autoincrement=True)
-    host_id = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.Integer, nullable=False)
-    victory_mode = db.Column(db.Integer, nullable=False)
-    captain_mode = db.Column(db.Integer, nullable=False)
-    witch_mode = db.Column(db.Integer, nullable=False)
-    wolf_mode = db.Column(db.Integer, nullable=False)
-    roles = db.Column(db.String(length=255), nullable=False)
-    end_time = db.Column(DATETIME(fsp=3), nullable=False)
-    last_modified = db.Column(db.TIMESTAMP(True), nullable=False)
-    # turn = db.Column(db.String(length=1023), nullable=False)
-    cards = db.Column(db.String(length=1023), nullable=False)
-    days = db.Column(db.Integer, nullable=False)
-    now_index = db.Column(db.Integer, nullable=False)
-    repeat = db.Column(db.Integer, nullable=False)
-    steps = db.Column(db.String(length=1023), nullable=False)
-    history = db.Column(db.String(length=1023), nullable=False)
-    captain_uid = db.Column(db.Integer, nullable=False)
+
 
 
 class Game(object):
