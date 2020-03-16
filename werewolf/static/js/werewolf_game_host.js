@@ -7,6 +7,9 @@
     let before_wait = 1000;
     let after_wait = 1000;
 
+
+    // load
+    // play
     function play() {
         playing = true;
         if (stop) {
@@ -71,6 +74,10 @@
     });
 
     $("#deal").on("click", function () {
+        back_audio.play();
+        back_audio.pause();
+        step_audio.play();
+        step_audio.pause();
         $.ajax({
             url: "action?op=deal",
             dataType: "json",

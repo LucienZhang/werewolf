@@ -3,16 +3,16 @@ import logging
 from flask import Flask, redirect, url_for
 from flask_sse import sse
 from werewolf.werewolf_module import werewolf_api
-from werewolf.login import init_login
+# from werewolf.login import init_login
 from werewolf.db import init_db
 from werewolf.config import config
-from werewolf.utils.scheduler import init_scheduler
+# from werewolf.utils.scheduler import init_scheduler
 
 
 def init_app(app):
-    init_login(app)
+    # init_login(app)
     init_db(app)
-    init_scheduler(app)
+    # init_scheduler(app)
     app.register_blueprint(sse, url_prefix='/stream')
     # todo: access control
     # def check_access():
@@ -51,3 +51,6 @@ def create_app(config_name=None):
         return redirect(url_for('werewolf_api.home'))
 
     return app
+
+
+# response.headers['X-Accel-Buffering'] = 'no'

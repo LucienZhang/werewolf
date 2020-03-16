@@ -5,32 +5,7 @@ from werewolf.utils.json_utils import ExtendedJSONEncoder, json_hook
 from copy import deepcopy
 
 
-class RoleTable(db.Model):
-    __tablename__ = 'role'
-    uid = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(length=255), nullable=False)
-    role_type = db.Column(db.Integer)
-    group_type = db.Column(db.Integer)
-    alive = db.Column(db.Boolean)
-    iscaptain = db.Column(db.Boolean)
-    voteable = db.Column(db.Boolean)
-    speakable = db.Column(db.Boolean)
-    position = db.Column(db.Integer)
-    skills = db.Column(db.String(length=255), nullable=False)
-    tags = db.Column(db.String(length=255), nullable=False)
-    args = db.Column(db.String(length=255), nullable=False)
 
-    def reset(self):
-        self.role_type = GameEnum.ROLE_TYPE_UNKNOWN.value
-        self.group_type = GameEnum.GROUP_TYPE_UNKNOWN.value
-        self.alive = True
-        self.iscaptain = False
-        self.voteable = True
-        self.speakable = True
-        self.position = -1
-        self.skills = '[]'
-        self.tags = '[]'
-        self.args = '{}'
 
 
 class Role(object):
