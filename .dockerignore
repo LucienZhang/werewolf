@@ -9,6 +9,7 @@ Dockerfile
 # Customized Ignore
 ########################
 secrets/
+.github
 
 
 # https://github.com/github/gitignore/blob/master/Global/Windows.gitignore
