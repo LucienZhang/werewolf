@@ -1,7 +1,7 @@
 import json
 
 from functools import singledispatch
-from werewolf.utils.enums import GameEnum, EnumMember
+from werewolf.utils.enums import GameEnum
 
 
 @singledispatch
@@ -9,9 +9,9 @@ def convert(o):
     raise TypeError('not special type')
 
 
-@convert.register(EnumMember)
+@convert.register(GameEnum)
 def _(o):
-    return {'__GameEnum__': o.name}
+    return {'__GameEnum__': o.value}
 
 
 class ExtendedJSONEncoder(json.JSONEncoder):
@@ -27,9 +27,3 @@ def json_hook(d):
         return GameEnum(d['__GameEnum__'])
     else:
         return d
-
-
-def response(success, message=None, **kwargs):
-    res = {'suc': success, 'msg': message}
-    res.update(kwargs)
-    return json.dumps(res)

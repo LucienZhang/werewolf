@@ -128,22 +128,7 @@ class Role(object):
     def args(self, args: dict):
         self._args = args
 
-    @staticmethod
-    def create_new_role(uid, name):
-        role_table = RoleTable.query.get(uid)
-        if role_table is None:
-            role_table = RoleTable(uid=uid, name=name, tags='[]', args='{}')
-            role_table.reset()
-        else:
-            role_table.name = name
-            role_table.reset()
-        db.session.add(role_table)
-        db.session.commit()
-        skills = json.loads(role_table.skills, object_hook=json_hook)
-        tags = json.loads(role_table.tags, object_hook=json_hook)
-        args = json.loads(role_table.args, object_hook=json_hook)
-        role = Role(role_table, skills=skills, tags=tags, args=args)
-        return role
+    
 
     @staticmethod
     def get_role_by_uid(uid):
