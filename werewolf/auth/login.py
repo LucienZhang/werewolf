@@ -1,13 +1,11 @@
 from flask import render_template, request, redirect, url_for, flash, Response
 from flask_login import LoginManager, current_user, login_user, logout_user
-from werewolf.game_module.user import User, UserTable
-from werewolf.game_module.game import Game
 from flask import current_app
-from werewolf.game_module.game import GameTable
 from datetime import datetime
 from hashlib import sha1
 from werewolf.db import db
 from werewolf.utils.enums import GameEnum
+from werewolf.db import User, Role
 
 
 def generate_login_token(username):
@@ -28,22 +26,23 @@ def init_login(app):
 
 def user_login() -> dict:
     username = request.form.get('username')
-    user = User.get_user_by_username(username)
-    if user and request.form['password'] == user.table.password:
-        user.id = user.table.login_token = generate_login_token(username)
-        user.commit()
+    user = User.query.filter_by(username=username).first()
+    if user and request.form['password'] == user.password:
+        user.id = user.login_token = generate_login_token(username)
+        db.session.add(user)
+        db.commit()
         login_user(user, remember=True)
         current_app.logger.info(f'User uid={user.uid} successfully logged in')
         return GameEnum.OK.digest()
     else:
-        current_app.logger.info(f'User uid={user.uid} login failed')
+        current_app.logger.info(f'User username={username} login failed')
         return GameEnum.GAME_MESSAGE_WRONG_PASSWORD.digest()
 
 
 def user_logout() -> dict:
     uid = current_user.uid
-    current_user.table.login_token = ""
-    db.session.add(current_user.table)
+    current_user.login_token = ""
+    db.session.add(current_user)
     db.session.commit()
     logout_user()
     current_app.logger.info(f'User uid={uid} successfully logged out')
@@ -51,10 +50,10 @@ def user_logout() -> dict:
 
 
 def user_register() -> dict:
-    existing_user = UserTable.query.filter_by(username=request.form['username']).first()
-    if existing_user:
+    user = User.create_new_user(username=request.form['username'], password=request.form['password'],
+                                nickname=request.form['nickname'], avatar=1)  # request.form['avatar'])
+    if not user:
         return GameEnum.GAME_MESSAGE_USER_EXISTS.digest()
     else:
-        user = User.create_new_user(username=request.form['username'], password=request.form['password'],
-                                    nickname=request.form['nickname'], avatar=1)  # request.form['avatar'])
+        Role.create_new_role(user.uid, user.nickname)
         return GameEnum.OK.digest()

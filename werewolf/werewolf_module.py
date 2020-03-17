@@ -112,6 +112,7 @@ def register():
     if request.method == 'GET':
         return render_template('register.html')
     else:
+        res = user_register()
         if (msg:=res['msg']) != 'OK':
             flash(msg, 'error')
             return render_template('register.html')
