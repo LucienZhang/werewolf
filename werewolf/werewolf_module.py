@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for
-# from flask_login import current_user, login_required
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_login import current_user, login_required
 # from flask_sse import sse
 # from werewolf.game_engine.game import Game
 # import json
 
 # from werewolf.game_engine.role import Role
-# from werewolf.login import do_login, do_logout, do_register
+from werewolf.auth.login import user_login, user_logout, user_register
 # from werewolf.utils.enums import GameEnum
 # from werewolf.utils.json_utils import ExtendedJSONEncoder
 # from werewolf.game_engine import game_engine
@@ -88,20 +88,35 @@ def home():
 #     return game_engine.take_action()
 
 
-# @werewolf_api.route('/login', methods=['GET', 'POST'])
-# def login():
-#     return do_login()
+@werewolf_api.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    else:
+        res = user_login()
+        if (msg:=res['msg']) != 'OK':
+            flash(msg, 'error')
+            return render_template('login.html')
+        else:
+            return redirect(request.args.get('next') or url_for('werewolf_api.home'))
 
 
-# @werewolf_api.route('/logout')
-# @login_required
-# def logout():
-#     return do_logout()
+@werewolf_api.route('/logout')
+@login_required
+def logout():
+    return jsonify(user_logout())
 
 
-# @werewolf_api.route('/register', methods=['GET', 'POST'])
-# def register():
-#     return do_register()
+@werewolf_api.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html')
+    else:
+        if (msg:=res['msg']) != 'OK':
+            flash(msg, 'error')
+            return render_template('register.html')
+        else:
+            return render_template('register_success.html')
 
 
 # @werewolf_api.route('/join')

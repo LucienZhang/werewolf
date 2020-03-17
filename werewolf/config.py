@@ -1,6 +1,4 @@
 import os
-from pathlib import Path
-test_dir = Path(__file__).resolve().parent
 
 
 class Config:
@@ -10,7 +8,7 @@ class Config:
 class TestConfig(Config):
     DEBUG = True
     SECRET_KEY = '123456'
-    SQLALCHEMY_DATABASE_URI = r'sqlite:///' + str(test_dir / 'test_sqlite.db')
+    SQLALCHEMY_DATABASE_URI = r'sqlite:///:memory:'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     LOGIN_SECRET_KEY = '123456'

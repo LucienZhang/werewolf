@@ -1,2 +1,5 @@
 # werewolf
-werewolf game online judge
+## Status
+
+[![](https://github.com/LucienZhang/werewolf/workflows/CI/badge.svg)](https://github.com/LucienZhang/werewolf)
+
