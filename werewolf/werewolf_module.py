@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, abort
 from flask_login import current_user, login_required
+import functools
 # from flask_sse import sse
 # from werewolf.game_engine.game import Game
 # import json
@@ -66,12 +67,6 @@ def game():
                                type(current_game.roles)) + '\n<br />\n' + str(type(current_game.steps))))
 
 
-# @werewolf_api.route('/action')
-# @login_required
-# def action():
-#     return game_engine.take_action()
-
-
 @werewolf_api.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
@@ -103,15 +98,11 @@ def register():
         else:
             return render_template('register_success.html')
 
-# @werewolf_api.route('/api/<string:cmd>', methods=['GET'])
-# @login_required
-# def api(cmd):
-#     res = GameEngine.perform('setup')
-#         if (msg:=res['msg']) != 'OK':
-#             flash(msg, 'error')
-#             return render_template("werewolf_setup.html")
-#         else:
-#             return redirect(url_for('werewolf_api.join', gid=res['gid']))
+
+@werewolf_api.route('/api/<string:cmd>', methods=['GET'])
+@login_required
+def api(cmd):
+    return jsonify(GameEngine.perform(cmd))
 
 
 @werewolf_api.route('/join')
@@ -128,18 +119,25 @@ def join():
         return redirect(url_for('werewolf_api.game'))
 
 
-# @werewolf_api.route('/quit')
-# @login_required
-# def quit_game():
-#     success, e = current_user.quit_game()
-#     if success:
-#         return redirect(url_for('werewolf_api.home'))
-#     else:
-#         if e is GameEnum.GAME_MESSAGE_NOT_IN_GAME:
-#             return redirect(url_for('werewolf_api.home'))
-#         else:
-#             return e.message
+@werewolf_api.route('/quit')
+@login_required
+def quit_game():
+    res = GameEngine.perform('quit')
+    if (msg:=res['msg']) != 'OK':
+        flash(msg, 'error')
+        return redirect(url_for('werewolf_api.home'))
+    else:
+        return redirect(url_for('werewolf_api.home'))
 
+
+def debug_api(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not current_app.config["DEBUG"]:
+            abort(403)
+        else:
+            return func(*args, **kwargs)
+    return wrapper
 
 # @werewolf_api.route('/get_game_info')
 # @login_required

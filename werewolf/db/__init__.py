@@ -45,6 +45,7 @@ class EnumType(TypeDecorator):
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
+    __table_args__ = {'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8', 'mysql_collate': 'utf8_general_ci'}
     # name 'id' is preserved!
     uid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(length=255),
@@ -55,9 +56,20 @@ class User(db.Model, UserMixin):
     avatar = db.Column(db.Integer, nullable=False)
     gid = db.Column(db.Integer, nullable=False)  # gid=-1 means not in game
 
+    # def to_json(self) -> dict:
+    #     return {'uid': self.uid,
+    #             'username': self.table.username,
+    #             'password': self.table.password,
+    #             'login_token': self.table.login_token,
+    #             'name': self.name,
+    #             'avatar': self.avatar,
+    #             'gid': self.gid,
+    #             'ishost': self.ishost}
+
 
 class Game(db.Model):
     __tablename__ = 'games'
+    __table_args__ = {'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8', 'mysql_collate': 'utf8_general_ci'}
     gid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     host_uid = db.Column(db.Integer, nullable=False)
     status = db.Column(EnumType, nullable=False)
@@ -88,11 +100,11 @@ class Game(db.Model):
         if GameEnum.ROLE_TYPE_THIEF in self.cards:
             cnt -= 2
         return cnt
-    
 
 
 class Role(db.Model):
     __tablename__ = 'roles'
+    __table_args__ = {'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8', 'mysql_collate': 'utf8_general_ci'}
     uid = db.Column(db.Integer, primary_key=True)
     nickname = db.Column(db.String(length=255), nullable=False)
     role_type = db.Column(EnumType, nullable=False)

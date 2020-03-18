@@ -60,6 +60,23 @@ def join_game() -> dict:
         return GameEnum.OK.digest()
 
 
+def quit_game() -> dict:
+    gid = current_user.gid
+    with Game.query.with_for_update().get(gid) as game:
+        if not game or datetime.utcnow() > game.end_time:
+            return GameEnum.GAME_MESSAGE_NOT_IN_GAME.digest()
+        if game.status is not GameEnum.GAME_STATUS_WAIT_TO_START:
+            pass  # todo easy to quit??
+        if current_user.uid not in game.players:
+            return GameEnum.GAME_MESSAGE_NOT_IN_GAME.digest()
+        game.players.remove(current_user.uid)
+        current_user.gid = -1
+        current_role = Role.query.get(current_user.uid)
+        current_role.reset()
+        db.session.commit()
+        return GameEnum.OK.digest()
+
+
 def _init_game(game):
     game.status = GameEnum.GAME_STATUS_WAIT_TO_START
     game.end_time = datetime.utcnow() + timedelta(days=1)
