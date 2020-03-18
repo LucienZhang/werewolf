@@ -6,6 +6,7 @@ from flask_login import current_user, login_required
 
 # from werewolf.game_engine.role import Role
 from werewolf.auth.login import user_login, user_logout, user_register
+from werewolf.game_engine import GameEngine
 # from werewolf.utils.enums import GameEnum
 # from werewolf.utils.json_utils import ExtendedJSONEncoder
 # from werewolf.game_engine import game_engine
@@ -21,65 +22,48 @@ def home():
     return render_template("werewolf_home.html")
 
 
-# @werewolf_api.route('/setup', methods=['GET', 'POST'])
-# @login_required
-# def setup():
-#     if request.method == 'GET':
-#         # TODO: ask to quick existing game if user is in a game!
-#         return render_template("werewolf_setup.html")
-#     else:
-#         victory_mode = GameEnum('VICTORY_MODE_{}'.format(
-#             request.form['victoryMode'].upper()))
-#         captain_mode = GameEnum('CAPTAIN_MODE_{}'.format(
-#             request.form['captainMode'].upper()))
-#         witch_mode = GameEnum('WITCH_MODE_{}'.format(
-#             request.form['witchMode'].upper()))
-#         villager_cnt = int(request.form['villager'])
-#         normal_wolf_cnt = int(request.form['normal_wolf'])
-#         cards = [GameEnum.ROLE_TYPE_VILLAGER] * villager_cnt + \
-#             [GameEnum.ROLE_TYPE_NORMAL_WOLF] * normal_wolf_cnt
-
-#         single_roles = request.form.getlist('single_roles')
-#         for r in single_roles:
-#             cards.append(GameEnum(f'ROLE_TYPE_{r.upper()}'))
-
-#         new_game = Game.create_new_game(host=current_user, victory_mode=victory_mode, cards=cards,
-#                                         captain_mode=captain_mode, witch_mode=witch_mode)
-
-#         # current_user.game = new_game
-#         # current_user.commit()
-
-#         return redirect(url_for('werewolf_api.join', gid=new_game.gid))
+@werewolf_api.route('/setup', methods=['GET', 'POST'])
+@login_required
+def setup():
+    if request.method == 'GET':
+        # TODO: ask to quick existing game if user is in a game!
+        return render_template("werewolf_setup.html")
+    else:
+        res = GameEngine.perform('setup')
+        if (msg:= res['msg']) != 'OK':
+            flash(msg, 'error')
+            return render_template("werewolf_setup.html")
+        else:
+            return redirect(url_for('werewolf_api.join', gid=res['gid']))
 
 
-# @werewolf_api.route('/game', methods=['GET'])
-# @login_required
-# def game():
-#     current_setting = []
-#     current_game = Game.get_game_by_gid(current_user.gid, load_roles=True)
-#     current_setting.append('游戏模式为：' + current_game.victory_mode.message)
-#     current_setting.append('警长模式为：' + current_game.captain_mode.message)
-#     current_setting.append('女巫模式为：' + current_game.witch_mode.message)
-#     current_setting.append('游戏总人数为：' + str(current_game.get_seat_num()) + '人')
-#     for role, cnt in Counter(current_game.cards).items():
-#         current_setting.append(role.message + ' = ' + str(cnt))
+@werewolf_api.route('/game', methods=['GET'])
+@login_required
+def game():
+    current_setting = []
+    current_game = Game.query.get(current_user.gid)
+    current_setting.append('游戏模式为：' + current_game.victory_mode.message)
+    current_setting.append('警长模式为：' + current_game.captain_mode.message)
+    current_setting.append('女巫模式为：' + current_game.witch_mode.message)
+    current_setting.append('游戏总人数为：' + str(current_game.get_seat_num()) + '人')
+    for role, cnt in Counter(current_game.cards).items():
+        current_setting.append(role.message + ' = ' + str(cnt))
 
-#     current_role = Role.get_role_by_uid(current_user.uid)
-#     skills = []
-#     if current_role:
-#         skills = current_role.skills
-#     return render_template("werewolf_game.html", ishost=current_user.ishost, name=current_user.name,
-#                            gid=current_game.gid,
-#                            uid=current_user.uid,
-#                            current_setting=current_setting,
-#                            role_name=current_role.role_type.message,
-#                            role_type=current_role.role_type.name.lower().replace('role_type_', '', 1),
-#                            seat_cnt=current_game.get_seat_num(),
-#                            days=current_game.days,
-#                            game_status=current_game.status,
-#                            skills=skills,
-#                            dbtxt=(str(current_game.roles) + str(
-#                                type(current_game.roles)) + '\n<br />\n' + str(type(current_game.steps))))
+    current_role = Role.query.get(current_user.uid)
+    return render_template("werewolf_game.html",
+                           ishost=current_user.uid == current_game.host_uid,
+                           nickname=current_user.nickname,
+                           gid=current_game.gid,
+                           uid=current_user.uid,
+                           current_setting=current_setting,
+                           role_name=current_role.role_type.message,
+                           role_type=current_role.role_type.name.lower().replace('role_type_', '', 1),
+                           seat_cnt=current_game.get_seats_cnt(),
+                           days=current_game.days,
+                           game_status=current_game.status,
+                           skills=current_role.skills,
+                           dbtxt=(str(current_game.roles) + str(
+                               type(current_game.roles)) + '\n<br />\n' + str(type(current_game.steps))))
 
 
 # @werewolf_api.route('/action')
@@ -119,19 +103,29 @@ def register():
         else:
             return render_template('register_success.html')
 
-
-# @werewolf_api.route('/join')
+# @werewolf_api.route('/api/<string:cmd>', methods=['GET'])
 # @login_required
-# def join():
-#     gid = int(request.args.get('gid'))
-#     success, e = current_user.join_game(gid)
-#     if success:
-#         return redirect(url_for('werewolf_api.game'))
-#     else:
-#         if e is GameEnum.GAME_MESSAGE_ALREADY_IN:
-#             return redirect(url_for('werewolf_api.game'))
+# def api(cmd):
+#     res = GameEngine.perform('setup')
+#         if (msg:=res['msg']) != 'OK':
+#             flash(msg, 'error')
+#             return render_template("werewolf_setup.html")
 #         else:
-#             return e.message
+#             return redirect(url_for('werewolf_api.join', gid=res['gid']))
+
+
+@werewolf_api.route('/join')
+@login_required
+def join():
+    res = GameEngine.perform('join')
+    if (msg:=res['msg']) != 'OK':
+        if msg == GameEngine.GAME_MESSAGE_ALREADY_IN.label:
+            return redirect(url_for('werewolf_api.game'))
+        else:
+            flash(msg, 'error')
+            return redirect(url_for('werewolf_api.home'))
+    else:
+        return redirect(url_for('werewolf_api.game'))
 
 
 # @werewolf_api.route('/quit')

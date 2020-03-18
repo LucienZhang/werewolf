@@ -59,69 +59,10 @@ class User(UserMixin):
     def gid(self, gid: int):
         self.table.gid = gid
 
-    @staticmethod
-    def create_new_user(username, password, name, avatar):
-        if UserTable.query.filter_by(username=username).first() is not None:
-            # username exists
-            # todo: return view
-            return None
-        user_table = UserTable(username=username, password=password,
-                               name=name, avatar=avatar, gid=-1, ishost=False)
-        db.session.add(user_table)
-        db.session.commit()
-        # Role.create_new_role(user_table.uid) todo :does not need
-        user = User(table=user_table)
-        return user
 
-    @staticmethod
-    def get_user_by_uid(uid):
-        user_table = UserTable.query.get(uid)
-        if user_table is not None:
-            return User(table=user_table)
-        else:
-            return None
 
-    @staticmethod
-    def get_user_by_token(login_token):
-        if not login_token:
-            return None
-        user_table = UserTable.query.filter_by(login_token=login_token).first()
-        if user_table is not None:
-            return User(table=user_table)
-        else:
-            return None
 
-    @staticmethod
-    def get_user_by_username(username):
-        if not username:
-            return None
-        user_table = UserTable.query.filter_by(username=username).first()
-        if user_table is not None:
-            return User(table=user_table)
-        else:
-            return None
-
-    def join_game(self, gid: int) -> (bool, GameEnum):
-        game = Game.get_game_by_gid(gid, lock=True, load_roles=True)
-        if game is None:
-            return False, GameEnum.GAME_MESSAGE_GAME_NOT_EXIST
-        if len(game.roles) >= game.get_seat_num():
-            db.session.commit()
-            return False, GameEnum.GAME_MESSAGE_GAME_FULL
-        if game.get_role_by_uid(self.uid) is not None:
-            db.session.commit()
-            return False, GameEnum.GAME_MESSAGE_ALREADY_IN
-
-        # fine to join the game
-        new_role = Role.create_new_role(self.uid, self.name)
-        game.roles.append(new_role)
-        game.commit()
-        self.gid = game.gid
-        self.ishost = self.uid == game.host_id
-        self.commit()
-        new_role.position = -1  # not sit
-        new_role.commit()
-        return True, None
+    
 
     def quit_game(self) -> (bool, GameEnum):
         game = Game.get_game_by_gid(self.gid, load_roles=True)

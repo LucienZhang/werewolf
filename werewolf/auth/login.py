@@ -6,6 +6,7 @@ from hashlib import sha1
 from werewolf.db import db
 from werewolf.utils.enums import GameEnum
 from werewolf.db import User, Role
+from sqlalchemy.exc import IntegrityError
 
 
 def generate_login_token(username):
@@ -21,7 +22,9 @@ def init_login(app):
 
     @login_manager.user_loader
     def load_user(login_token):
-        return User.get_user_by_token(login_token)
+        if not login_token:
+            return None
+        return User.query.filter_by(login_token=login_token).first()
 
 
 def user_login() -> dict:
@@ -30,7 +33,7 @@ def user_login() -> dict:
     if user and request.form['password'] == user.password:
         user.id = user.login_token = generate_login_token(username)
         db.session.add(user)
-        db.commit()
+        db.session.commit()
         login_user(user, remember=True)
         current_app.logger.info(f'User uid={user.uid} successfully logged in')
         return GameEnum.OK.digest()
@@ -50,10 +53,15 @@ def user_logout() -> dict:
 
 
 def user_register() -> dict:
-    user = User.create_new_user(username=request.form['username'], password=request.form['password'],
-                                nickname=request.form['nickname'], avatar=1)  # request.form['avatar'])
-    if not user:
+    new_user = User(username=request.form['username'], password=request.form['password'], login_token='', nickname=request.form['nickname'], avatar=1, gid=-1)
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+    except IntegrityError:
         return GameEnum.GAME_MESSAGE_USER_EXISTS.digest()
-    else:
-        Role.create_new_role(user.uid, user.nickname)
-        return GameEnum.OK.digest()
+
+    new_role = Role(uid=new_user.uid, nickname=new_user.nickname)
+    new_role.reset()
+    db.session.add(new_role)
+    db.session.commit()
+    return GameEnum.OK.digest()
