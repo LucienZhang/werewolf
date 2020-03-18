@@ -51,7 +51,7 @@ class Game(object):
 
     def to_json(self) -> dict:
         return {'gid': self.gid,
-                'host_id': self.host_id,
+                'host_uid': self.host_uid,
                 'status': [self.status.name, self.status.message],
                 'victory_mode': self.victory_mode.name,
                 'captain_mode': self.captain_mode.name,
@@ -165,33 +165,7 @@ class Game(object):
     def captain_uid(self, captain_uid: int):
         self.table.captain_uid = captain_uid
 
-    @staticmethod
-    def create_new_game(host: User, victory_mode: GameEnum, cards: list, captain_mode: GameEnum,
-                        witch_mode: GameEnum):
-        steps = Game._get_init_steps(cards, captain_mode)
-        game_table = GameTable(host_id=host.uid,
-                               status=GameEnum.GAME_STATUS_WAIT_TO_START.value,
-                               victory_mode=victory_mode.value,
-                               roles='[]',
-                               end_time=datetime.utcnow() + timedelta(days=1),
-                               cards=json.dumps(
-                                   cards, cls=ExtendedJSONEncoder),
-                               captain_mode=captain_mode.value,
-                               witch_mode=witch_mode.value,
-                               wolf_mode=Game._get_wolf_mode(cards).value,
-                               days=0,
-                               now_index=-1,
-                               repeat=0,
-                               steps=json.dumps(
-                                   steps, cls=ExtendedJSONEncoder),
-                               history='{}',
-                               captain_uid=-1)
-        db.session.add(game_table)
-        db.session.commit()
-        game = Game(table=game_table, roles=None, steps=steps, cards=cards,
-                    last_modified=game_table.last_modified, history=None, roles_loaded=True)
-        return game
-
+    
     # @staticmethod
     # def create_game_from_table(game_table):
     #     if game_table and datetime.utcnow() < game_table.end_time:
@@ -290,11 +264,7 @@ class Game(object):
         db.session.commit()
         return True, None
 
-    def get_seat_num(self):
-        cnt = len(self.cards)
-        if GameEnum.ROLE_TYPE_THIEF in self.cards:
-            cnt -= 2
-        return cnt
+    
 
     def get_role_by_pos(self, pos):
         pos = int(pos)
@@ -324,50 +294,11 @@ class Game(object):
             else:
                 return (None, None) if with_index else None
 
-    @staticmethod
-    def _get_init_steps(cards, captain_mode) -> dict:
-        return {
-            'global_steps': 0,
-            'step_list': Game._reset_step_list(1, cards, captain_mode)
-        }
+    
 
-    @staticmethod
-    def _get_wolf_mode(cards):
-        # WOLF_MODE_FIRST if there is no thrid party, else WOLF_MODE_ALL
-        if GameEnum.ROLE_TYPE_CUPID in cards:
-            return GameEnum.WOLF_MODE_ALL
+    
 
-        return GameEnum.WOLF_MODE_FIRST
-
-    @staticmethod
-    def _reset_step_list(day, cards, captain_mode) -> list:
-        step_list = []
-        step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
-        if day == 1 and GameEnum.ROLE_TYPE_THIEF in cards:
-            pass
-        if day == 1 and GameEnum.ROLE_TYPE_CUPID in cards:
-            pass
-        # TODO: 恋人互相确认身份
-        step_list.append(GameEnum.ROLE_TYPE_ALL_WOLF)
-        if GameEnum.ROLE_TYPE_SEER in cards:
-            step_list.append(GameEnum.ROLE_TYPE_SEER)
-        if GameEnum.ROLE_TYPE_WITCH in cards:
-            step_list.append(GameEnum.ROLE_TYPE_WITCH)
-        if GameEnum.ROLE_TYPE_SAVIOR in cards:
-            step_list.append(GameEnum.ROLE_TYPE_SAVIOR)
-        step_list.append(GameEnum.TURN_STEP_TURN_DAY)
-        if day == 1 and captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
-            step_list.append(GameEnum.TURN_STEP_ELECT)
-            step_list.append(GameEnum.TURN_STEP_ELECT_TALK)
-            step_list.append(GameEnum.TURN_STEP_CAPTAIN_VOTE)
-        step_list.append(GameEnum.TURN_STEP_ANNOUNCE)
-        step_list.append(GameEnum.TURN_STEP_TALK)
-        step_list.append(GameEnum.TURN_STEP_VOTE)
-        step_list.append(GameEnum.TURN_STEP_LAST_WORDS)
-
-        # step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
-
-        return step_list
+    
 
     def _process_vote(self, vote_type):
         # pos: -1=no one, -2=not acted

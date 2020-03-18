@@ -2,14 +2,10 @@ import sys
 from pathlib import Path
 import pytest
 import json
+from flask import request
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from tests.env import init_table, app, db
-
-# @pytest.fixture(scope='function')
-# def account_client():
-#     with app.test_client() as account_client:
-#         yield account_client
+from tests.env import app, db
 
 
 def login(client, username, password):
@@ -24,7 +20,7 @@ def logout(client):
 
 
 def register(client, username, password, nickname):
-    return client.post('/werewolf/login', data=dict(
+    return client.post('/werewolf/register', data=dict(
         username=username,
         password=password,
         nickname=nickname
@@ -32,13 +28,39 @@ def register(client, username, password, nickname):
 
 
 @pytest.mark.login
-@pytest.mark.usefixtures('init_table')
-def test_register_login_logout():
+def test_register_login_logout(app):  # noqa
     client = app.test_client()
-    assert register(client, 'username', 'password', 'nickname').status_code == 200
-    assert login(client, 'username', 'password').status_code == 200
-    assert logout(client).status_code == 200
+    assert register(client, 'username-login', 'password', 'nickname').status_code == 200
+    assert login(client, 'username-login', 'password').status_code == 200
+    rv = logout(client)
+    assert rv.status_code == 200
+    assert rv.is_json
+    assert rv.get_json() == {'msg': 'OK'}
 
+
+def logged_client(app):  # noqa
+    with app.test_client() as c:
+        yield c
+
+
+def prepare_player(app, username, password, nickname):  # noqa
+    client = next(logged_client(app))
+    register(client, username, password, nickname)
+    login(client, username, password)
+    return client
+
+
+def get_players(app, num):  # noqa
+    players = []
+    for i in range(num):
+        players.append(prepare_player(app, f'test{i}', f'test{i}', f'test{i}'))
+    return players
+
+
+def test_seer_witch_hunter(app):  # noqa
+    players = get_players(app, 6)
+    for p in players:
+        assert logout(p).status_code == 200
 
 # class Player(object):
 #     def __init__(self, username, password):
