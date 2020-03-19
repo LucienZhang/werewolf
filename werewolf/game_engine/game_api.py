@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 import json
+import random
 from flask import request
 from flask_login import current_user
 from werewolf.database import db, User, Game, Role
 from werewolf.utils.enums import GameEnum
 from werewolf.utils.json_utils import json_hook, ExtendedJSONEncoder
+from werewolf.utils.publisher import publish_info
 
 
 def setup_game() -> dict:
@@ -55,6 +57,7 @@ def join_game() -> dict:
         game.players.append(current_user.uid)
         current_user.gid = gid
         current_role = Role.query.get(current_user.uid)
+        current_role.gid = gid
         current_role.reset()
         db.session.commit()
         return GameEnum.OK.digest()
@@ -72,9 +75,58 @@ def quit_game() -> dict:
         game.players.remove(current_user.uid)
         current_user.gid = -1
         current_role = Role.query.get(current_user.uid)
+        current_role.gid = -1
         current_role.reset()
         db.session.commit()
         return GameEnum.OK.digest()
+
+
+def deal() -> dict:
+    with Game.query.with_for_update().get(current_user.gid) as game:
+        if not game or datetime.utcnow() > game.end_time:
+            return GameEnum.GAME_MESSAGE_CANNOT_START.digest()
+        if game.status is not GameEnum.GAME_STATUS_WAIT_TO_START:
+            return GameEnum.GAME_MESSAGE_CANNOT_START.digest()
+        players_cnt = len(game.players)
+        if players_cnt != game.get_seats_cnt():
+            return GameEnum.GAME_MESSAGE_CANNOT_START.digest()
+        players = Role.query.filter(Role.gid == game.gid).limit(players_cnt).all()
+        if len(players) != players_cnt:
+            return GameEnum.GAME_MESSAGE_CANNOT_START.digest()
+        for p in players:
+            if p.uid not in game.players:
+                return GameEnum.GAME_MESSAGE_CANNOT_START.digest()
+        if set([p.position for p in players]) != set(range(1, players_cnt + 1)):
+            return GameEnum.GAME_MESSAGE_CANNOT_START.digest()
+
+        # fine to deal
+        game.status = GameEnum.GAME_STATUS_READY
+        players.sort(key=lambda p: p.position)
+        game.players = [p.uid for p in players]
+        cards = game.cards.copy()
+        random.shuffle(cards)
+        for p, c in zip(players, cards):
+            p.role_type = c
+            p.prepare(game.captain_mode)
+        publish_info(game.gid, json.dumps({'cards': True}))
+        return GameEnum.OK.digest()
+
+
+def get_game_info() -> dict:
+    game = Game.query.get(current_user.gid)
+    if not game:
+        return GameEnum.GAME_MESSAGE_NOT_IN_GAME.digest()
+    all_players = Role.query.filter(Role.gid == game.gid).limit(len(game.players)).all()
+    role = Role.query.get(current_user.uid)
+    return GameEnum.OK.digest(
+        game={
+            'players': {p.position: [p.nickname, p.avatar] for p in all_players},
+            'status': [game.status.name, game.status.label],
+        },
+        role={
+            'role_type': role.role_type.label,
+            'skills': [sk.label for sk in role.skills],
+        })
 
 
 def _init_game(game):
@@ -82,7 +134,7 @@ def _init_game(game):
     game.end_time = datetime.utcnow() + timedelta(days=1)
     game.days = 0
     game.now_index = -1
-    step_cnt = 0
+    game.step_cnt = 0
     game.steps = []
     game.history = {}
     game.captain_uid = -1

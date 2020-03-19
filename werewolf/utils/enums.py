@@ -120,4 +120,7 @@ class GameEnum(LabelledEnum):
     WOLF_MODE_FIRST = (1000, '第一狼刀有效')
     WOLF_MODE_ALL = (1001, '所有狼刀相同有效')
 
+    # 1100
+    TAG_ATTACKABLE_WOLF = (1100, '带刀狼')
+
     OK = (9999, 'OK')

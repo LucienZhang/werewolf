@@ -53,14 +53,16 @@ def user_logout() -> dict:
 
 
 def user_register() -> dict:
-    new_user = User(username=request.form['username'], password=request.form['password'], login_token='', nickname=request.form['nickname'], avatar=1, gid=-1)
+    avatar = 1
+    new_user = User(username=request.form['username'], password=request.form['password'], login_token='', nickname=request.form['nickname'], avatar=avatar, gid=-1)
     try:
         db.session.add(new_user)
         db.session.commit()
     except IntegrityError:
+        db.session.rollback()
         return GameEnum.GAME_MESSAGE_USER_EXISTS.digest()
 
-    new_role = Role(uid=new_user.uid, nickname=new_user.nickname)
+    new_role = Role(uid=new_user.uid, nickname=new_user.nickname, avatar=avatar, gid=-1)
     new_role.reset()
     db.session.add(new_role)
     db.session.commit()
