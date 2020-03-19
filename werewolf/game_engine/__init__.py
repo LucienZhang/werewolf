@@ -1,4 +1,4 @@
-from .game_api import join_game, setup_game, quit_game, deal, get_game_info
+from .game_api import join_game, setup_game, quit_game, deal, get_game_info, sit
 
 
 class GameEngine(object):
@@ -8,6 +8,7 @@ class GameEngine(object):
         'quit': quit_game,
         'deal': deal,
         'get_game_info': get_game_info,
+        'sit': sit,
     }
 
     @staticmethod

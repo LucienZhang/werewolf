@@ -129,6 +129,23 @@ def get_game_info() -> dict:
         })
 
 
+def sit()->dict:
+    position = int(request.args.get('position'))
+    game = Game.query.get(current_user.gid)
+    if game.status is not GameEnum.GAME_STATUS_WAIT_TO_START:
+        return GameEnum.GAME_MESSAGE_ALREADY_STARTED.digest()
+    my_role = Role.query.get(current_user.uid)
+    my_role.position = position
+    db.session.commit()
+    all_players = Role.query.filter(Role.gid == game.gid).limit(len(game.players)).all()
+    publish_info(game.gid, json.dumps(
+        GameEnum.OK.digest(
+            seats={p.position: [p.nickname, p.avatar] for p in all_players},
+        )
+    ))
+    return GameEnum.OK.digest()
+
+
 def _init_game(game):
     game.status = GameEnum.GAME_STATUS_WAIT_TO_START
     game.end_time = datetime.utcnow() + timedelta(days=1)

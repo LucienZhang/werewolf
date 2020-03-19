@@ -16,27 +16,27 @@ def take_action() -> str:  # return json to user
     # /action?op=see&target=1
     me = current_user
     op = request.args.get('op')
-    if op == 'deal':
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
-            if game.status is not GameEnum.GAME_STATUS_WAIT_TO_START:
-                return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
-            positions = set()
-            for r in game.roles:
-                positions.add(r.position)
-            if len(positions) != game.get_seat_num():
-                return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
+    # if op == 'deal':
+    #     with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+    #         if game.status is not GameEnum.GAME_STATUS_WAIT_TO_START:
+    #             return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
+    #         positions = set()
+    #         for r in game.roles:
+    #             positions.add(r.position)
+    #         if len(positions) != game.get_seat_num():
+    #             return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
 
-            game.status = GameEnum.GAME_STATUS_READY
-            game.table.end_time = datetime.utcnow() + timedelta(days=1)
-            game.roles.sort(key=lambda r: r.position)
-            cards = game.cards.copy()
-            random.shuffle(cards)
-            for r, c in zip(game.roles, cards):
-                r.role_type = c
-                r.prepare(game.captain_mode)
-                r.commit()
-            publish_info(game.gid, json.dumps({'cards': True}))
-            return response(True)
+    #         game.status = GameEnum.GAME_STATUS_READY
+    #         game.table.end_time = datetime.utcnow() + timedelta(days=1)
+    #         game.roles.sort(key=lambda r: r.position)
+    #         cards = game.cards.copy()
+    #         random.shuffle(cards)
+    #         for r, c in zip(game.roles, cards):
+    #             r.role_type = c
+    #             r.prepare(game.captain_mode)
+    #             r.commit()
+    #         publish_info(game.gid, json.dumps({'cards': True}))
+    #         return response(True)
     elif op == 'next_step':
         with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
             now = game.current_step()
@@ -138,21 +138,21 @@ def take_action() -> str:  # return json to user
                         history['wolf_kill_decision'] = -1
                     game.go_next_step()
             return response(True)
-    elif op == 'sit':
-        position = int(request.args.get('position'))
-        with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
-            if game.status != GameEnum.GAME_STATUS_WAIT_TO_START:
-                return response(False, GameEnum('GAME_MESSAGE_ALREADY_STARTED').message)
-            if game.get_role_by_pos(position):
-                return response(False, GameEnum('GAME_MESSAGE_POSITION_OCCUPIED').message)
-            my_role = game.get_role_by_uid(me.uid)
-            if not my_role:
-                return response(False, GameEnum('GAME_MESSAGE_ROLE_NOT_EXIST').message)
-            my_role.position = position
-            my_role.commit()
-            publish_info(game.gid, json.dumps(
-                {'seats': {str(role.position): role.name for role in game.roles if role.position > 0}}))
-            return response(True)
+    # elif op == 'sit':
+    #     position = int(request.args.get('position'))
+    #     with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
+    #         if game.status != GameEnum.GAME_STATUS_WAIT_TO_START:
+    #             return response(False, GameEnum('GAME_MESSAGE_ALREADY_STARTED').message)
+    #         if game.get_role_by_pos(position):
+    #             return response(False, GameEnum('GAME_MESSAGE_POSITION_OCCUPIED').message)
+    #         my_role = game.get_role_by_uid(me.uid)
+    #         if not my_role:
+    #             return response(False, GameEnum('GAME_MESSAGE_ROLE_NOT_EXIST').message)
+    #         my_role.position = position
+    #         my_role.commit()
+    #         publish_info(game.gid, json.dumps(
+    #             {'seats': {str(role.position): role.name for role in game.roles if role.position > 0}}))
+    #         return response(True)
     elif op == 'discover':
         target = int(request.args.get('target'))
         with Game.get_game_by_gid(me.gid) as game:
