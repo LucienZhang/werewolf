@@ -31,8 +31,8 @@ def setup():
         return render_template("werewolf_setup.html")
     else:
         res = GameEngine.perform('setup')
-        if (msg:= res['msg']) != 'OK':
-            flash(msg, 'error')
+        if res['msg'] != 'OK':
+            flash(res['msg'], 'error')
             return render_template("werewolf_setup.html")
         else:
             return redirect(url_for('werewolf_api.join', gid=res['gid']))
@@ -73,7 +73,7 @@ def login():
         return render_template('login.html')
     else:
         res = user_login()
-        if (msg:=res['msg']) != 'OK':
+        if res['msg'] != 'OK':
             flash(msg, 'error')
             return render_template('login.html')
         else:
@@ -92,8 +92,8 @@ def register():
         return render_template('register.html')
     else:
         res = user_register()
-        if (msg:=res['msg']) != 'OK':
-            flash(msg, 'error')
+        if res['msg'] != 'OK':
+            flash(res['msg'], 'error')
             return render_template('register.html')
         else:
             return render_template('register_success.html')
@@ -109,11 +109,11 @@ def api(cmd):
 @login_required
 def join():
     res = GameEngine.perform('join')
-    if (msg:=res['msg']) != 'OK':
-        if msg == GameEngine.GAME_MESSAGE_ALREADY_IN.label:
+    if res['msg'] != 'OK':
+        if res['msg'] == GameEngine.GAME_MESSAGE_ALREADY_IN.label:
             return redirect(url_for('werewolf_api.game'))
         else:
-            flash(msg, 'error')
+            flash(res['msg'], 'error')
             return redirect(url_for('werewolf_api.home'))
     else:
         return redirect(url_for('werewolf_api.game'))
@@ -123,8 +123,8 @@ def join():
 @login_required
 def quit_game():
     res = GameEngine.perform('quit')
-    if (msg:=res['msg']) != 'OK':
-        flash(msg, 'error')
+    if res['msg'] != 'OK':
+        flash(res['msg'], 'error')
         return redirect(url_for('werewolf_api.home'))
     else:
         return redirect(url_for('werewolf_api.home'))
@@ -142,6 +142,8 @@ def test_api(func):
 #######################################
 # Test API
 #######################################
+
+
 @test_api
 @werewolf_api.route('/test/<string:cmd>', methods=['GET'])
 def test(cmd):
