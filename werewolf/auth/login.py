@@ -3,9 +3,9 @@ from flask_login import LoginManager, current_user, login_user, logout_user
 from flask import current_app
 from datetime import datetime
 from hashlib import sha1
-from werewolf.db import db
+from werewolf.database import db
 from werewolf.utils.enums import GameEnum
-from werewolf.db import User, Role
+from werewolf.database import User, Role
 from sqlalchemy.exc import IntegrityError
 
 

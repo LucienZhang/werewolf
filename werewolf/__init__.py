@@ -4,7 +4,7 @@ from flask import Flask, redirect, url_for
 from flask_sse import sse
 from werewolf.werewolf_module import werewolf_api
 from werewolf.auth.login import init_login
-from werewolf.db import init_db
+from werewolf.database import init_db
 from werewolf.config import config
 # from werewolf.utils.scheduler import init_scheduler
 

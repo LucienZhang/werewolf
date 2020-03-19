@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, abort
 from flask_login import current_user, login_required
 import functools
-# from flask_sse import sse
+from flask_sse import sse
 # from werewolf.game_engine.game import Game
 # import json
 
@@ -130,7 +130,7 @@ def quit_game():
         return redirect(url_for('werewolf_api.home'))
 
 
-def debug_api(func):
+def test_api(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if not current_app.config["DEBUG"]:
@@ -138,6 +138,18 @@ def debug_api(func):
         else:
             return func(*args, **kwargs)
     return wrapper
+
+#######################################
+# Test API
+#######################################
+@test_api
+@werewolf_api.route('/test/<string:cmd>', methods=['GET'])
+def test(cmd):
+    if cmd == 'home':
+        return render_template('test.html', uid=1)
+    else:
+        sse.publish({"message": cmd}, type='greeting', channel='u1')
+
 
 # @werewolf_api.route('/get_game_info')
 # @login_required

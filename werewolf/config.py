@@ -25,6 +25,7 @@ class DBConfig(Config):
     LOGIN_SECRET_KEY = '123456'
     REDIS_URL = "redis://localhost"
     SCHEDULER_API_ENABLED = True
+    GUNICORN = False
 
 
 config = {

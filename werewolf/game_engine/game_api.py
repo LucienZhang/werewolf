@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import json
 from flask import request
 from flask_login import current_user
-from werewolf.db import db, User, Game, Role
+from werewolf.database import db, User, Game, Role
 from werewolf.utils.enums import GameEnum
 from werewolf.utils.json_utils import json_hook, ExtendedJSONEncoder
 

@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from tests.env import app, db
-from werewolf.db import User, Game, Role
+from werewolf.database import User, Game, Role
 from werewolf.utils.enums import GameEnum
 
 
