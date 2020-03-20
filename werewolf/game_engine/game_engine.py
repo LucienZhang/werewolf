@@ -138,21 +138,7 @@ def take_action() -> str:  # return json to user
                         history['wolf_kill_decision'] = -1
                     game.go_next_step()
             return response(True)
-    # elif op == 'sit':
-    #     position = int(request.args.get('position'))
-    #     with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
-    #         if game.status != GameEnum.GAME_STATUS_WAIT_TO_START:
-    #             return response(False, GameEnum('GAME_MESSAGE_ALREADY_STARTED').message)
-    #         if game.get_role_by_pos(position):
-    #             return response(False, GameEnum('GAME_MESSAGE_POSITION_OCCUPIED').message)
-    #         my_role = game.get_role_by_uid(me.uid)
-    #         if not my_role:
-    #             return response(False, GameEnum('GAME_MESSAGE_ROLE_NOT_EXIST').message)
-    #         my_role.position = position
-    #         my_role.commit()
-    #         publish_info(game.gid, json.dumps(
-    #             {'seats': {str(role.position): role.name for role in game.roles if role.position > 0}}))
-    #         return response(True)
+
     elif op == 'discover':
         target = int(request.args.get('target'))
         with Game.get_game_by_gid(me.gid) as game:

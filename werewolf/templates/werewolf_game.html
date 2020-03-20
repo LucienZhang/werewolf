@@ -86,7 +86,7 @@
         </div>
         {% if ishost %}
         <button class="btn btn-warning host-button" id="deal">发牌</button>
-        <button class="btn btn-warning host-button" id="next-step">下一阶段</button>
+        <button class="btn btn-warning host-button" id="next-step">{{ next_step }}</button>
         <!-- <button data-toggle="modal" data-target="#nothing" class="btn btn-warning host-button">发起投票</button> -->
         {% endif %}
     </div>
@@ -211,8 +211,8 @@
     </script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/werewolf_game.js') }}"></script>
     {% if ishost %}
-    <audio id="back_audio" loop></audio>
-    <audio id="step_audio"></audio>
+    <audio id="bgm_audio" loop></audio>
+    <audio id="instruction_audio"></audio>
     <script type="text/javascript"
         src="{{ url_for('static', filename='js/werewolf_game_host.js') }}"></script>
     {% endif %}

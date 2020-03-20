@@ -3,11 +3,11 @@ from flask_sse import sse
 import json
 
 
-def publish_music(channel, instruction, bgm, repeat=True):
+def publish_music(channel, instruction, bgm, bgm_loop=True):
     instruction = url_for('static', filename=f'audio/{instruction}.mp3')
     if bgm is not None:
         bgm = url_for('static', filename=f'audio/{bgm}.mp3')
-    sse.publish(json.dumps([instruction, bgm, repeat]),
+    sse.publish(json.dumps([instruction, bgm, bgm_loop]),
                 type='music',
                 channel=channel)
 
