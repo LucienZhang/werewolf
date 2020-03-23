@@ -261,6 +261,7 @@
                 }
                 );
             } else {
+                $(".player > button").off("click");
                 $(".player > button").on("click", skills.select);
             }
         }

@@ -15,7 +15,7 @@ class GameEnum(LabelledEnum):
         return self is GameEnum.OK
 
     def digest(self, *args, **kwargs):
-        return {'msg': self.label.format(*args), **kwargs}
+        return {'code': self.value, 'msg': self.label.format(*args), **kwargs}
 
     # negative positions
     TARGET_NOT_ACTED = (-2, '未行动')
@@ -99,6 +99,7 @@ class GameEnum(LabelledEnum):
     GAME_MESSAGE_CANNOT_ACT = (710, '当前无法操作')
     GAME_MESSAGE_WRONG_PASSWORD = (711, '用户名或密码错误')
     GAME_MESSAGE_USER_EXISTS = (712, '用户名已存在')
+    GAME_MESSAGE_NOT_VOTED_YET = (713, '仍有玩家未投票：{}')
 
     # 800
     SKILL_VOTE = (800, '投票')
@@ -122,5 +123,9 @@ class GameEnum(LabelledEnum):
 
     # 1100
     TAG_ATTACKABLE_WOLF = (1100, '带刀狼')
+
+    # 1200
+    STEP_FLAG_AUTO_MOVE_ON = (1200, '自动下一步')
+    STEP_FLAG_WAIT_FOR_ACTION = (1201, '等待玩家操作')
 
     OK = (9999, 'OK')

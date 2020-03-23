@@ -53,7 +53,7 @@ def test_game_table():
                 steps=[],
                 step_cnt=0,
                 history={},
-                captain_uid=-1,
+                captain_pos=-1,
                 players=[],
                 )
     db.session.add(game)

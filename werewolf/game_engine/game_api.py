@@ -154,7 +154,7 @@ def _init_game(game):
     game.step_cnt = 0
     game.steps = []
     game.history = {}
-    game.captain_uid = -1
+    game.captain_pos = -1
     game.players = []
 
 
@@ -164,34 +164,3 @@ def _get_wolf_mode_by_cards(cards):
         return GameEnum.WOLF_MODE_ALL
     else:
         return GameEnum.WOLF_MODE_FIRST
-
-
-# def _reset_step_list(game) -> list:
-#     # ,day, cards, captain_mode
-#     step_list = []
-#     step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
-#     if day == 1 and GameEnum.ROLE_TYPE_THIEF in cards:
-#         pass
-#     if day == 1 and GameEnum.ROLE_TYPE_CUPID in cards:
-#         pass
-#     # TODO: 恋人互相确认身份
-#     step_list.append(GameEnum.ROLE_TYPE_ALL_WOLF)
-#     if GameEnum.ROLE_TYPE_SEER in cards:
-#         step_list.append(GameEnum.ROLE_TYPE_SEER)
-#     if GameEnum.ROLE_TYPE_WITCH in cards:
-#         step_list.append(GameEnum.ROLE_TYPE_WITCH)
-#     if GameEnum.ROLE_TYPE_SAVIOR in cards:
-#         step_list.append(GameEnum.ROLE_TYPE_SAVIOR)
-#     step_list.append(GameEnum.TURN_STEP_TURN_DAY)
-#     if day == 1 and captain_mode is GameEnum.CAPTAIN_MODE_WITH_CAPTAIN:
-#         step_list.append(GameEnum.TURN_STEP_ELECT)
-#         step_list.append(GameEnum.TURN_STEP_ELECT_TALK)
-#         step_list.append(GameEnum.TURN_STEP_CAPTAIN_VOTE)
-#     step_list.append(GameEnum.TURN_STEP_ANNOUNCE)
-#     step_list.append(GameEnum.TURN_STEP_TALK)
-#     step_list.append(GameEnum.TURN_STEP_VOTE)
-#     step_list.append(GameEnum.TURN_STEP_LAST_WORDS)
-
-#     # step_list.append(GameEnum.TURN_STEP_TURN_NIGHT)
-
-#     return step_list

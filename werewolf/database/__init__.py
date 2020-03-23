@@ -86,7 +86,7 @@ class Game(db.Model):
     step_cnt = db.Column(db.Integer, nullable=False)
     steps = db.Column(MutableList.as_mutable(JSONEncodedType(1023)), nullable=False)
     history = db.Column(MutableDict.as_mutable(JSONEncodedType(1023)), nullable=False)
-    captain_uid = db.Column(db.Integer, nullable=False)
+    captain_pos = db.Column(db.Integer, nullable=False)
 
     def __enter__(self):
         return self
@@ -112,7 +112,7 @@ class Role(db.Model):
     role_type = db.Column(EnumType, nullable=False)
     group_type = db.Column(EnumType, nullable=False)
     alive = db.Column(db.Boolean, nullable=False)
-    iscaptain = db.Column(db.Boolean, nullable=False)
+    # iscaptain = db.Column(db.Boolean, nullable=False)
     voteable = db.Column(db.Boolean, nullable=False)
     speakable = db.Column(db.Boolean, nullable=False)
     position = db.Column(db.Integer, nullable=False)
@@ -124,7 +124,7 @@ class Role(db.Model):
         self.role_type = GameEnum.ROLE_TYPE_UNKNOWN
         self.group_type = GameEnum.GROUP_TYPE_UNKNOWN
         self.alive = True
-        self.iscaptain = False
+        # self.iscaptain = False
         self.voteable = True
         self.speakable = True
         self.position = -1
