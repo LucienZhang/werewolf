@@ -106,7 +106,7 @@ class Role(db.Model):
     __tablename__ = 'roles'
     __table_args__ = {'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8', 'mysql_collate': 'utf8_general_ci'}
     uid = db.Column(db.Integer, primary_key=True)
-    gid = db.Column(db.Integer, nullable=False)  # gid=-1 means not in game
+    gid = db.Column(db.Integer, nullable=False, index=True)  # gid=-1 means not in game
     nickname = db.Column(db.String(length=255), nullable=False)
     avatar = db.Column(db.Integer, nullable=False)
     role_type = db.Column(EnumType, nullable=False)

@@ -1,11 +1,16 @@
 import typing
 import collections
+from sqlalchemy import func
 from werewolf.utils.enums import GameEnum
 from werewolf.database import Role
 from werewolf.utils.publisher import publish_history, publish_music
 
 if typing.TYPE_CHECKING:
     from werewolf.database import Game
+
+
+class GameFinished(Exception):
+    pass
 
 
 class StepProcessor(object):
@@ -109,11 +114,12 @@ class StepProcessor(object):
             if len(most_voted) == 1:
                 if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_PK_VOTE]:
                     msg += f'{most_voted[0]}号玩家以{max_ticket}票被公投出局'
-                    StepProcessor.kill(most_voted[0], GameEnum.SKILL_VOTE)  # todo
+                    publish_history(game.gid, msg)
+                    StepProcessor.kill(game, most_voted[0], GameEnum.SKILL_VOTE)
                 else:
                     game.captain_pos = most_voted[0]
                     msg += f'{most_voted[0]}号玩家以{max_ticket}票当选警长'
-                publish_history(game.gid, msg)
+                    publish_history(game.gid, msg)
                 return GameEnum.OK.digest()
             else:
                 # 平票
@@ -290,3 +296,88 @@ class StepProcessor(object):
             'vote_result': {},
             'dying': {},
         }
+
+    @staticmethod
+    def kill(game: Game, pos: int, how: GameEnum):
+        if pos < 1 or pos > game.get_seats_cnt():
+            return
+        role = Role.query.filter(Role.gid == game.gid, Role.position == pos).limit(1).first()
+
+        # todo 长老?
+
+        if role is GameEnum.ROLE_TYPE_IDIOT and how is GameEnum.SKILL_VOTE and not role.args['exposed']:
+            role.args['exposed'] = True
+            role.voteable = False
+            return
+
+        game.history['dying'][pos] = True
+
+        if how is GameEnum.SKILL_TOXIC and role is GameEnum.ROLE_TYPE_HUNTER:
+            role.args['shootable'] = False
+
+        # todo: other link die
+        # if game.status is GameEnum.GAME_STATUS_DAY:
+        StepProcessor.check_win(game)
+
+    @staticmethod
+    def calculate_die_in_night(game):
+        wolf_kill_pos = game.history['wolf_kill_decision']
+        elixir = game.history['elixir']
+        guard = game.history['guard']
+
+        if wolf_kill_pos > 0:
+            killed = True
+            if elixir:
+                killed = not killed
+            if guard == wolf_kill_pos:
+                killed = not killed
+
+            if killed:
+                StepProcessor.kill(game, wolf_kill_pos, GameEnum.SKILL_WOLF_KILL)
+        if game.history['toxic'] > 0:
+            StepProcessor.kill(game, game.history['toxic'], GameEnum.SKILL_TOXIC)
+        # todo: other death way in night?
+        return
+
+    @staticmethod
+    def check_win(game):
+        groups = Role.query.with_entities(Role.group_type, func.count(Role.group_type)).filter(Role.gid == game.gid, Role.alive == int(True)).group_by(Role.group_type).all()
+        groups = {g: cnt for g, cnt in groups}
+
+        if GameEnum.GROUP_TYPE_WOLVES not in groups:
+            publish_history(game.gid, '游戏结束，好人阵营胜利')
+            game.status = GameEnum.GAME_STATUS_FINISHED
+            raise GameFinished()
+
+        if game.victory_mode is GameEnum.VICTORY_MODE_KILL_GROUP and (GameEnum.GROUP_TYPE_GODS not in groups or GameEnum.GROUP_TYPE_VILLAGERS not in groups):
+            publish_history(game.gid, '游戏结束，狼人阵营胜利')
+            game.status = GameEnum.GAME_STATUS_FINISHED
+            raise GameFinished()
+
+        if GameEnum.GROUP_TYPE_GODS not in groups and GameEnum.GROUP_TYPE_VILLAGERS not in groups:
+            publish_history(game.gid, '游戏结束，狼人阵营胜利')
+            game.status = GameEnum.GAME_STATUS_FINISHED
+            raise GameFinished()
+
+        # todo third party
+        # todo reset game
+
+
+
+
+
+#     def get_attackable_wolf(self):
+#         attackable = []
+#         for r in self.roles:
+#             if r.alive and GameEnum.ROLE_TYPE_ALL_WOLF in r.tags:
+#                 attackable.append(r)
+#         return attackable
+
+
+# def action_timeout(gid, global_step_num):
+#     game = Game.get_game_by_gid(gid)
+#     if global_step_num != game.steps['global_steps']:
+#         return
+#     game.go_next_step()
+#     game.commit()
+#     return
