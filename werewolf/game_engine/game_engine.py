@@ -16,27 +16,7 @@ def take_action() -> str:  # return json to user
     # /action?op=see&target=1
     me = current_user
     op = request.args.get('op')
-    # if op == 'deal':
-    #     with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
-    #         if game.status is not GameEnum.GAME_STATUS_WAIT_TO_START:
-    #             return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
-    #         positions = set()
-    #         for r in game.roles:
-    #             positions.add(r.position)
-    #         if len(positions) != game.get_seat_num():
-    #             return response(False, GameEnum('GAME_MESSAGE_CANNOT_START').message)
-
-    #         game.status = GameEnum.GAME_STATUS_READY
-    #         game.table.end_time = datetime.utcnow() + timedelta(days=1)
-    #         game.roles.sort(key=lambda r: r.position)
-    #         cards = game.cards.copy()
-    #         random.shuffle(cards)
-    #         for r, c in zip(game.roles, cards):
-    #             r.role_type = c
-    #             r.prepare(game.captain_mode)
-    #             r.commit()
-    #         publish_info(game.gid, json.dumps({'cards': True}))
-    #         return response(True)
+   
     elif op == 'next_step':
         with Game.get_game_by_gid(me.gid, lock=True, load_roles=True) as game:
             now = game.current_step()
