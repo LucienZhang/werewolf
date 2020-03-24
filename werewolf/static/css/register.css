@@ -1,0 +1,42 @@
+/*
+* @Author: Lucien Zhang
+* @Date:   2019-09-29 23:49:16
+* @Last Modified by:   Lucien Zhang
+* @Last Modified time: 2019-09-30 18:28:18
+*/
+html,
+body {
+    height: 100%;
+}
+
+body {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    width: 100%;
+    max-width: 330px;
+    padding: 15px;
+    margin: auto;
+}
+
+.flashes {
+    margin-bottom: 10px;
+}
+
+.flashes > li {
+    color: #155724;
+    padding: 0.6rem, 0.6rem;
+    background-color: #c3e6cb;
+}
+
+.flashes > .error {
+    color: #721c24;
+    background-color: #f5c6cb;
+}

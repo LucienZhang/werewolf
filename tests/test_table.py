@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from tests.env import app, db
-from werewolf.db import User, Game, Role
+from werewolf.database import User, Game, Role
 from werewolf.utils.enums import GameEnum
 
 
@@ -53,7 +53,7 @@ def test_game_table():
                 steps=[],
                 step_cnt=0,
                 history={},
-                captain_uid=-1,
+                captain_pos=-1,
                 players=[],
                 )
     db.session.add(game)
@@ -62,6 +62,7 @@ def test_game_table():
     assert game.updated_on is not None
 
     timestamp1 = game.updated_on
+    time.sleep(0.01)
     affected_cnt = db.session.query(Game).filter(Game.gid == game.gid, Game.updated_on == str(timestamp1)).update({'days': 1})
     db.session.commit()
     assert affected_cnt == 1
@@ -75,6 +76,7 @@ def test_game_table():
     db.session.commit()
     assert affected_cnt == 0
     assert Game.query.get(game.gid).updated_on == timestamp2
+    time.sleep(0.01)
     affected_cnt = db.session.query(Game).filter(Game.gid == game.gid, Game.updated_on == str(timestamp2)).update({'days': 1})
     db.session.commit()
     assert affected_cnt == 1
@@ -94,4 +96,38 @@ def test_game_table():
 
 @pytest.mark.usefixtures('app')
 def test_role_table():
-    pass
+    role1 = Role(uid=101, nickname='nickname', avatar=1, gid=101)
+    role1.reset()
+    role1.group_type = GameEnum.GROUP_TYPE_GODS
+    role2 = Role(uid=102, nickname='nickname', avatar=1, gid=101)
+    role2.reset()
+    role2.group_type = GameEnum.GROUP_TYPE_WOLVES
+    role3 = Role(uid=103, nickname='nickname', avatar=1, gid=101)
+    role3.reset()
+    role3.group_type = GameEnum.GROUP_TYPE_WOLVES
+    db.session.add(role1)
+    db.session.add(role2)
+    db.session.add(role3)
+    db.session.commit()
+    roles = Role.query.filter(Role.gid == 101).all()
+    assert len(roles) == 3
+    assert isinstance(roles[0], Role)
+    from sqlalchemy import func
+    groups = db.session.query(Role.group_type, func.count(Role.group_type)).filter(Role.gid == 101).group_by(Role.group_type).all()
+    assert len(groups) == 2
+    assert isinstance(groups, list)
+    for g, cnt in groups:
+        assert g in [GameEnum.GROUP_TYPE_GODS, GameEnum.GROUP_TYPE_WOLVES]
+        if g is GameEnum.GROUP_TYPE_GODS:
+            assert cnt == 1
+        elif g is GameEnum.GROUP_TYPE_WOLVES:
+            assert cnt == 2
+    groups = Role.query.with_entities(Role.group_type, func.count(Role.group_type)).filter(Role.gid == 101, Role.alive == int(True)).group_by(Role.group_type).all()
+    assert len(groups) == 2
+    assert isinstance(groups, list)
+    for g, cnt in groups:
+        assert g in [GameEnum.GROUP_TYPE_GODS, GameEnum.GROUP_TYPE_WOLVES]
+        if g is GameEnum.GROUP_TYPE_GODS:
+            assert cnt == 1
+        elif g is GameEnum.GROUP_TYPE_WOLVES:
+            assert cnt == 2

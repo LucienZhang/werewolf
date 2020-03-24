@@ -3,9 +3,9 @@ from flask_login import LoginManager, current_user, login_user, logout_user
 from flask import current_app
 from datetime import datetime
 from hashlib import sha1
-from werewolf.db import db
+from werewolf.database import db
 from werewolf.utils.enums import GameEnum
-from werewolf.db import User, Role
+from werewolf.database import User, Role
 from sqlalchemy.exc import IntegrityError
 
 
@@ -53,14 +53,16 @@ def user_logout() -> dict:
 
 
 def user_register() -> dict:
-    new_user = User(username=request.form['username'], password=request.form['password'], login_token='', nickname=request.form['nickname'], avatar=1, gid=-1)
+    avatar = 1
+    new_user = User(username=request.form['username'], password=request.form['password'], login_token='', nickname=request.form['nickname'], avatar=avatar, gid=-1)
     try:
         db.session.add(new_user)
         db.session.commit()
     except IntegrityError:
+        db.session.rollback()
         return GameEnum.GAME_MESSAGE_USER_EXISTS.digest()
 
-    new_role = Role(uid=new_user.uid, nickname=new_user.nickname)
+    new_role = Role(uid=new_user.uid, nickname=new_user.nickname, avatar=avatar, gid=-1)
     new_role.reset()
     db.session.add(new_role)
     db.session.commit()

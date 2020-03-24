@@ -8,17 +8,17 @@
         content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>狼人杀房间</title>
     <link rel="stylesheet" type="text/css"
-        href="{{ url_for('werewolf_api.static', filename='css/bootstrap.min.css') }}">
+        href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" type="text/css"
-        href="{{ url_for('werewolf_api.static', filename='css/werewolf_game.css') }}">
-    <link rel="shortcut icon" href="{{ url_for('werewolf_api.static', filename='images/favicon.ico') }}">
+        href="{{ url_for('static', filename='css/werewolf_game.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 </head>
 
 <body>
     <div class="container">
         <div class="logo">
             <div class="float-left" id="current_user">{{ name }}</div>
-            <img src="{{ url_for('werewolf_api.static',filename='images/werewolf/logo.png') }}" alt="Logo">
+            <img src="{{ url_for('static',filename='images/werewolf/logo.png') }}" alt="Logo">
             <div class="float-right">
                 <a href="{{ url_for('werewolf_api.quit_game') }}">
                     退出
@@ -86,7 +86,7 @@
         </div>
         {% if ishost %}
         <button class="btn btn-warning host-button" id="deal">发牌</button>
-        <button class="btn btn-warning host-button" id="next-step">下一阶段</button>
+        <button class="btn btn-warning host-button" id="next-step">{{ next_step }}</button>
         <!-- <button data-toggle="modal" data-target="#nothing" class="btn btn-warning host-button">发起投票</button> -->
         {% endif %}
     </div>
@@ -144,7 +144,7 @@
                     </p>
                     {% if role_type!='unknown' %}
                     <div class="role-img">
-                        <img src="{{ url_for('werewolf_api.static', filename='images/werewolf/cards/' + role_type + '.jpg') }}"
+                        <img src="{{ url_for('static', filename='images/werewolf/cards/' + role_type + '.jpg') }}"
                             alt="{{ role_name }}" width="274" height="389">
                     </div>
                     {% endif %}
@@ -202,19 +202,19 @@
 
 
     <script type="text/javascript"
-        src="{{ url_for('werewolf_api.static', filename='js/jquery-3.4.1.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/bootstrap.min.js') }}"></script>
+        src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <!-- <script type="text/javascript" src="../static/js/ajax-utils.js"></script> -->
     <script>
         const gid_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
-        const uid_source = new EventSource("{{ url_for('sse.stream',channel='u'+uid|string) }}");
+        // const uid_source = new EventSource("{{ url_for('sse.stream',channel='u'+uid|string) }}");
     </script>
-    <script type="text/javascript" src="{{ url_for('werewolf_api.static', filename='js/werewolf_game.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/werewolf_game.js') }}"></script>
     {% if ishost %}
-    <audio id="back_audio" loop></audio>
-    <audio id="step_audio"></audio>
+    <audio id="bgm_audio" loop></audio>
+    <audio id="instruction_audio"></audio>
     <script type="text/javascript"
-        src="{{ url_for('werewolf_api.static', filename='js/werewolf_game_host.js') }}"></script>
+        src="{{ url_for('static', filename='js/werewolf_game_host.js') }}"></script>
     {% endif %}
 </body>
 

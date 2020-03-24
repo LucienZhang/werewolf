@@ -37,7 +37,7 @@
             }
             reset_panel();
             $.ajax({
-                url: "action?op=vote&target=" + candidates.shift().attr("pos"),
+                url: "api/vote?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
                 success: function (info) {
                     if (info.suc !== true) {
@@ -49,7 +49,7 @@
         buttons.children("button.skill-cancel").on("click", function () {
             reset_panel();
             $.ajax({
-                url: "action?op=vote&target=-1",
+                url: "api/vote?target=-1",
                 dataType: "json",
                 success: function (info) {
                     if (info.suc !== true) {
@@ -67,7 +67,7 @@
         buttons.children("button.skill-elect").on("click", function () {
             reset_panel();
             $.ajax({
-                url: "action?op=elect&choice=yes",
+                url: "api/elect?choice=yes",
                 dataType: "json",
                 success: function (info) {
                     if (info.suc !== true) {
@@ -79,7 +79,7 @@
         buttons.children("button.skill-no-elect").on("click", function () {
             reset_panel();
             $.ajax({
-                url: "action?op=elect&choice=no",
+                url: "api/elect?choice=no",
                 dataType: "json",
                 success: function (info) {
                     if (info.suc !== true) {
@@ -91,7 +91,7 @@
         buttons.children("button.skill-give-up").on("click", function () {
             reset_panel();
             $.ajax({
-                url: "action?op=elect&choice=quit",
+                url: "api/elect?choice=quit",
                 dataType: "json",
                 success: function (info) {
                     if (info.suc !== true) {
@@ -114,7 +114,7 @@
             }
             reset_panel();
             $.ajax({
-                url: "action?op=wolf_kill&target=" + candidates.shift().attr("pos"),
+                url: "api/wolf_kill?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
                 success: function (info) {
                     if (info.suc !== true) {
@@ -126,7 +126,7 @@
         buttons.children("button.skill-cancel").on("click", function () {
             reset_panel();
             $.ajax({
-                url: "action?op=wolf_kill&target=-1",
+                url: "api/wolf_kill?target=-1",
                 dataType: "json",
                 success: function (info) {
                     if (info.suc !== true) {
@@ -149,7 +149,7 @@
             }
             reset_panel();
             $.ajax({
-                url: "action?op=discover&target=" + candidates.shift().attr("pos"),
+                url: "api/discover?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
                 success: function (info) {
                     show_message(info.msg);
@@ -173,7 +173,7 @@
             $(this).text("");
         });
         for (const position in seats) {
-            let name = seats[position];
+            let name = seats[position][0];
             $("#all_players button[pos=" + position + "]").siblings("span").text(name);
         }
     }
@@ -187,7 +187,7 @@
         if (data.cards) {
             show_message("身份牌已发放");
             $.ajax({
-                url: "get_game_info",
+                url: "api/get_game_info",
                 dataType: "json",
                 success: function (info) {
                     $(".player > button").on("click", skills.select);
@@ -231,40 +231,37 @@
 
     }, false);
 
-    uid_source.addEventListener('game_info', function (event) {
-        let data = JSON.parse(event.data);
-        let show = data.show;
-        if (data.history) {
-            let content = '';
-            data.history.split('\n').forEach(element => {
-                content += '<p>' + element + '</p>';
-            });
-            if (show) {
-                show_message(content);
-            }
-            history.html(history.html() + content);
-        }
-    }, false);
+    // uid_source.addEventListener('game_info', function (event) {
+    //     let data = JSON.parse(event.data);
+    //     let show = data.show;
+    //     if (data.history) {
+    //         let content = '';
+    //         data.history.split('\n').forEach(element => {
+    //             content += '<p>' + element + '</p>';
+    //         });
+    //         if (show) {
+    //             show_message(content);
+    //         }
+    //         history.html(history.html() + content);
+    //     }
+    // }, false);
 
     $.ajax({
-        url: "get_game_info",
+        url: "api/get_game_info",
         type: "GET",
         dataType: "json",
-        success: function (info) {
-            let seats = {};
-            info.game.roles.forEach(role => {
-                seats[role[1]] = role[2];
-            });
-            update_seats(seats);
+        success: function (info) {            
+            update_seats(info.game.players);
             let game_status = info.game.status;
             if (game_status[0] === "GAME_STATUS_WAIT_TO_START") {
                 $(".player > button").on("click", function () {
                     $.ajax({
-                        url: "action?op=sit&position=" + $(this).attr("pos")
+                        url: "api/sit?position=" + $(this).attr("pos")
                     });
                 }
                 );
             } else {
+                $(".player > button").off("click");
                 $(".player > button").on("click", skills.select);
             }
         }

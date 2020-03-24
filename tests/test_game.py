@@ -35,7 +35,7 @@ def test_register_login_logout(app):  # noqa
     rv = logout(client)
     assert rv.status_code == 200
     assert rv.is_json
-    assert rv.get_json() == {'msg': 'OK'}
+    assert rv.get_json() == {'code': 9999, 'msg': 'OK'}
 
 
 def logged_client(app):  # noqa

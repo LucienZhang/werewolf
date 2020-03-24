@@ -12,9 +12,11 @@
         alert("The server says " + data.message);
     }, false);
     source.addEventListener('error', function(event) {
-        var data = JSON.parse(event.data);
-        alert("Failed to connect to event stream. Is Redis running?"+data.message);
+      console.log(event)
+        // var data = JSON.parse(event.data);
+        // alert("Failed to connect to event stream. Is Redis running?"+data.message);
     }, false);
   </script>
+
 </body>
 </html>

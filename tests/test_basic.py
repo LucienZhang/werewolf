@@ -45,6 +45,6 @@ def test_enum_valid():
     assert GameEnum(2) not in d
 
     assert isinstance(GameEnum.OK.digest(), dict)
-    assert GameEnum.OK.digest() == {'msg': 'OK'}
-    assert GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest('1,2,3') == {'msg': '昨晚，以下位置的玩家倒下了，不分先后： 1,2,3'}
-    assert GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest('1,2,3', other='other info') == {'msg': '昨晚，以下位置的玩家倒下了，不分先后： 1,2,3', 'other': 'other info'}
+    assert GameEnum.OK.digest() == {'code': 9999, 'msg': 'OK'}
+    assert GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest('1,2,3') == {'code': 707, 'msg': '昨晚，以下位置的玩家倒下了，不分先后： 1,2,3'}
+    assert GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest('1,2,3', other='other info') == {'code': 707, 'msg': '昨晚，以下位置的玩家倒下了，不分先后： 1,2,3', 'other': 'other info'}

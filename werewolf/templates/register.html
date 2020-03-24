@@ -4,66 +4,66 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>注册</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/register.css') }}"> -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/register.css') }}">
 </head>
 
 <body>
-<div class="container">
+    <div class="container">
+        <div class="card">
+            <header class="card-header">
+                <a href="{{ url_for('werewolf_api.login') }}" class="float-right btn btn-outline-primary mt-1">登录</a>
+                <h4 class="card-title mt-2">注册</h4>
+            </header>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <ul class="flashes list-group">
+                {% for category, message in messages %}
+                <li class="{{ category }} list-group-item">{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+            <article class="card-body">
+                <form id="user_form" method="post">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input id="username" name="username" type="text" class="form-control" placeholder=""
+                            required="required">
+                    </div>
 
-
-
-<div class="row justify-content-center">
-<div class="col-md-6">
-<div class="card">
-<header class="card-header">
-    <a href="{{ url_for('werewolf_api.login') }}" class="float-right btn btn-outline-primary mt-1">登录</a>
-    <h4 class="card-title mt-2">注册</h4>
-</header>
-<article class="card-body">
-<form id="user_form" method="post">
-    <div class="form-group">
-        <label>用户名</label>
-        <input id="username" name="username" type="text" class="form-control" placeholder="" required="required">
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input id="password" name="password" class="form-control" type="password" required="required">
+                    </div>
+                    <div class="form-group">
+                        <label>确认密码</label>
+                        <input id="confirm" class="form-control" type="password" required="required">
+                    </div>
+                    <div class="form-group">
+                        <label>昵称（在游戏中显示）</label>
+                        <input id="nickname" name="nickname" type="text" class="form-control" placeholder=""
+                            required="required">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block"> 注册 </button>
+                    </div> <!-- form-group// -->
+                    <small class="text-muted">点击注册后，您将同意我们的隐私服务条款。</small>
+                </form>
+            </article> <!-- card-body end .// -->
+            <div class="border-top card-body text-center">已有账户？ <a href="{{ url_for('werewolf_api.login') }}">登录</a>
+            </div>
+        </div> <!-- card.// -->
     </div>
-
-    <div class="form-group">
-        <label>密码</label>
-        <input id="password" name="password" class="form-control" type="password" required="required">
-    </div>
-    <div class="form-group">
-        <label>确认密码</label>
-        <input id="confirm" class="form-control" type="password" required="required">
-    </div>
-    <div class="form-group">
-        <label>游戏名称</label>
-        <input id="name" name="name" type="text" class="form-control" placeholder="" required="required">
-    </div>
-    <div class="form-group">
-        <button type="submit" class="btn btn-primary btn-block"> 注册  </button>
-    </div> <!-- form-group// -->
-    <small class="text-muted">点击注册后，您将同意我们的隐私服务条款。</small>
-</form>
-</article> <!-- card-body end .// -->
-<div class="border-top card-body text-center">已有账户？ <a href="{{ url_for('werewolf_api.login') }}">登录</a></div>
-</div> <!-- card.// -->
-</div> <!-- col.//-->
-
-</div> <!-- row.//-->
-
-
-</div>
-<!--container end.//-->
-
-
-
-<!--     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <!--container end.//-->
+    <!--     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
     <script type="text/javascript" src="{{ url_for('static', filename='js/register.js') }}"></script>
 
 
 </body>
-</html>
 
+</html>

@@ -1,0 +1,25 @@
+name: Build
+
+on:
+  release:
+    types:
+      - published
+      - created
+      - edited
+      - prereleased
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build Docker Image
+      uses: mr-smithers-excellent/docker-build-push@v2
+      with:
+        image: lucienzhangzl/werewolf
+        registry: docker.io
+        dockerfile: Dockerfile
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}

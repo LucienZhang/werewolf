@@ -21,10 +21,12 @@ class DBConfig(Config):
     PORT = 1000
     SECRET_KEY = '123456'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ECHO = True
     LOGIN_SECRET_KEY = '123456'
     REDIS_URL = "redis://localhost"
     SCHEDULER_API_ENABLED = True
+    GUNICORN = False
 
 
 config = {

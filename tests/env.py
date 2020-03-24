@@ -5,7 +5,7 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from werewolf import create_app
-from werewolf.db import db
+from werewolf.database import db
 
 
 @pytest.fixture(scope='session')
