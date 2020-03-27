@@ -40,7 +40,7 @@
                 url: "api/vote?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
                 success: function (info) {
-                    if (info.suc !== true) {
+                    if (info.msg !== 'OK') {
                         show_message(info.msg);
                     }
                 }
@@ -52,7 +52,7 @@
                 url: "api/vote?target=-1",
                 dataType: "json",
                 success: function (info) {
-                    if (info.suc !== true) {
+                    if (info.msg !== 'OK') {
                         show_message(info.msg);
                     }
                 }
@@ -70,7 +70,7 @@
                 url: "api/elect?choice=yes",
                 dataType: "json",
                 success: function (info) {
-                    if (info.suc !== true) {
+                    if (info.msg !== 'OK') {
                         show_message(info.msg);
                     }
                 }
@@ -82,7 +82,7 @@
                 url: "api/elect?choice=no",
                 dataType: "json",
                 success: function (info) {
-                    if (info.suc !== true) {
+                    if (info.msg !== 'OK') {
                         show_message(info.msg);
                     }
                 }
@@ -94,7 +94,7 @@
                 url: "api/elect?choice=quit",
                 dataType: "json",
                 success: function (info) {
-                    if (info.suc !== true) {
+                    if (info.msg !== 'OK') {
                         show_message(info.msg);
                     }
                 }
@@ -117,7 +117,7 @@
                 url: "api/wolf_kill?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
                 success: function (info) {
-                    if (info.suc !== true) {
+                    if (info.msg !== 'OK') {
                         show_message(info.msg);
                     }
                 }
@@ -129,7 +129,7 @@
                 url: "api/wolf_kill?target=-1",
                 dataType: "json",
                 success: function (info) {
-                    if (info.suc !== true) {
+                    if (info.msg !== 'OK') {
                         show_message(info.msg);
                     }
                 }
@@ -152,7 +152,11 @@
                 url: "api/discover?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
                 success: function (info) {
-                    show_message(info.msg);
+                    if (info.msg !== 'OK') {
+                        show_message(info.msg);
+                    } else {
+                        show_message(info.result);
+                    }
                 }
             });
         });
@@ -198,7 +202,7 @@
                         '你的身份是：' + role.role_type[1] +
                         '</p>' +
                         '<div class="role-img">' +
-                        '<img src="static/images/werewolf/cards/' + role.role_type[0].toLowerCase().replace('role_type_', '') + '.jpg"' +
+                        '<img src="/static/images/werewolf/cards/' + role.role_type[0].toLowerCase().replace('role_type_', '') + '.jpg"' +
                         'alt="' + role.role_type[1] + '" width="274" height="389">' +
                         '</div>'
                     );
@@ -251,7 +255,7 @@
         url: "api/get_game_info",
         type: "GET",
         dataType: "json",
-        success: function (info) {            
+        success: function (info) {
             update_seats(info.game.players);
             let game_status = info.game.status;
             if (game_status[0] === "GAME_STATUS_WAIT_TO_START") {

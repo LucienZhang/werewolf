@@ -109,7 +109,7 @@ class GameEnum(LabelledEnum):
     SKILL_WITCH = (803, '用药')
     SKILL_GUARD = (804, '守护')
     SKILL_SHOOT = (805, '开枪')
-    SKILL_EXPLODE = (806, '自爆')
+    SKILL_SUICIDE = (806, '自爆')
     SKILL_TOXIC = (807, '毒杀')
     SKILL_CAPTAIN = (808, '警长相关')
 

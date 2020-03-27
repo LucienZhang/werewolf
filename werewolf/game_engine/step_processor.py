@@ -5,13 +5,10 @@ from sqlalchemy import func
 from werewolf.utils.enums import GameEnum
 from werewolf.database import Role
 from werewolf.utils.publisher import publish_history, publish_music
+from werewolf.utils.game_exceptions import GameFinished
 
 if typing.TYPE_CHECKING:
     from werewolf.database import Game
-
-
-class GameFinished(Exception):
-    pass
 
 
 class StepProcessor(object):
@@ -31,6 +28,7 @@ class StepProcessor(object):
                 StepProcessor.init_steps(game)
 
             step_flag = StepProcessor._enter_step(game)
+        return GameEnum.OK.digest(next_step=StepProcessor.peek_next(game).label)
 
     @staticmethod
     def _leave_step(game: Game)->dict:
@@ -54,7 +52,7 @@ class StepProcessor(object):
                     voters.append(r.position)
             voters.sort()
             votees.sort()
-            return GameEnum.OK.digest(0)
+            return GameEnum.OK.digest()
 
             if not voters or not votees:
                 # no captain
@@ -161,6 +159,8 @@ class StepProcessor(object):
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_end_voice', None, False)
             return GameEnum.OK.digest()
+        else:
+            return GameEnum.OK.digest()
 
     @staticmethod
     def _enter_step(game: Game)->GameEnum:
@@ -238,7 +238,7 @@ class StepProcessor(object):
 
     @staticmethod
     def current_step(game: Game)->GameEnum:
-        if game.now_index >= len(game.steps):
+        if game.now_index < 0 or game.now_index >= len(game.steps):
             return None
         else:
             return game.steps[game.now_index]
@@ -362,9 +362,6 @@ class StepProcessor(object):
 
         # todo third party
         # todo reset game
-
-
-
 
 
 #     def get_attackable_wolf(self):

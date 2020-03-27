@@ -7,12 +7,26 @@ from sqlalchemy.ext.mutable import MutableDict, MutableList
 import json
 from werewolf.utils.enums import GameEnum
 from werewolf.utils.json_utils import json_hook, ExtendedJSONEncoder
+from werewolf.utils.game_exceptions import GameFinished
 
 db = SQLAlchemy()
 
 
 def init_db(app):
     db.init_app(app)
+
+    @app.teardown_request
+    def db_teardown(exception):
+        if exception:
+            db.session.rollback()
+
+        if isinstance(exception, GameFinished):
+            pass
+
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
 
 class JSONEncodedType(TypeDecorator):
@@ -142,7 +156,7 @@ class Role(db.Model):
             self.args = {'shootable': True}
             self.group_type = GameEnum.GROUP_TYPE_GODS
         elif self.role_type is GameEnum.ROLE_TYPE_SAVIOR:
-            self.args = {'guard': GameEnum.TARGET_NO_ONE}
+            self.args = {'guard': GameEnum.TARGET_NO_ONE.value}
             self.group_type = GameEnum.GROUP_TYPE_GODS
         elif self.role_type is GameEnum.ROLE_TYPE_VILLAGER:
             self.group_type = GameEnum.GROUP_TYPE_VILLAGERS
@@ -174,6 +188,7 @@ class Role(db.Model):
             skills.append(GameEnum.SKILL_GUARD)
         if GameEnum.TAG_ATTACKABLE_WOLF in self.tags:
             skills.append(GameEnum.SKILL_WOLF_KILL)
+            skills.append(GameEnum.SKILL_SUICIDE)
 
         self.skills = skills
         return
