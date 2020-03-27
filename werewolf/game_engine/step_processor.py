@@ -50,7 +50,7 @@ class StepProcessor(object):
             for r in roles:
                 if not r.alive:
                     continue
-                if GameEnum.TAG_ELECT in r.args:
+                if GameEnum.TAG_ELECT in r.tags:
                     votees.append(r.position)
                 else:
                     voters.append(r.position)
