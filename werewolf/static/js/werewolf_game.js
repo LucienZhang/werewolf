@@ -190,6 +190,7 @@
                 url: "api/get_game_info",
                 dataType: "json",
                 success: function (info) {
+                    $(".player > button").off("click");
                     $(".player > button").on("click", skills.select);
                     let role = info.role;
                     $("#check-role-dialog .modal-body").html(

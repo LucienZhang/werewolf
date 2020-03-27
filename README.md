@@ -76,6 +76,8 @@ This is a repository for an online judge of game [*The Werewolves of Millers Hol
    
    log_level = "warning"
    bind = "0.0.0.0:8000"
+   workers = 4
+   worker_class = "gevent"
    ```
 
 3. Install Redis

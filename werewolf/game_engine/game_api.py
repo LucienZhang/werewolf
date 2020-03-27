@@ -124,7 +124,7 @@ def get_game_info() -> dict:
             'status': [game.status.name, game.status.label],
         },
         role={
-            'role_type': role.role_type.label,
+            'role_type': [role.role_type.name, role.role_type.label],
             'skills': [sk.label for sk in role.skills],
         })
 
