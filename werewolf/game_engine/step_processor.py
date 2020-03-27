@@ -28,7 +28,7 @@ class StepProcessor(object):
                 StepProcessor.init_steps(game)
 
             step_flag = StepProcessor._enter_step(game)
-        return GameEnum.OK.digest(next_step=StepProcessor.peek_next(game).label)
+        return GameEnum.OK.digest(next_step=StepProcessor.get_instruction_string(game))
 
     @staticmethod
     def _leave_step(game: Game)->dict:
@@ -229,12 +229,27 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
 
     @staticmethod
-    def peek_next(game: Game)->GameEnum:
+    def get_instruction_string(game: Game)->str:
+        now = StepProcessor.current_step(game)
+        if now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_PK_TALK, GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_ELECT_PK_TALK, GameEnum.TURN_STEP_LAST_WORDS]:
+            return '结束发言'
+
+        if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
+            return '结束投票'
+
+        if now is GameEnum.TURN_STEP_ELECT:
+            return '结束上警'
+
         next_index = game.now_index + 1
         if next_index >= len(game.steps):
-            return GameEnum.TURN_STEP_TURN_NIGHT
+            step = GameEnum.TURN_STEP_TURN_NIGHT
         else:
-            return game.steps[next_index]
+            step = game.steps[next_index]
+
+        if step is GameEnum.TURN_STEP_TURN_NIGHT:
+            return '入夜'
+
+        return '等待中'
 
     @staticmethod
     def current_step(game: Game)->GameEnum:

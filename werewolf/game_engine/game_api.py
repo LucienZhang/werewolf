@@ -126,7 +126,7 @@ def get_game_info() -> dict:
         },
         role={
             'role_type': [role.role_type.name, role.role_type.label],
-            'skills': [sk.label for sk in role.skills],
+            'skills': [[sk.name, sk.label] for sk in role.skills],
         })
 
 

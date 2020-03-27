@@ -58,7 +58,7 @@ def game():
                            days=current_game.days,
                            game_status=current_game.status,
                            skills=current_role.skills,
-                           next_step=StepProcessor.peek_next(current_game).label,
+                           next_step=StepProcessor.get_instruction_string(current_game),
                            dbtxt=(str(current_game.players) + str(
                                type(current_game.players)) + '\n<br />\n' + str(type(current_game.steps))))
 
