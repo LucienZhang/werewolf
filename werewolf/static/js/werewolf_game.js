@@ -184,7 +184,6 @@
 
     gid_source.addEventListener('game_info', function (event) {
         let data = JSON.parse(event.data);
-        let show = data.show
         if ("seats" in data) {
             update_seats(data.seats);
         }
@@ -216,6 +215,7 @@
             });
         }
         if (data.history) {
+            let show = data.show
             let content = '';
             data.history.split('\n').forEach(element => {
                 content += '<p>' + element + '</p>'
