@@ -216,7 +216,7 @@ def wolf_kill()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
     with Game.query.with_for_update().get(current_user.gid) as game:
-        now = game.current_step()
+        now = StepProcessor.current_step(game)
         history = game.history
         if now != GameEnum.TAG_ATTACKABLE_WOLF or GameEnum.TAG_ATTACKABLE_WOLF not in my_role.tags:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()

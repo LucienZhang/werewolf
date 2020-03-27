@@ -33,7 +33,7 @@
             <div class="notice">
                 <div class="status" style="display: inline-block;">
                     第<span id="status-days">{{ days }}</span>天 <span
-                        id="status-message">{{ game_status.message }}</span>
+                        id="status-message">{{ game_status.label }}</span>
                 </div>
                 <div class="setting float-right">
                     <button data-toggle="modal" data-target="#history" class="btn btn-primary btn-xs">历史信息</button>
@@ -168,7 +168,7 @@
                     {% for skill in skills %}
                     <div>
                         <button id="{{ skill.name.lower() }}" type="button" class="btn-lg skill-button"
-                            onclick="skills.{{ skill.name.lower() }}();">{{ skill.message }}</button>
+                            onclick="skills.{{ skill.name.lower() }}();">{{ skill.label }}</button>
                     </div>
                     {% endfor %}
                 </div>
