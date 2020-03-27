@@ -56,7 +56,6 @@ class StepProcessor(object):
                     voters.append(r.position)
             voters.sort()
             votees.sort()
-            return GameEnum.OK.digest()
 
             if not voters or not votees:
                 # no captain
@@ -66,7 +65,6 @@ class StepProcessor(object):
                     publish_history(game.gid, '所有人都竞选警长，本局游戏无警长')
                 else:
                     publish_history(game.gid, '没有人竞选警长，本局游戏无警长')
-                return GameEnum.OK.digest()
             elif len(votees) == 1:
                 # auto win captain
                 while game.now_index + 1 < len(game.steps) and game.steps[game.now_index + 1] in {GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_ELECT_VOTE}:
@@ -77,6 +75,7 @@ class StepProcessor(object):
             else:
                 publish_history(game.gid, f"竞选警长的玩家为：{','.join(map(str,votees))}\n未竞选警长的玩家为：{','.join(map(str,voters))}")
                 game.history['voter_votee'] = [voters, votees]
+            return GameEnum.OK.digest()
         elif now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
             msg = ""
             announce_result = collections.defaultdict(list)
@@ -96,7 +95,7 @@ class StepProcessor(object):
                     ticket_cnt[votee_pos] += 0.5
             if forfeit and now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
                 return GameEnum.GAME_MESSAGE_NOT_VOTED_YET.digest(*forfeit)
-            for votee, voters in sorted(announce_result.items):
+            for votee, voters in sorted(announce_result.items()):
                 msg += '{} <= {}\n'.format(votee, ','.join(voters))
             if forfeit:
                 msg += '弃票：{}\n'.format(','.join(forfeit))
@@ -254,7 +253,7 @@ class StepProcessor(object):
         if step is GameEnum.TURN_STEP_TURN_NIGHT:
             return '入夜'
 
-        return '等待中'
+        return ''
 
     @staticmethod
     def current_step(game: Game)->GameEnum:
