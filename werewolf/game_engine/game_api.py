@@ -195,7 +195,7 @@ def elect()->dict:
         elif choice == 'no':
             my_role.tags.append(GameEnum.TAG_NOT_ELECT)
         elif choice == 'quit':
-            publish_history(game, f'{my_role.position}号玩家退水')
+            publish_history(game.gid, f'{my_role.position}号玩家退水')
             my_role.tags.remove(GameEnum.TAG_ELECT)
             my_role.tags.append(GameEnum.TAG_GIVE_UP_ELECT)
             votee = game.history['voter_votee'][1]
@@ -205,7 +205,7 @@ def elect()->dict:
                     game.steps.pop(game.now_index + 1)
                 captain_pos = votee[0]
                 game.captain_pos = captain_pos
-                publish_history(game, f'仅剩一位警上玩家，{captain_pos}号玩家自动当选警长')
+                publish_history(game.gid, f'仅剩一位警上玩家，{captain_pos}号玩家自动当选警长')
                 return StepProcessor.move_on(game)
         else:
             raise ValueError(f'Unknown choice: {choice}')
@@ -338,7 +338,7 @@ def shoot()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if not my_role.args['shootable'] or my_role.position not in game.history['dying']:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-        publish_history(game, f'{my_role.position}号玩家发动技能“枪击”，带走了{target}号玩家')
+        publish_history(game.gid, f'{my_role.position}号玩家发动技能“枪击”，带走了{target}号玩家')
         StepProcessor.kill(game, target, GameEnum.SKILL_SHOOT)
         return GameEnum.OK.digest()
 

@@ -12,8 +12,8 @@ def publish_music(channel, instruction, bgm, bgm_loop):
                 channel=channel)
 
 
-def publish_history(game, message, show=True):
-    publish_info(game.gid, json.dumps({'history': message, 'days': game.days, 'game_status': game.status, 'show': show}))
+def publish_history(channel, message, show=True):
+    publish_info(channel, json.dumps({'history': message, 'show': show}))
 
 
 def publish_info(channel, message):

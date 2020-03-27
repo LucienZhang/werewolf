@@ -29,7 +29,9 @@ class StepProcessor(object):
                 StepProcessor.init_steps(game)
 
             step_flag = StepProcessor._enter_step(game)
-        publish_info(game.gid, json.dumps({'next_step': StepProcessor.get_instruction_string(game)}))
+        instruction_string = StepProcessor.get_instruction_string(game)
+        if instruction_string:
+            publish_info(game.gid, json.dumps({'next_step': instruction_string}))
         return GameEnum.OK.digest()
 
     @staticmethod
@@ -48,7 +50,7 @@ class StepProcessor(object):
             for r in roles:
                 if not r.alive:
                     continue
-                if GameEnum.TAG_ELECT in r.rags:
+                if GameEnum.TAG_ELECT in r.args:
                     votees.append(r.position)
                 else:
                     voters.append(r.position)
@@ -61,9 +63,9 @@ class StepProcessor(object):
                 while game.now_index + 1 < len(game.steps) and game.steps[game.now_index + 1] in {GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_ELECT_VOTE}:
                     game.steps.pop(game.now_index + 1)
                 if not voters:
-                    publish_history(game, '所有人都竞选警长，本局游戏无警长')
+                    publish_history(game.gid, '所有人都竞选警长，本局游戏无警长')
                 else:
-                    publish_history(game, '没有人竞选警长，本局游戏无警长')
+                    publish_history(game.gid, '没有人竞选警长，本局游戏无警长')
                 return GameEnum.OK.digest()
             elif len(votees) == 1:
                 # auto win captain
@@ -71,9 +73,9 @@ class StepProcessor(object):
                     game.steps.pop(game.now_index + 1)
                 captain_pos = votees[0]
                 game.captain_pos = captain_pos
-                publish_history(game, f'只有{captain_pos}号玩家竞选警长，自动当选')
+                publish_history(game.gid, f'只有{captain_pos}号玩家竞选警长，自动当选')
             else:
-                publish_history(game, f"竞选警长的玩家为：{','.join(map(str,votees))}\n未竞选警长的玩家为：{','.join(map(str,voters))}")
+                publish_history(game.gid, f"竞选警长的玩家为：{','.join(map(str,votees))}\n未竞选警长的玩家为：{','.join(map(str,voters))}")
                 game.history['voter_votee'] = [voters, votees]
         elif now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
             msg = ""
@@ -115,12 +117,12 @@ class StepProcessor(object):
             if len(most_voted) == 1:
                 if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_PK_VOTE]:
                     msg += f'{most_voted[0]}号玩家以{max_ticket}票被公投出局'
-                    publish_history(game, msg)
+                    publish_history(game.gid, msg)
                     StepProcessor.kill(game, most_voted[0], GameEnum.SKILL_VOTE)
                 else:
                     game.captain_pos = most_voted[0]
                     msg += f'{most_voted[0]}号玩家以{max_ticket}票当选警长'
-                    publish_history(game, msg)
+                    publish_history(game.gid, msg)
                 return GameEnum.OK.digest()
             else:
                 # 平票
@@ -139,7 +141,7 @@ class StepProcessor(object):
                             voters.append(r.position)
                     game.history['voter_votee'] = [voters, votees]
                     msg += '以下玩家以{}票平票进入PK：{}'.format(max_ticket, ','.join(map(str, votees)))
-                    publish_history(game, msg)
+                    publish_history(game.gid, msg)
                     return GameEnum.OK.digest()
                 else:
                     msg += '以下玩家以{}票再次平票：{}\n'.format(max_ticket, ','.join(map(str, most_voted)))
@@ -147,7 +149,7 @@ class StepProcessor(object):
                         msg += '今天是平安日，无人被公投出局'
                     else:
                         msg += '警徽流失，本局游戏无警长'
-                    publish_history(game, msg)
+                    publish_history(game.gid, msg)
                     return GameEnum.OK.digest()
         elif now is GameEnum.TAG_ATTACKABLE_WOLF:
             publish_music(game.gid, 'wolf_end_voice', None, False)
@@ -174,6 +176,7 @@ class StepProcessor(object):
                 role.alive = False
             StepProcessor._reset_history(game)
             publish_music(game.gid, 'night_start_voice', 'night_bgm', True)
+            publish_info(game.gid, json.dumps({'days': game.days, 'game_status': game.status.label}))
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.TAG_ATTACKABLE_WOLF:
             publish_music(game.gid, 'wolf_start_voice', 'wolf_bgm', True)
@@ -208,17 +211,17 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             if game.history['dying']:
-                publish_history(game, GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest(
+                publish_history(game.gid, GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest(
                     ','.join([str(d) for d in sorted(game.history['dying'])])
                 ))
             else:
-                publish_history(game, "昨晚是平安夜")
+                publish_history(game.gid, "昨晚是平安夜")
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.TURN_STEP_TURN_DAY:
             game.status = GameEnum.GAME_STATUS_DAY
             publish_music(game.gid, 'day_start_voice', 'day_bgm', False)
-            # todo publish_info(game.gid, json.dumps({'game_status': game.status.message}))
-            # todo game.calculate_die_in_night()
+            StepProcessor.calculate_die_in_night(game)
+            publish_info(game.gid, json.dumps({'days': game.days, 'game_status': game.status.label}))
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.ROLE_TYPE_SEER:
             publish_music(game.gid, 'seer_start_voice', 'seer_bgm', True)
@@ -363,17 +366,17 @@ class StepProcessor(object):
         groups = {g: cnt for g, cnt in groups}
 
         if GameEnum.GROUP_TYPE_WOLVES not in groups:
-            publish_history(game, '游戏结束，好人阵营胜利')
+            publish_history(game.gid, '游戏结束，好人阵营胜利')
             game.status = GameEnum.GAME_STATUS_FINISHED
             raise GameFinished()
 
         if game.victory_mode is GameEnum.VICTORY_MODE_KILL_GROUP and (GameEnum.GROUP_TYPE_GODS not in groups or GameEnum.GROUP_TYPE_VILLAGERS not in groups):
-            publish_history(game, '游戏结束，狼人阵营胜利')
+            publish_history(game.gid, '游戏结束，狼人阵营胜利')
             game.status = GameEnum.GAME_STATUS_FINISHED
             raise GameFinished()
 
         if GameEnum.GROUP_TYPE_GODS not in groups and GameEnum.GROUP_TYPE_VILLAGERS not in groups:
-            publish_history(game, '游戏结束，狼人阵营胜利')
+            publish_history(game.gid, '游戏结束，狼人阵营胜利')
             game.status = GameEnum.GAME_STATUS_FINISHED
             raise GameFinished()
 
