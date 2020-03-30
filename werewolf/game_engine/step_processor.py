@@ -181,7 +181,7 @@ class StepProcessor(object):
             publish_history(game.gid,
                             (
                                 '***************************\n'
-                                '<pre>*        第{}天           *</pre>\n'
+                                '<pre>         第{}天           </pre>\n'
                                 '***************************'
                             ).format(game.days), show=False)
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
@@ -390,7 +390,7 @@ class StepProcessor(object):
 
         players = Role.query.with_entities(Role.position, Role.group_type).filter(Role.gid == game.gid, Role.alive == int(True)).all()
         groups = collections.defaultdict(int)
-        for p, g in groups:
+        for p, g in players:
             if p not in game.history['dying']:
                 groups[g] += 1
 

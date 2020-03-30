@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import pytest
 import json
+import collections
 from sqlalchemy.exc import IntegrityError
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -131,3 +132,11 @@ def test_role_table():
             assert cnt == 1
         elif g is GameEnum.GROUP_TYPE_WOLVES:
             assert cnt == 2
+    players = Role.query.with_entities(Role.position, Role.group_type).filter(Role.gid == 101, Role.alive == int(True)).all()
+    groups = collections.defaultdict(int)
+    for p, g in players:
+        groups[g] += 1
+    assert GameEnum.GROUP_TYPE_GODS in groups
+    assert groups[GameEnum.GROUP_TYPE_GODS] == 1
+    assert GameEnum.GROUP_TYPE_WOLVES in groups
+    assert groups[GameEnum.GROUP_TYPE_WOLVES] == 2

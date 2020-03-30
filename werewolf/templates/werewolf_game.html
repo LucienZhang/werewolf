@@ -15,7 +15,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <div class="float-left" id="current_user">{{ name }}</div>
+            <div class="float-left" id="current_user">{{ nickname }}</div>
             <img src="{{ url_for('static',filename='images/werewolf/logo.png') }}" alt="Logo">
             <div class="float-right">
                 <a href="{{ url_for('werewolf_api.quit_game') }}">
