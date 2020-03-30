@@ -103,9 +103,9 @@ class StepProcessor(object):
             if forfeit and now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
                 return GameEnum.GAME_MESSAGE_NOT_VOTED_YET.digest(*forfeit)
             for votee, voters in sorted(announce_result.items()):
-                msg += '{} <= {}\n'.format(votee, ','.join(voters))
+                msg += '{} <= {}\n'.format(votee, ','.join(map(str, voters)))
             if forfeit:
-                msg += '弃票：{}\n'.format(','.join(forfeit))
+                msg += '弃票：{}\n'.format(','.join(map(str, forfeit)))
 
             if not ticket_cnt:
                 most_voted = game.history['voter_votee'][1]
