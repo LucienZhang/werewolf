@@ -166,14 +166,20 @@ def vote()->dict:
         if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE]:
             game.history['vote_result'][role.position] = target
             game.history.changed()
-            return GameEnum.OK.digest()
+            if target > 0:
+                return GameEnum.OK.digest(result=f'你投了{target}号玩家')
+            else:
+                return GameEnum.OK.digest(result=f'你弃票了')
         elif now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
             if target == GameEnum.TARGET_NO_ONE.value:
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
             else:
                 game.history['vote_result'][role.position] = target
                 game.history.changed()
-                return GameEnum.OK.digest()
+                if target > 0:
+                    return GameEnum.OK.digest(result=f'你投了{target}号玩家')
+                else:
+                    return GameEnum.OK.digest(result=f'你弃票了')
         else:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
 
@@ -238,7 +244,11 @@ def wolf_kill()->dict:
                     history['wolf_kill_decision'] = decision.pop()
                 else:
                     history['wolf_kill_decision'] = GameEnum.TARGET_NO_ONE.value
-        return StepProcessor.move_on(game)
+        StepProcessor.move_on(game)
+        if target > 0:
+            return GameEnum.OK.digest(result=f'你选择了击杀{target}号玩家')
+        else:
+            return GameEnum.OK.digest(result=f'你选择空刀')
 
 
 def discover()->dict:
@@ -255,9 +265,9 @@ def discover()->dict:
         if not target_role.alive:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         history['discover'] = target
-        group_result = "狼人" if target_role.group_type is GameEnum.GROUP_TYPE_WOLVES else "好人"
+        group_result = '<span style="color:red">狼人</span>' if target_role.group_type is GameEnum.GROUP_TYPE_WOLVES else '<span style="color:green">好人</span>'
         StepProcessor.move_on(game)
-        return GameEnum.OK.digest(result=group_result)
+        return GameEnum.OK.digest(result=f'你查验了{target}号玩家为：{group_result}')
 
 
 def witch()->dict:
@@ -288,7 +298,7 @@ def elixir()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         history['elixir'] = True
         my_role.args['elixir'] = False
-        return GameEnum.OK.digest()
+        return GameEnum.OK.digest(result=f'你使用了解药')
 
 
 def toxic()->dict:
@@ -308,7 +318,10 @@ def toxic()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         history['toxic'] = target
         my_role.args['toxic'] = False
-        return GameEnum.OK.digest()
+        if target > 0:
+            return GameEnum.OK.digest(result=f'你毒杀了{target}号玩家')
+        else:
+            return GameEnum.OK.digest()
 
 
 def guard()->dict:
@@ -328,7 +341,10 @@ def guard()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         history['guard'] = target
         my_role.args['guard'] = target
-        return GameEnum.OK.digest()
+        if target > 0:
+            return GameEnum.OK.digest(result=f'你守护了{target}号玩家')
+        else:
+            return GameEnum.OK.digest(result=f'你选择空守')
 
 
 def shoot()->dict:
@@ -355,6 +371,7 @@ def suicide():
         if game.status is not GameEnum.GAME_STATUS_DAY:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         game.history = game.history[:game.now_index + 1]
+        publish_history(game.gid, f'{my_role.position}号玩家自爆了')
         StepProcessor.kill(game, my_role.position, GameEnum.SKILL_SUICIDE)
         return GameEnum.OK.digest()
 

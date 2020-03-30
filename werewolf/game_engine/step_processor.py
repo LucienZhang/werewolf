@@ -178,6 +178,12 @@ class StepProcessor(object):
             StepProcessor._reset_history(game)
             publish_music(game.gid, 'night_start_voice', 'night_bgm', True)
             publish_info(game.gid, json.dumps({'days': game.days, 'game_status': game.status.label}))
+            publish_history(game.gid,
+                            (
+                                '***************************\n'
+                                '*        第{}天           *\n'
+                                '***************************'
+                            ).format(game.days), show=False)
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.TAG_ATTACKABLE_WOLF:
             publish_music(game.gid, 'wolf_start_voice', 'wolf_bgm', True)
@@ -194,6 +200,7 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ELECT:
             publish_music(game.gid, 'elect', None, False)
+            publish_history(game.gid, '###上警阶段###')
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_VOTE:
             game.history['vote_result'] = {}
@@ -207,9 +214,19 @@ class StepProcessor(object):
                 if r.voteable:
                     voters.append(r.position)
             game.history['voter_votee'] = [voters, votees]
+            publish_history(game.gid, '###投票阶段###')
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
-        elif now in [GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
+        elif now is GameEnum.TURN_STEP_ELECT_VOTE:
             game.history['vote_result'] = {}
+            publish_history(game.gid, '###警长投票阶段###')
+            return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
+        elif now is GameEnum.TURN_STEP_PK_VOTE:
+            game.history['vote_result'] = {}
+            publish_history(game.gid, '###PK投票阶段###')
+            return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
+        elif now is GameEnum.TURN_STEP_ELECT_PK_VOTE:
+            game.history['vote_result'] = {}
+            publish_history(game.gid, '###警长PK投票阶段###')
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             if game.history['dying']:

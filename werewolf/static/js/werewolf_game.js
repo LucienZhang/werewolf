@@ -6,6 +6,21 @@
     let candidates = [];
     let num_of_can = 0;
     let message = $("#message");
+    let history = $("#history-model-content");
+
+    window.add_history = function (data, show) {
+        if (!data) {
+            return
+        }
+        let content = '';
+        data.split('\n').forEach(element => {
+            content += '<p>' + element + '</p>'
+        });
+        if (show) {
+            show_message(content);
+        }
+        history.html(history.html() + content)
+    }
 
     window.show_message = function (content) {
         message.find("#message-model-content").html(content);
@@ -20,12 +35,22 @@
         }
     };
 
+    skills.deselect = function () {
+        while (candidates.length > 0) {
+            candidates.shift().removeClass("selected");
+        }
+    };
+
     function reset_panel() {
         tips.text("");
         buttons.html("");
+        deselect();
+        $('#all_players').removeClass();
+
     }
 
     skills.skill_vote = function () {
+        $('#all_players').addClass('skill_vote');
         $("#skills").modal("hide");
         tips.text("选择玩家并投票");
         num_of_can = 1;
@@ -42,6 +67,8 @@
                 success: function (info) {
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -54,6 +81,8 @@
                 success: function (info) {
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -61,6 +90,7 @@
     };
 
     skills.skill_captain = function () {
+        $('#all_players').addClass('skill_captain');
         $("#skills").modal("hide");
         num_of_can = 0;
         buttons.html('<button class="btn btn-warning skill-elect">竞选</button>' + '<button class="btn btn-warning skill-no-elect">不竞选</button>' + '<button class="btn btn-warning skill-give-up">退水</button>');
@@ -72,6 +102,8 @@
                 success: function (info) {
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -84,6 +116,8 @@
                 success: function (info) {
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -96,6 +130,8 @@
                 success: function (info) {
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -103,6 +139,7 @@
     };
 
     skills.skill_wolf_kill = function () {
+        $('#all_players').addClass('skill_wolf_kill');
         $("#skills").modal("hide");
         tips.text("选择玩家落刀");
         num_of_can = 1;
@@ -119,6 +156,8 @@
                 success: function (info) {
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -131,6 +170,8 @@
                 success: function (info) {
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -138,6 +179,7 @@
     };
 
     skills.skill_discover = function () {
+        $('#all_players').addClass('skill_discover');
         $("#skills").modal("hide");
         tips.text("选择玩家查验");
         num_of_can = 1;
@@ -155,7 +197,7 @@
                     if (info.msg !== 'OK') {
                         show_message(info.msg);
                     } else {
-                        show_message(info.result);
+                        add_history(info.result, true);
                     }
                 }
             });
@@ -166,8 +208,6 @@
 })(window);
 
 (function (window) {
-    let history = $("#history-model-content");
-
     document.querySelector("#history").onfocus = function () {
         $("#history-model-content").scrollTop($(this).prop("scrollHeight"));
     };
@@ -215,15 +255,7 @@
             });
         }
         if (data.history) {
-            let show = data.show
-            let content = '';
-            data.history.split('\n').forEach(element => {
-                content += '<p>' + element + '</p>'
-            });
-            if (show) {
-                show_message(content);
-            }
-            history.html(history.html() + content)
+            add_history(data.history, data.show);
         }
 
         if ("next_step" in data) {
