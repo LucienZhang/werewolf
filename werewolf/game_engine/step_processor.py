@@ -125,6 +125,7 @@ class StepProcessor(object):
                 return GameEnum.OK.digest()
             else:
                 # 平票
+                # todo 无人投票
                 if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE]:
                     if now is GameEnum.TURN_STEP_VOTE:
                         game.steps.insert(game.now_index + 1, GameEnum.TURN_STEP_PK_TALK)
@@ -204,6 +205,7 @@ class StepProcessor(object):
                 votees.append(r.position)
                 if r.voteable:
                     voters.append(r.position)
+            game.history['voter_votee'] = [voters, votees]
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now in [GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
             game.history['vote_result'].clear()

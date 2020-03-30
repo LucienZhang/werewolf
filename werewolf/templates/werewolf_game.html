@@ -7,10 +7,8 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>狼人杀房间</title>
-    <link rel="stylesheet" type="text/css"
-        href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" type="text/css"
-        href="{{ url_for('static', filename='css/werewolf_game.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/werewolf_game.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 </head>
 
@@ -32,8 +30,7 @@
         <div id="info" class="area">
             <div class="notice">
                 <div class="status" style="display: inline-block;">
-                    第<span id="status-days">{{ days }}</span>天 <span
-                        id="status-message">{{ game_status.label }}</span>
+                    第<span id="status-days">{{ days }}</span>天 <span id="status-message">{{ game_status.label }}</span>
                 </div>
                 <div class="setting float-right">
                     <button data-toggle="modal" data-target="#history" class="btn btn-primary btn-xs">历史信息</button>
@@ -201,8 +198,7 @@
     <!-- {{ dbtxt }} -->
 
 
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <!-- <script type="text/javascript" src="../static/js/ajax-utils.js"></script> -->
     <script>
@@ -213,8 +209,7 @@
     {% if ishost %}
     <audio id="bgm_audio" loop></audio>
     <audio id="instruction_audio"></audio>
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='js/werewolf_game_host.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/werewolf_game_host.js') }}"></script>
     {% endif %}
 </body>
 

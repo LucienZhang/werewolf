@@ -226,6 +226,10 @@
             history.html(history.html() + content)
         }
 
+        if ("next_step" in data) {
+            $("#next-step").text(data.next_step)
+        }
+
         if ("days" in data) {
             $("#status-days").text(data.days)
         }

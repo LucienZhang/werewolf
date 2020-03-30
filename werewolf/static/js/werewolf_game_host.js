@@ -48,22 +48,13 @@
         move_on();
     }, false);
 
-    gid_source.addEventListener('game_info', function (event) {
-        let data = JSON.parse(event.data);
-
-        if ("next_step" in data) {
-            $("#next-step").text(data.next_step)
-        }
-
-    }, false);
-
     $("#next-step").on("click", function () {
         $.ajax({
             url: "api/next_step",
             dataType: "json",
             success: function (info) {
                 if (info.msg !== 'OK') {
-                    alert(info.msg)
+                    show_message(info.msg)
                 }
             }
         });
@@ -79,7 +70,7 @@
             dataType: "json",
             success: function (info) {
                 if (info.msg !== 'OK') {
-                    alert(info.msg)
+                    show_message(info.msg)
                 } else {
                     $("#deal").off("click");
                 }
