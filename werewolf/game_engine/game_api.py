@@ -184,6 +184,24 @@ def vote()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
 
 
+def handover()->dict:
+    target = int(request.args.get('target'))
+    my_role = Role.query.get(current_user.uid)
+    with Game.query.with_for_update().get(current_user.gid) as game:
+        if game.status is not GameEnum.TURN_STEP_LAST_WORDS:
+            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if my_role.position not in game.history['dying']:
+            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if game.captain_pos != my_role.position:
+            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+
+        target_role = _get_role_by_pos(game, target)
+        if not target_role.alive:
+            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        game.captain_pos = target
+        return GameEnum.OK.digest()
+
+
 def elect()->dict:
     choice = request.args.get('choice')
     my_role = Role.query.get(current_user.uid)

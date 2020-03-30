@@ -1,4 +1,4 @@
-from .game_api import join_game, setup_game, quit_game, deal, get_game_info, sit, next_step, vote, elect, wolf_kill, discover, witch, elixir, toxic, guard, shoot, suicide
+from .game_api import join_game, setup_game, quit_game, deal, get_game_info, sit, next_step, vote, elect, wolf_kill, discover, witch, elixir, toxic, guard, shoot, suicide, handover
 
 
 class GameEngine(object):
@@ -20,6 +20,7 @@ class GameEngine(object):
         'guard': guard,
         'shoot': shoot,
         'suicide': suicide,
+        'handover': handover,
     }
 
     @staticmethod

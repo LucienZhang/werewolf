@@ -92,8 +92,8 @@
     skills.skill_captain = function () {
         $('#all_players').addClass('skill_captain');
         $("#skills").modal("hide");
-        num_of_can = 0;
-        buttons.html('<button class="btn btn-warning skill-elect">竞选</button>' + '<button class="btn btn-warning skill-no-elect">不竞选</button>' + '<button class="btn btn-warning skill-give-up">退水</button>');
+        num_of_can = 1;
+        buttons.html('<button class="btn btn-warning skill-elect">竞选</button>' + '<button class="btn btn-warning skill-give-up">退水</button>' + '<button class="btn btn-warning skill-handover">移交警徽</button>');
         buttons.children("button.skill-elect").on("click", function () {
             $.ajax({
                 url: "api/elect?choice=yes",
@@ -108,9 +108,9 @@
             });
             reset_panel();
         });
-        buttons.children("button.skill-no-elect").on("click", function () {
+        buttons.children("button.skill-give-up").on("click", function () {
             $.ajax({
-                url: "api/elect?choice=no",
+                url: "api/elect?choice=quit",
                 dataType: "json",
                 success: function (info) {
                     if (info.msg !== 'OK') {
@@ -122,9 +122,9 @@
             });
             reset_panel();
         });
-        buttons.children("button.skill-give-up").on("click", function () {
+        buttons.children("button.skill-handover").on("click", function () {
             $.ajax({
-                url: "api/elect?choice=quit",
+                url: "api/handover?target=" + candidates[0].attr("pos"),
                 dataType: "json",
                 success: function (info) {
                     if (info.msg !== 'OK') {
