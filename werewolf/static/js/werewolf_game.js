@@ -61,7 +61,7 @@
                 return;
             }
             $.ajax({
-                url: "api/vote?target=" + candidates.shift().attr("pos"),
+                url: "api/vote?target=" + candidates[0].attr("pos"),
                 dataType: "json",
                 success: function (info) {
                     if (info.msg !== 'OK') {
@@ -150,7 +150,7 @@
                 return;
             }
             $.ajax({
-                url: "api/wolf_kill?target=" + candidates.shift().attr("pos"),
+                url: "api/wolf_kill?target=" + candidates[0].attr("pos"),
                 dataType: "json",
                 success: function (info) {
                     if (info.msg !== 'OK') {
@@ -190,7 +190,7 @@
                 return;
             }
             $.ajax({
-                url: "api/discover?target=" + candidates.shift().attr("pos"),
+                url: "api/discover?target=" + candidates[0].attr("pos"),
                 dataType: "json",
                 success: function (info) {
                     if (info.msg !== 'OK') {

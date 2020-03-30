@@ -97,6 +97,9 @@ class StepProcessor(object):
                 ticket_cnt[votee_pos] += 1
                 if voter_pos == game.captain_pos:
                     ticket_cnt[votee_pos] += 0.5
+            for voter in game.history['voter_votee'][0]:
+                if voter not in game.history['vote_result']:
+                    forfeit.append(voter)
             if forfeit and now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
                 return GameEnum.GAME_MESSAGE_NOT_VOTED_YET.digest(*forfeit)
             for votee, voters in sorted(announce_result.items()):
@@ -198,7 +201,7 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ELECT:
             publish_music(game.gid, 'elect', None, False)
-            publish_history(game.gid, '###上警阶段###')
+            publish_history(game.gid, '###上警阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_VOTE:
             game.history['vote_result'] = {}
@@ -212,19 +215,19 @@ class StepProcessor(object):
                 if r.voteable:
                     voters.append(r.position)
             game.history['voter_votee'] = [voters, votees]
-            publish_history(game.gid, '###投票阶段###')
+            publish_history(game.gid, '###投票阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ELECT_VOTE:
             game.history['vote_result'] = {}
-            publish_history(game.gid, '###警长投票阶段###')
+            publish_history(game.gid, '###警长投票阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_PK_VOTE:
             game.history['vote_result'] = {}
-            publish_history(game.gid, '###PK投票阶段###')
+            publish_history(game.gid, '###PK投票阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ELECT_PK_VOTE:
             game.history['vote_result'] = {}
-            publish_history(game.gid, '###警长PK投票阶段###')
+            publish_history(game.gid, '###警长PK投票阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             if game.history['dying']:
@@ -402,21 +405,46 @@ class StepProcessor(object):
 
         if GameEnum.GROUP_TYPE_WOLVES not in groups:
             publish_history(game.gid, '游戏结束，好人阵营胜利')
-            game.status = GameEnum.GAME_STATUS_FINISHED
+            # game.status = GameEnum.GAME_STATUS_FINISHED
+            StepProcessor.init_game(game)
+            all_players = Role.query.filter(Role.gid == game.gid).all()
+            for p in all_players:
+                p.reset()
             raise GameFinished()
 
         if game.victory_mode is GameEnum.VICTORY_MODE_KILL_GROUP and (GameEnum.GROUP_TYPE_GODS not in groups or GameEnum.GROUP_TYPE_VILLAGERS not in groups):
             publish_history(game.gid, '游戏结束，狼人阵营胜利')
-            game.status = GameEnum.GAME_STATUS_FINISHED
+            # game.status = GameEnum.GAME_STATUS_FINISHED
+            StepProcessor.init_game(game)
+            all_players = Role.query.filter(Role.gid == game.gid).all()
+            for p in all_players:
+                p.reset()
             raise GameFinished()
 
         if GameEnum.GROUP_TYPE_GODS not in groups and GameEnum.GROUP_TYPE_VILLAGERS not in groups:
             publish_history(game.gid, '游戏结束，狼人阵营胜利')
-            game.status = GameEnum.GAME_STATUS_FINISHED
+            # game.status = GameEnum.GAME_STATUS_FINISHED
+            StepProcessor.init_game(game)
+            all_players = Role.query.filter(Role.gid == game.gid).all()
+            for p in all_players:
+                p.reset()
             raise GameFinished()
 
         # todo third party
         # todo reset game
+
+    @staticmethod
+    def init_game(game):
+        game.status = GameEnum.GAME_STATUS_WAIT_TO_START
+        game.end_time = datetime.utcnow() + timedelta(days=1)
+        game.days = 0
+        game.now_index = -1
+        game.step_cnt = 0
+        game.steps = []
+        game.history = {}
+        game.captain_pos = -1
+        game.players = []
+        StepProcessor._reset_history(game)
 
 
 #     def get_attackable_wolf(self):

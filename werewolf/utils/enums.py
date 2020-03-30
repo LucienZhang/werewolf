@@ -27,7 +27,7 @@ class GameEnum(LabelledEnum):
     GAME_STATUS_READY = (2, '游戏已准备好')
     GAME_STATUS_DAY = (3, '白天')
     GAME_STATUS_NIGHT = (4, '夜晚')
-    GAME_STATUS_FINISHED = (5, '游戏已结束')
+    # GAME_STATUS_FINISHED = (5, '游戏已结束')
 
     # 100
     VICTORY_MODE_UNKNOWN = (100, '未知胜利模式')

@@ -32,7 +32,7 @@ def setup_game() -> dict:
                     wolf_mode=_get_wolf_mode_by_cards(cards),
                     cards=cards,
                     )
-    _init_game(new_game)
+    StepProcessor.init_game(new_game)
     db.session.add(new_game)
     db.session.commit()
 
@@ -374,19 +374,6 @@ def suicide():
         publish_history(game.gid, f'{my_role.position}号玩家自爆了')
         StepProcessor.kill(game, my_role.position, GameEnum.SKILL_SUICIDE)
         return GameEnum.OK.digest()
-
-
-def _init_game(game):
-    game.status = GameEnum.GAME_STATUS_WAIT_TO_START
-    game.end_time = datetime.utcnow() + timedelta(days=1)
-    game.days = 0
-    game.now_index = -1
-    game.step_cnt = 0
-    game.steps = []
-    game.history = {}
-    game.captain_pos = -1
-    game.players = []
-    StepProcessor._reset_history(game)
 
 
 def _get_wolf_mode_by_cards(cards):
