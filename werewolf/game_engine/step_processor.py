@@ -181,7 +181,7 @@ class StepProcessor(object):
             publish_history(game.gid,
                             (
                                 '***************************\n'
-                                '*        第{}天           *\n'
+                                '<pre>*        第{}天           *</pre>\n'
                                 '***************************'
                             ).format(game.days), show=False)
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON

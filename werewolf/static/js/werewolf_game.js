@@ -60,7 +60,6 @@
                 show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
                 return;
             }
-            reset_panel();
             $.ajax({
                 url: "api/vote?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
@@ -72,9 +71,9 @@
                     }
                 }
             });
+            reset_panel();
         });
         buttons.children("button.skill-cancel").on("click", function () {
-            reset_panel();
             $.ajax({
                 url: "api/vote?target=-1",
                 dataType: "json",
@@ -86,6 +85,7 @@
                     }
                 }
             });
+            reset_panel();
         });
     };
 
@@ -95,7 +95,6 @@
         num_of_can = 0;
         buttons.html('<button class="btn btn-warning skill-elect">竞选</button>' + '<button class="btn btn-warning skill-no-elect">不竞选</button>' + '<button class="btn btn-warning skill-give-up">退水</button>');
         buttons.children("button.skill-elect").on("click", function () {
-            reset_panel();
             $.ajax({
                 url: "api/elect?choice=yes",
                 dataType: "json",
@@ -107,9 +106,9 @@
                     }
                 }
             });
+            reset_panel();
         });
         buttons.children("button.skill-no-elect").on("click", function () {
-            reset_panel();
             $.ajax({
                 url: "api/elect?choice=no",
                 dataType: "json",
@@ -121,9 +120,9 @@
                     }
                 }
             });
+            reset_panel();
         });
         buttons.children("button.skill-give-up").on("click", function () {
-            reset_panel();
             $.ajax({
                 url: "api/elect?choice=quit",
                 dataType: "json",
@@ -135,6 +134,7 @@
                     }
                 }
             });
+            reset_panel();
         });
     };
 
@@ -149,7 +149,6 @@
                 show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
                 return;
             }
-            reset_panel();
             $.ajax({
                 url: "api/wolf_kill?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
@@ -161,9 +160,9 @@
                     }
                 }
             });
+            reset_panel();
         });
         buttons.children("button.skill-cancel").on("click", function () {
-            reset_panel();
             $.ajax({
                 url: "api/wolf_kill?target=-1",
                 dataType: "json",
@@ -175,6 +174,7 @@
                     }
                 }
             });
+            reset_panel();
         });
     };
 
@@ -189,7 +189,6 @@
                 show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
                 return;
             }
-            reset_panel();
             $.ajax({
                 url: "api/discover?target=" + candidates.shift().attr("pos"),
                 dataType: "json",
@@ -201,6 +200,7 @@
                     }
                 }
             });
+            reset_panel();
         });
     };
 
