@@ -165,12 +165,14 @@ def vote()->dict:
         now = StepProcessor.current_step(game)
         if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE]:
             game.history['vote_result'][role.position] = target
+            game.history.changed()
             return GameEnum.OK.digest()
         elif now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
             if target == GameEnum.TARGET_NO_ONE.value:
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
             else:
                 game.history['vote_result'][role.position] = target
+                game.history.changed()
                 return GameEnum.OK.digest()
         else:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
@@ -224,6 +226,7 @@ def wolf_kill()->dict:
             history['wolf_kill_decision'] = target
         else:
             history['wolf_kill'][my_role.position] = target
+            history.changed()
             all_players = Role.query.filter(Role.gid == game.gid, Role.alive == int(True)).limit(len(game.players)).all()
             attackable_cnt = 0
             for p in all_players:
