@@ -3,6 +3,7 @@ import typing
 import collections
 import json
 from sqlalchemy import func
+from flask import current_app
 from werewolf.utils.enums import GameEnum
 from werewolf.database import Role
 from werewolf.utils.publisher import publish_history, publish_music, publish_info
@@ -321,6 +322,7 @@ class StepProcessor(object):
 
     @staticmethod
     def kill(game: Game, pos: int, how: GameEnum):
+        current_app.logger.info(f'kill pos={pos},by {how.label}')
         if pos < 1 or pos > game.get_seats_cnt():
             return
         role = Role.query.filter(Role.gid == game.gid, Role.position == pos).limit(1).first()
@@ -347,6 +349,7 @@ class StepProcessor(object):
         elixir = game.history['elixir']
         guard = game.history['guard']
 
+        current_app.logger.info(f'wolf_kill_pos={wolf_kill_pos},elixir={elixir},guard={guard}')
         if wolf_kill_pos > 0:
             killed = True
             if elixir:
