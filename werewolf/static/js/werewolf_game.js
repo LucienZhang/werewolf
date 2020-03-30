@@ -44,7 +44,7 @@
     function reset_panel() {
         tips.text("");
         buttons.html("");
-        deselect();
+        skills.deselect();
         $('#all_players').removeClass();
 
     }
