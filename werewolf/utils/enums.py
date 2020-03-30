@@ -131,6 +131,6 @@ class GameEnum(LabelledEnum):
 
     # 1300
     GAME_TIMEOUT_RANDOM_FROM = (1300, 5)
-    GAME_TIMEOUT_RANDOM_TO = (1300, 8)
+    GAME_TIMEOUT_RANDOM_TO = (1301, 8)
 
     OK = (9999, 'OK')

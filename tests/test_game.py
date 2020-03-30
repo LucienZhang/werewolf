@@ -5,7 +5,7 @@ import json
 from flask import request
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from tests.env import app, db
+from werewolf.database import db
 
 
 def login(client, username, password):
