@@ -196,7 +196,7 @@ class StepProcessor(object):
             publish_music(game.gid, 'elect', None, False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_VOTE:
-            game.history['vote_result']={}
+            game.history['vote_result'] = {}
             voters = []
             votees = []
             roles = Role.query.filter(Role.gid == game.gid).limit(len(game.players)).all()
@@ -209,7 +209,7 @@ class StepProcessor(object):
             game.history['voter_votee'] = [voters, votees]
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now in [GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
-            game.history['vote_result']={}
+            game.history['vote_result'] = {}
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             if game.history['dying']:
@@ -368,8 +368,14 @@ class StepProcessor(object):
     @staticmethod
     def check_win(game):
         # todo consider dying
-        groups = Role.query.with_entities(Role.group_type, func.count(Role.group_type)).filter(Role.gid == game.gid, Role.alive == int(True)).group_by(Role.group_type).all()
-        groups = {g: cnt for g, cnt in groups}
+        # groups = Role.query.with_entities(Role.group_type, func.count(Role.group_type)).filter(Role.gid == game.gid, Role.alive == int(True)).group_by(Role.group_type).all()
+        # groups = {g: cnt for g, cnt in groups}
+
+        players = Role.query.with_entities(Role.position, Role.group_type).filter(Role.gid == game.gid, Role.alive == int(True)).all()
+        groups = collections.defaultdict(int)
+        for p, g in groups:
+            if p not in game.history['dying']:
+                groups[g] += 1
 
         if GameEnum.GROUP_TYPE_WOLVES not in groups:
             publish_history(game.gid, '游戏结束，好人阵营胜利')
