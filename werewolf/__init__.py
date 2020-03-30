@@ -6,13 +6,13 @@ from werewolf.werewolf_module import werewolf_api
 from werewolf.auth.login import init_login
 from werewolf.database import init_db
 from werewolf.config import config
-# from werewolf.utils.scheduler import init_scheduler
+from werewolf.utils.game_scheduler import init_scheduler
 
 
 def init_app(app):
     init_login(app)
     init_db(app)
-    # init_scheduler(app)
+    init_scheduler(app)
     app.register_blueprint(sse, url_prefix='/stream')
     # todo: access control
     # def check_access():

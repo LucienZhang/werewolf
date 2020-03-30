@@ -4,10 +4,13 @@ import collections
 import json
 from sqlalchemy import func
 from flask import current_app
+from datetime import datetime, timedelta
+import random
 from werewolf.utils.enums import GameEnum
 from werewolf.database import Role
 from werewolf.utils.publisher import publish_history, publish_music, publish_info
 from werewolf.utils.game_exceptions import GameFinished
+from werewolf.utils.game_scheduler import scheduler
 
 if typing.TYPE_CHECKING:
     from werewolf.database import Game
@@ -187,14 +190,9 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.TAG_ATTACKABLE_WOLF:
             publish_music(game.gid, 'wolf_start_voice', 'wolf_bgm', True)
-            # todo: add random job if there is not wolf (third party situation)
-            # scheduler.add_job(id=f'{game.gid}_WOLF_KILL', func=action_timeout,
-            #                   args=(game.gid, game.steps['global_steps']),
-            #                   next_run_time=datetime.now() + timedelta(seconds=30))
-
-            # two mode:
-            # 1. without third party: any wolf kill is fine
-            # 2. with thrid party: all wolf kill is needed
+            scheduler.add_job(id=f'{game.gid}_WOLF_KILL', func=timeout_move_on,
+                              args=(game.gid, game.step_cnt),
+                              next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_ELECT_TALK]:
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
@@ -244,12 +242,21 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.ROLE_TYPE_SEER:
             publish_music(game.gid, 'seer_start_voice', 'seer_bgm', True)
+            scheduler.add_job(id=f'{game.gid}_SEER', func=timeout_move_on,
+                              args=(game.gid, game.step_cnt),
+                              next_run_time=datetime.now() + timedelta(seconds=5))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_WITCH:
             publish_music(game.gid, 'witch_start_voice', 'witch_bgm', True)
+            scheduler.add_job(id=f'{game.gid}_WITCH', func=timeout_move_on,
+                              args=(game.gid, game.step_cnt),
+                              next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_start_voice', 'savior_bgm', True)
+            scheduler.add_job(id=f'{game.gid}_SAVIOR', func=timeout_move_on,
+                              args=(game.gid, game.step_cnt),
+                              next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
 
     @staticmethod
@@ -384,7 +391,6 @@ class StepProcessor(object):
 
     @staticmethod
     def check_win(game):
-        # todo consider dying
         # groups = Role.query.with_entities(Role.group_type, func.count(Role.group_type)).filter(Role.gid == game.gid, Role.alive == int(True)).group_by(Role.group_type).all()
         # groups = {g: cnt for g, cnt in groups}
 
@@ -420,11 +426,8 @@ class StepProcessor(object):
 #                 attackable.append(r)
 #         return attackable
 
-
-# def action_timeout(gid, global_step_num):
-#     game = Game.get_game_by_gid(gid)
-#     if global_step_num != game.steps['global_steps']:
-#         return
-#     game.go_next_step()
-#     game.commit()
-#     return
+def timeout_move_on(gid, step_cnt):
+    with Game.query.with_for_update().get(gid) as game:
+        if step_cnt != game.step_cnt:
+            return
+        StepProcessor.move_on(game)
