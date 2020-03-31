@@ -211,6 +211,7 @@ def handover()->dict:
             current_app.logger.info(f'target not alive, target={target}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         game.captain_pos = target
+        publish_history(game.gid, f'{my_role.position}号玩家将警徽移交给了{target}号玩家')
         return GameEnum.OK.digest()
 
 

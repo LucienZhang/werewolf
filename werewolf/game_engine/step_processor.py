@@ -7,7 +7,7 @@ from flask import current_app
 from datetime import datetime, timedelta
 import random
 from werewolf.utils.enums import GameEnum
-from werewolf.database import Role, Game
+from werewolf.database import db, Role, Game
 from werewolf.utils.publisher import publish_history, publish_music, publish_info
 from werewolf.utils.game_exceptions import GameFinished
 from werewolf.utils.game_scheduler import scheduler
@@ -250,7 +250,7 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.ROLE_TYPE_SEER:
             publish_music(game.gid, 'seer_start_voice', 'seer_bgm', True)
-            seer_cnt = Role.query.filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SEER.value).count()
+            seer_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SEER.value).scalar()
             if seer_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_SEER_{game.step_cnt}', func=timeout_move_on,
                                   args=(game.gid, game.step_cnt),
@@ -258,7 +258,7 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_WITCH:
             publish_music(game.gid, 'witch_start_voice', 'witch_bgm', True)
-            witch_cnt = Role.query.filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_WITCH.value).count()
+            witch_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_WITCH.value).scalar()
             if witch_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_WITCH_{game.step_cnt}', func=timeout_move_on,
                                   args=(game.gid, game.step_cnt),
@@ -266,7 +266,7 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_start_voice', 'savior_bgm', True)
-            savior_cnt = Role.query.filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SAVIOR.value).count()
+            savior_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SAVIOR.value).scalar()
             if savior_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_SAVIOR', func=timeout_move_on,
                                   args=(game.gid, game.step_cnt),
