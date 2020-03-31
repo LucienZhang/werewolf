@@ -156,15 +156,17 @@ def next_step()->dict:
 
 def vote()->dict:
     target = int(request.args.get('target'))
-    role = Role.query.get(current_user.uid)
+    my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
-        if not role.voteable or role.position not in game.history['voter_votee'][0]:
+        if not my_role.voteable or my_role.position not in game.history['voter_votee'][0]:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if target != GameEnum.TARGET_NO_ONE.value and target not in game.history['voter_votee'][1]:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         now = StepProcessor.current_step(game)
         if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE]:
-            game.history['vote_result'][role.position] = target
+            game.history['vote_result'][my_role.position] = target
             game.history.changed()
             if target > 0:
                 return GameEnum.OK.digest(result=f'你投了{target}号玩家')
@@ -174,7 +176,7 @@ def vote()->dict:
             if target == GameEnum.TARGET_NO_ONE.value:
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
             else:
-                game.history['vote_result'][role.position] = target
+                game.history['vote_result'][my_role.position] = target
                 game.history.changed()
                 if target > 0:
                     return GameEnum.OK.digest(result=f'你投了{target}号玩家')
@@ -187,8 +189,11 @@ def vote()->dict:
 def handover()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
-        if game.status is not GameEnum.TURN_STEP_LAST_WORDS:
+        now = StepProcessor.current_step(game)
+        if now is not GameEnum.TURN_STEP_LAST_WORDS:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if my_role.position not in game.history['dying']:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
@@ -205,6 +210,8 @@ def handover()->dict:
 def elect()->dict:
     choice = request.args.get('choice')
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         now = StepProcessor.current_step(game)
         if choice in ['yes', 'no'] and now is not GameEnum.TURN_STEP_ELECT:
@@ -241,6 +248,8 @@ def elect()->dict:
 def wolf_kill()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         now = StepProcessor.current_step(game)
         history = game.history
@@ -272,6 +281,8 @@ def wolf_kill()->dict:
 def discover()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         history = game.history
         now = StepProcessor.current_step(game)
@@ -290,6 +301,8 @@ def discover()->dict:
 
 def witch()->dict:
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         history = game.history
         now = StepProcessor.current_step(game)
@@ -303,6 +316,8 @@ def witch()->dict:
 
 def elixir()->dict:
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         history = game.history
         now = StepProcessor.current_step(game)
@@ -322,6 +337,8 @@ def elixir()->dict:
 def toxic()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         history = game.history
         now = StepProcessor.current_step(game)
@@ -345,6 +362,8 @@ def toxic()->dict:
 def guard()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         history = game.history
         now = StepProcessor.current_step(game)
@@ -368,6 +387,8 @@ def guard()->dict:
 def shoot()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
+    if not my_role.alive:
+        return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         history = game.history
         now = StepProcessor.current_step(game)
