@@ -98,7 +98,7 @@ class StepProcessor(object):
                 if voter_pos == game.captain_pos:
                     ticket_cnt[votee_pos] += 0.5
             for voter in game.history['voter_votee'][0]:
-                if voter not in game.history['vote_result']:
+                if str(voter) not in game.history['vote_result']:
                     forfeit.append(voter)
             if forfeit and now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
                 return GameEnum.GAME_MESSAGE_NOT_VOTED_YET.digest(*forfeit)
@@ -472,9 +472,8 @@ class StepProcessor(object):
 #         return attackable
 
 def timeout_move_on(gid, step_cnt):
-    with scheduler.app.app_context() as app:
-        with app.test_request_context():
-            with Game.query.with_for_update().get(gid) as game:
-                if step_cnt != game.step_cnt:
-                    return
-                StepProcessor.move_on(game)
+    with scheduler.app.test_request_context():
+        with Game.query.with_for_update().get(gid) as game:
+            if step_cnt != game.step_cnt:
+                return
+            StepProcessor.move_on(game)
