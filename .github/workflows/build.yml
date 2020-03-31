@@ -15,11 +15,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Build Docker Image
-      uses: mr-smithers-excellent/docker-build-push@v2
+    - name: Build & Push Docker Image
+      uses: docker/build-push-action@v1
       with:
-        image: lucienzhangzl/werewolf
-        registry: docker.io
-        dockerfile: Dockerfile
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: lucienzhangzl/werewolf
+        tags: latest
+        tag_with_ref: true

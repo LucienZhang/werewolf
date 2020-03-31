@@ -138,3 +138,16 @@ body {
 #skills-model-content {
     text-align: center;
 }
+
+#all_players.skill_vote button.selected {
+    background-color: #a86432;
+}
+#all_players.skill_captain button.selected {
+    background-color: #a86432;
+}
+#all_players.skill_wolf_kill button.selected {
+    background-color: red;
+}
+#all_players.skill_discover button.selected {
+    background-color: green;
+}

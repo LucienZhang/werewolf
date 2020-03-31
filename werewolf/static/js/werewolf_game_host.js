@@ -54,9 +54,7 @@
             dataType: "json",
             success: function (info) {
                 if (info.msg !== 'OK') {
-                    alert(info.msg)
-                } else {
-                    $("#next-step").text(info.next_step)
+                    show_message(info.msg)
                 }
             }
         });
@@ -72,7 +70,7 @@
             dataType: "json",
             success: function (info) {
                 if (info.msg !== 'OK') {
-                    alert(info.msg)
+                    show_message(info.msg)
                 } else {
                     $("#deal").off("click");
                 }

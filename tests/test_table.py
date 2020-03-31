@@ -4,11 +4,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import pytest
 import json
+import collections
 from sqlalchemy.exc import IntegrityError
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from tests.env import app, db
-from werewolf.database import User, Game, Role
+from werewolf.database import db, User, Game, Role
 from werewolf.utils.enums import GameEnum
 
 
@@ -131,3 +131,15 @@ def test_role_table():
             assert cnt == 1
         elif g is GameEnum.GROUP_TYPE_WOLVES:
             assert cnt == 2
+    players = Role.query.with_entities(Role.position, Role.group_type).filter(Role.gid == 101, Role.alive == int(True)).all()
+    groups = collections.defaultdict(int)
+    for p, g in players:
+        groups[g] += 1
+    assert GameEnum.GROUP_TYPE_GODS in groups
+    assert groups[GameEnum.GROUP_TYPE_GODS] == 1
+    assert GameEnum.GROUP_TYPE_WOLVES in groups
+    assert groups[GameEnum.GROUP_TYPE_WOLVES] == 2
+
+    player_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == 101, Role.alive == int(True), Role.group_type == GameEnum.GROUP_TYPE_WOLVES).scalar()
+    assert isinstance(player_cnt, int)
+    assert player_cnt == 2

@@ -27,7 +27,7 @@ class GameEnum(LabelledEnum):
     GAME_STATUS_READY = (2, '游戏已准备好')
     GAME_STATUS_DAY = (3, '白天')
     GAME_STATUS_NIGHT = (4, '夜晚')
-    GAME_STATUS_FINISHED = (5, '游戏已结束')
+    # GAME_STATUS_FINISHED = (5, '游戏已结束')
 
     # 100
     VICTORY_MODE_UNKNOWN = (100, '未知胜利模式')
@@ -94,7 +94,7 @@ class GameEnum(LabelledEnum):
     GAME_MESSAGE_NOT_IN_GAME = (704, '你不在游戏中')
     GAME_MESSAGE_CANNOT_START = (705, '玩家不足，无法开始')
     GAME_MESSAGE_UNKNOWN_OP = (706, '未知命令')
-    GAME_MESSAGE_DIE_IN_NIGHT = (707, '昨晚，以下位置的玩家倒下了，不分先后： {}')
+    # GAME_MESSAGE_DIE_IN_NIGHT = (707, '昨晚，以下位置的玩家倒下了，不分先后： {}')
     GAME_MESSAGE_ALREADY_STARTED = (708, '游戏已经开始了')
     GAME_MESSAGE_POSITION_OCCUPIED = (709, '那个位置已经有人了')
     GAME_MESSAGE_CANNOT_ACT = (710, '当前无法操作')
@@ -109,7 +109,7 @@ class GameEnum(LabelledEnum):
     SKILL_WITCH = (803, '用药')
     SKILL_GUARD = (804, '守护')
     SKILL_SHOOT = (805, '开枪')
-    SKILL_EXPLODE = (806, '自爆')
+    SKILL_SUICIDE = (806, '自爆')
     SKILL_TOXIC = (807, '毒杀')
     SKILL_CAPTAIN = (808, '警长相关')
 
@@ -128,5 +128,9 @@ class GameEnum(LabelledEnum):
     # 1200
     STEP_FLAG_AUTO_MOVE_ON = (1200, '自动下一步')
     STEP_FLAG_WAIT_FOR_ACTION = (1201, '等待玩家操作')
+
+    # 1300
+    GAME_TIMEOUT_RANDOM_FROM = (1300, 12)
+    GAME_TIMEOUT_RANDOM_TO = (1301, 15)
 
     OK = (9999, 'OK')

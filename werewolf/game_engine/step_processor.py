@@ -1,16 +1,19 @@
-import typing
+# from __future__ import annotations
+# import typing
 import collections
+import json
 from sqlalchemy import func
+from flask import current_app
+from datetime import datetime, timedelta
+import random
 from werewolf.utils.enums import GameEnum
-from werewolf.database import Role
-from werewolf.utils.publisher import publish_history, publish_music
+from werewolf.database import db, Role, Game
+from werewolf.utils.publisher import publish_history, publish_music, publish_info
+from werewolf.utils.game_exceptions import GameFinished
+from werewolf.utils.game_scheduler import scheduler
 
-if typing.TYPE_CHECKING:
-    from werewolf.database import Game
-
-
-class GameFinished(Exception):
-    pass
+# if typing.TYPE_CHECKING:
+#     from werewolf.database import Game
 
 
 class StepProcessor(object):
@@ -30,6 +33,10 @@ class StepProcessor(object):
                 StepProcessor.init_steps(game)
 
             step_flag = StepProcessor._enter_step(game)
+        instruction_string = StepProcessor.get_instruction_string(game)
+        if instruction_string:
+            publish_info(game.gid, json.dumps({'next_step': instruction_string}))
+        return GameEnum.OK.digest()
 
     @staticmethod
     def _leave_step(game: Game)->dict:
@@ -47,13 +54,12 @@ class StepProcessor(object):
             for r in roles:
                 if not r.alive:
                     continue
-                if GameEnum.TAG_ELECT in r.rags:
+                if GameEnum.TAG_ELECT in r.tags:
                     votees.append(r.position)
                 else:
                     voters.append(r.position)
             voters.sort()
             votees.sort()
-            return GameEnum.OK.digest(0)
 
             if not voters or not votees:
                 # no captain
@@ -63,7 +69,6 @@ class StepProcessor(object):
                     publish_history(game.gid, '所有人都竞选警长，本局游戏无警长')
                 else:
                     publish_history(game.gid, '没有人竞选警长，本局游戏无警长')
-                return GameEnum.OK.digest()
             elif len(votees) == 1:
                 # auto win captain
                 while game.now_index + 1 < len(game.steps) and game.steps[game.now_index + 1] in {GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_ELECT_VOTE}:
@@ -74,6 +79,7 @@ class StepProcessor(object):
             else:
                 publish_history(game.gid, f"竞选警长的玩家为：{','.join(map(str,votees))}\n未竞选警长的玩家为：{','.join(map(str,voters))}")
                 game.history['voter_votee'] = [voters, votees]
+            return GameEnum.OK.digest()
         elif now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
             msg = ""
             announce_result = collections.defaultdict(list)
@@ -91,12 +97,15 @@ class StepProcessor(object):
                 ticket_cnt[votee_pos] += 1
                 if voter_pos == game.captain_pos:
                     ticket_cnt[votee_pos] += 0.5
+            for voter in game.history['voter_votee'][0]:
+                if str(voter) not in game.history['vote_result']:
+                    forfeit.append(voter)
             if forfeit and now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
                 return GameEnum.GAME_MESSAGE_NOT_VOTED_YET.digest(*forfeit)
-            for votee, voters in sorted(announce_result.items):
-                msg += '{} <= {}\n'.format(votee, ','.join(voters))
+            for votee, voters in sorted(announce_result.items()):
+                msg += '{} <= {}\n'.format(votee, ','.join(map(str, voters)))
             if forfeit:
-                msg += '弃票：{}\n'.format(','.join(forfeit))
+                msg += '弃票：{}\n'.format(','.join(map(str, forfeit)))
 
             if not ticket_cnt:
                 most_voted = game.history['voter_votee'][1]
@@ -123,6 +132,7 @@ class StepProcessor(object):
                 return GameEnum.OK.digest()
             else:
                 # 平票
+                # todo 无人投票
                 if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE]:
                     if now is GameEnum.TURN_STEP_VOTE:
                         game.steps.insert(game.now_index + 1, GameEnum.TURN_STEP_PK_TALK)
@@ -160,6 +170,8 @@ class StepProcessor(object):
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_end_voice', None, False)
             return GameEnum.OK.digest()
+        else:
+            return GameEnum.OK.digest()
 
     @staticmethod
     def _enter_step(game: Game)->GameEnum:
@@ -171,25 +183,33 @@ class StepProcessor(object):
                 role.alive = False
             StepProcessor._reset_history(game)
             publish_music(game.gid, 'night_start_voice', 'night_bgm', True)
+            publish_info(game.gid, json.dumps({'days': game.days, 'game_status': game.status.label}))
+            publish_history(game.gid,
+                            (
+                                '***************************\n'
+                                '<pre>         第{}天           </pre>\n'
+                                '***************************'
+                            ).format(game.days), show=False)
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.TAG_ATTACKABLE_WOLF:
             publish_music(game.gid, 'wolf_start_voice', 'wolf_bgm', True)
-            # todo: add random job if there is not wolf (third party situation)
-            # scheduler.add_job(id=f'{game.gid}_WOLF_KILL', func=action_timeout,
-            #                   args=(game.gid, game.steps['global_steps']),
-            #                   next_run_time=datetime.now() + timedelta(seconds=30))
-
-            # two mode:
-            # 1. without third party: any wolf kill is fine
-            # 2. with thrid party: all wolf kill is needed
+            all_players = Role.query.filter(Role.gid == game.gid, Role.alive == int(True)).limit(len(game.players)).all()
+            for p in all_players:
+                if GameEnum.TAG_ATTACKABLE_WOLF in p.tags:
+                    break
+            else:
+                scheduler.add_job(id=f'{game.gid}_WOLF_KILL_{game.step_cnt}', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_ELECT_TALK]:
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ELECT:
             publish_music(game.gid, 'elect', None, False)
+            publish_history(game.gid, '###上警阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_VOTE:
-            game.history['vote_result'].clear()
+            game.history['vote_result'] = {}
             voters = []
             votees = []
             roles = Role.query.filter(Role.gid == game.gid).limit(len(game.players)).all()
@@ -199,13 +219,24 @@ class StepProcessor(object):
                 votees.append(r.position)
                 if r.voteable:
                     voters.append(r.position)
+            game.history['voter_votee'] = [voters, votees]
+            publish_history(game.gid, '###投票阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
-        elif now in [GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
-            game.history['vote_result'].clear()
+        elif now is GameEnum.TURN_STEP_ELECT_VOTE:
+            game.history['vote_result'] = {}
+            publish_history(game.gid, '###警长投票阶段###', False)
+            return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
+        elif now is GameEnum.TURN_STEP_PK_VOTE:
+            game.history['vote_result'] = {}
+            publish_history(game.gid, '###PK投票阶段###', False)
+            return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
+        elif now is GameEnum.TURN_STEP_ELECT_PK_VOTE:
+            game.history['vote_result'] = {}
+            publish_history(game.gid, '###警长PK投票阶段###', False)
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             if game.history['dying']:
-                publish_history(game.gid, GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest(
+                publish_history(game.gid, '昨晚，以下位置的玩家倒下了，不分先后：{}'.format(
                     ','.join([str(d) for d in sorted(game.history['dying'])])
                 ))
             else:
@@ -214,30 +245,60 @@ class StepProcessor(object):
         elif now is GameEnum.TURN_STEP_TURN_DAY:
             game.status = GameEnum.GAME_STATUS_DAY
             publish_music(game.gid, 'day_start_voice', 'day_bgm', False)
-            # todo publish_info(game.gid, json.dumps({'game_status': game.status.message}))
-            # todo game.calculate_die_in_night()
+            StepProcessor.calculate_die_in_night(game)
+            publish_info(game.gid, json.dumps({'days': game.days, 'game_status': game.status.label}))
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.ROLE_TYPE_SEER:
             publish_music(game.gid, 'seer_start_voice', 'seer_bgm', True)
+            seer_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SEER).scalar()
+            if seer_cnt == 0:
+                scheduler.add_job(id=f'{game.gid}_SEER_{game.step_cnt}', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_WITCH:
             publish_music(game.gid, 'witch_start_voice', 'witch_bgm', True)
+            witch_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_WITCH).scalar()
+            if witch_cnt == 0:
+                scheduler.add_job(id=f'{game.gid}_WITCH_{game.step_cnt}', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_start_voice', 'savior_bgm', True)
+            savior_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SAVIOR).scalar()
+            if savior_cnt == 0:
+                scheduler.add_job(id=f'{game.gid}_SAVIOR', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
 
     @staticmethod
-    def peek_next(game: Game)->GameEnum:
+    def get_instruction_string(game: Game)->str:
+        now = StepProcessor.current_step(game)
+        if now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_PK_TALK, GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_ELECT_PK_TALK, GameEnum.TURN_STEP_LAST_WORDS]:
+            return '结束发言'
+
+        if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
+            return '结束投票'
+
+        if now is GameEnum.TURN_STEP_ELECT:
+            return '结束上警'
+
         next_index = game.now_index + 1
         if next_index >= len(game.steps):
-            return GameEnum.TURN_STEP_TURN_NIGHT
+            step = GameEnum.TURN_STEP_TURN_NIGHT
         else:
-            return game.steps[next_index]
+            step = game.steps[next_index]
+
+        if step is GameEnum.TURN_STEP_TURN_NIGHT:
+            return '入夜'
+
+        return ''
 
     @staticmethod
     def current_step(game: Game)->GameEnum:
-        if game.now_index >= len(game.steps):
+        if game.now_index < 0 or game.now_index >= len(game.steps):
             return None
         else:
             return game.steps[game.now_index]
@@ -299,6 +360,7 @@ class StepProcessor(object):
 
     @staticmethod
     def kill(game: Game, pos: int, how: GameEnum):
+        current_app.logger.info(f'kill pos={pos},by {how.label}')
         if pos < 1 or pos > game.get_seats_cnt():
             return
         role = Role.query.filter(Role.gid == game.gid, Role.position == pos).limit(1).first()
@@ -311,6 +373,7 @@ class StepProcessor(object):
             return
 
         game.history['dying'][pos] = True
+        game.history.changed()
 
         if how is GameEnum.SKILL_TOXIC and role is GameEnum.ROLE_TYPE_HUNTER:
             role.args['shootable'] = False
@@ -325,6 +388,7 @@ class StepProcessor(object):
         elixir = game.history['elixir']
         guard = game.history['guard']
 
+        current_app.logger.info(f'wolf_kill_pos={wolf_kill_pos},elixir={elixir},guard={guard}')
         if wolf_kill_pos > 0:
             killed = True
             if elixir:
@@ -341,29 +405,63 @@ class StepProcessor(object):
 
     @staticmethod
     def check_win(game):
-        groups = Role.query.with_entities(Role.group_type, func.count(Role.group_type)).filter(Role.gid == game.gid, Role.alive == int(True)).group_by(Role.group_type).all()
-        groups = {g: cnt for g, cnt in groups}
+        # groups = Role.query.with_entities(Role.group_type, func.count(Role.group_type)).filter(Role.gid == game.gid, Role.alive == int(True)).group_by(Role.group_type).all()
+        # groups = {g: cnt for g, cnt in groups}
+
+        players = Role.query.with_entities(Role.position, Role.group_type).filter(Role.gid == game.gid, Role.alive == int(True)).all()
+        groups = collections.defaultdict(int)
+        for p, g in players:
+            if p not in game.history['dying']:
+                groups[g] += 1
 
         if GameEnum.GROUP_TYPE_WOLVES not in groups:
             publish_history(game.gid, '游戏结束，好人阵营胜利')
-            game.status = GameEnum.GAME_STATUS_FINISHED
+            # game.status = GameEnum.GAME_STATUS_FINISHED
+            original_players = game.players
+            StepProcessor.init_game(game)
+            game.players = original_players
+            all_players = Role.query.filter(Role.gid == game.gid).all()
+            for p in all_players:
+                p.reset()
             raise GameFinished()
 
         if game.victory_mode is GameEnum.VICTORY_MODE_KILL_GROUP and (GameEnum.GROUP_TYPE_GODS not in groups or GameEnum.GROUP_TYPE_VILLAGERS not in groups):
             publish_history(game.gid, '游戏结束，狼人阵营胜利')
-            game.status = GameEnum.GAME_STATUS_FINISHED
+            # game.status = GameEnum.GAME_STATUS_FINISHED
+            original_players = game.players
+            StepProcessor.init_game(game)
+            game.players = original_players
+            all_players = Role.query.filter(Role.gid == game.gid).all()
+            for p in all_players:
+                p.reset()
             raise GameFinished()
 
         if GameEnum.GROUP_TYPE_GODS not in groups and GameEnum.GROUP_TYPE_VILLAGERS not in groups:
             publish_history(game.gid, '游戏结束，狼人阵营胜利')
-            game.status = GameEnum.GAME_STATUS_FINISHED
+            # game.status = GameEnum.GAME_STATUS_FINISHED
+            original_players = game.players
+            StepProcessor.init_game(game)
+            game.players = original_players
+            all_players = Role.query.filter(Role.gid == game.gid).all()
+            for p in all_players:
+                p.reset()
             raise GameFinished()
 
         # todo third party
         # todo reset game
 
-
-
+    @staticmethod
+    def init_game(game):
+        game.status = GameEnum.GAME_STATUS_WAIT_TO_START
+        game.end_time = datetime.utcnow() + timedelta(days=1)
+        game.days = 0
+        game.now_index = -1
+        game.step_cnt = 0
+        game.steps = []
+        game.history = {}
+        game.captain_pos = -1
+        game.players = []
+        StepProcessor._reset_history(game)
 
 
 #     def get_attackable_wolf(self):
@@ -373,11 +471,9 @@ class StepProcessor(object):
 #                 attackable.append(r)
 #         return attackable
 
-
-# def action_timeout(gid, global_step_num):
-#     game = Game.get_game_by_gid(gid)
-#     if global_step_num != game.steps['global_steps']:
-#         return
-#     game.go_next_step()
-#     game.commit()
-#     return
+def timeout_move_on(gid, step_cnt):
+    with scheduler.app.test_request_context():
+        with Game.query.with_for_update().get(gid) as game:
+            if step_cnt != game.step_cnt:
+                return
+            StepProcessor.move_on(game)
