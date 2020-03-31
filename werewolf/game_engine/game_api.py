@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import json
 import random
-from flask import request
+from flask import request, current_app
 from flask_login import current_user
 from werewolf.database import db, User, Game, Role
 from werewolf.utils.enums import GameEnum
@@ -66,6 +66,8 @@ def join_game() -> dict:
 
 def quit_game() -> dict:
     gid = current_user.gid
+    if gid < 0:
+        return GameEnum.GAME_MESSAGE_NOT_IN_GAME.digest()
     with Game.query.with_for_update().get(gid) as game:
         if not game or datetime.utcnow() > game.end_time:
             return GameEnum.GAME_MESSAGE_NOT_IN_GAME.digest()
@@ -190,18 +192,23 @@ def handover()->dict:
     target = int(request.args.get('target'))
     my_role = Role.query.get(current_user.uid)
     if not my_role.alive:
+        current_app.logger.info('my_role is not alive')
         return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
     with Game.query.with_for_update().get(current_user.gid) as game:
         now = StepProcessor.current_step(game)
         if now is not GameEnum.TURN_STEP_LAST_WORDS:
+            current_app.logger.info(f'wrong now step:{now.label}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if my_role.position not in game.history['dying']:
+            current_app.logger.info(f'not in dying: my position={my_role.position},dying={game.history["dying"]}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if game.captain_pos != my_role.position:
+            current_app.logger.info(f'I am not captain, my position={my_role.position},captain pos={game.captain_pos}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
 
         target_role = _get_role_by_pos(game, target)
         if not target_role.alive:
+            current_app.logger.info(f'target not alive, target={target}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         game.captain_pos = target
         return GameEnum.OK.digest()

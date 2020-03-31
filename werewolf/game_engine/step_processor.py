@@ -1,5 +1,5 @@
-from __future__ import annotations
-import typing
+# from __future__ import annotations
+# import typing
 import collections
 import json
 from sqlalchemy import func
@@ -7,13 +7,13 @@ from flask import current_app
 from datetime import datetime, timedelta
 import random
 from werewolf.utils.enums import GameEnum
-from werewolf.database import Role
+from werewolf.database import Role, Game
 from werewolf.utils.publisher import publish_history, publish_music, publish_info
 from werewolf.utils.game_exceptions import GameFinished
 from werewolf.utils.game_scheduler import scheduler
 
-if typing.TYPE_CHECKING:
-    from werewolf.database import Game
+# if typing.TYPE_CHECKING:
+#     from werewolf.database import Game
 
 
 class StepProcessor(object):
