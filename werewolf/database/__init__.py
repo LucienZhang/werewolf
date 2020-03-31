@@ -20,9 +20,6 @@ def init_db(app):
         if exception:
             db.session.rollback()
 
-        if isinstance(exception, GameFinished):
-            pass
-
         try:
             db.session.commit()
         except Exception:

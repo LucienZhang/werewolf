@@ -472,8 +472,9 @@ class StepProcessor(object):
 #         return attackable
 
 def timeout_move_on(gid, step_cnt):
-    with scheduler.app.app_context():
-        with Game.query.with_for_update().get(gid) as game:
-            if step_cnt != game.step_cnt:
-                return
-            StepProcessor.move_on(game)
+    with scheduler.app.app_context() as app:
+        with app.test_request_context():
+            with Game.query.with_for_update().get(gid) as game:
+                if step_cnt != game.step_cnt:
+                    return
+                StepProcessor.move_on(game)

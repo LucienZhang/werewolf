@@ -1,3 +1,5 @@
+from werewolf.utils.game_exceptions import GameFinished
+from werewolf.utils.enums import GameEnum
 from .game_api import join_game, setup_game, quit_game, deal, get_game_info, sit, next_step, vote, elect, wolf_kill, discover, witch, elixir, toxic, guard, shoot, suicide, handover
 
 
@@ -25,4 +27,7 @@ class GameEngine(object):
 
     @staticmethod
     def perform(cmd):
-        return GameEngine.router[cmd]()
+        try:
+            return GameEngine.router[cmd]()
+        except GameFinished:
+            return GameEnum.OK.digest()
