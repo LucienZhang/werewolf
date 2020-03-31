@@ -204,6 +204,23 @@
         });
     };
 
+    skills.skill_suicide = function () {
+        $("#skills").modal("hide");
+        num_of_can = 0;
+        $.ajax({
+            url: "api/suicide",
+            dataType: "json",
+            success: function (info) {
+                if (info.msg !== 'OK') {
+                    show_message(info.msg);
+                } else {
+                    add_history(info.result, true);
+                }
+            }
+        });
+        reset_panel();
+    };
+
     window.skills = skills
 })(window);
 

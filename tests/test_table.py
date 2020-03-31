@@ -139,3 +139,7 @@ def test_role_table():
     assert groups[GameEnum.GROUP_TYPE_GODS] == 1
     assert GameEnum.GROUP_TYPE_WOLVES in groups
     assert groups[GameEnum.GROUP_TYPE_WOLVES] == 2
+
+    player_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == 101, Role.alive == int(True), Role.group_type == GameEnum.GROUP_TYPE_WOLVES).scalar()
+    assert isinstance(player_cnt, int)
+    assert player_cnt == 2
