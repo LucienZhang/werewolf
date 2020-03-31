@@ -166,6 +166,11 @@ def vote()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if target != GameEnum.TARGET_NO_ONE.value and target not in game.history['voter_votee'][1]:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target > 0:
+            target_role = _get_role_by_pos(game, target)
+            if not target_role.alive:
+                return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+
         now = StepProcessor.current_step(game)
         if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE]:
             game.history['vote_result'][my_role.position] = target
@@ -205,11 +210,11 @@ def handover()->dict:
         if game.captain_pos != my_role.position:
             current_app.logger.info(f'I am not captain, my position={my_role.position},captain pos={game.captain_pos}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-
-        target_role = _get_role_by_pos(game, target)
-        if not target_role.alive:
-            current_app.logger.info(f'target not alive, target={target}')
-            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target > 0:
+            target_role = _get_role_by_pos(game, target)
+            if not target_role.alive:
+                current_app.logger.info(f'target not alive, target={target}')
+                return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         game.captain_pos = target
         publish_history(game.gid, f'{my_role.position}号玩家将警徽移交给了{target}号玩家')
         return GameEnum.OK.digest()
@@ -263,6 +268,10 @@ def wolf_kill()->dict:
         history = game.history
         if now != GameEnum.TAG_ATTACKABLE_WOLF or GameEnum.TAG_ATTACKABLE_WOLF not in my_role.tags:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target > 0:
+            target_role = _get_role_by_pos(game, target)
+            if not target_role.alive:
+                return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if game.wolf_mode is GameEnum.WOLF_MODE_FIRST:
             history['wolf_kill_decision'] = target
         else:
@@ -298,9 +307,10 @@ def discover()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if history['discover'] != GameEnum.TARGET_NOT_ACTED.value:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-        target_role = _get_role_by_pos(game, target)
-        if not target_role.alive:
-            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target > 0:
+            target_role = _get_role_by_pos(game, target)
+            if not target_role.alive:
+                return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         history['discover'] = target
         group_result = '<span style="color:red">狼人</span>' if target_role.group_type is GameEnum.GROUP_TYPE_WOLVES else '<span style="color:green">好人</span>'
         StepProcessor.move_on(game)
@@ -356,11 +366,14 @@ def toxic()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if history['elixir'] or history['toxic'] != GameEnum.TARGET_NOT_ACTED.value:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-        target_role = _get_role_by_pos(game, target)
-        if not target_role.alive:
-            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target > 0:
+            target_role = _get_role_by_pos(game, target)
+            if not target_role.alive:
+                return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         history['toxic'] = target
-        my_role.args['toxic'] = False
+        if target > 0:
+            my_role.args['toxic'] = False
+        StepProcessor.move_on(game)
         if target > 0:
             return GameEnum.OK.digest(result=f'你毒杀了{target}号玩家')
         else:
@@ -381,11 +394,13 @@ def guard()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if history['guard'] != GameEnum.TARGET_NOT_ACTED.value:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-        target_role = _get_role_by_pos(game, target)
-        if not target_role.alive:
-            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target > 0:
+            target_role = _get_role_by_pos(game, target)
+            if not target_role.alive:
+                return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         history['guard'] = target
         my_role.args['guard'] = target
+        StepProcessor.move_on(game)
         if target > 0:
             return GameEnum.OK.digest(result=f'你守护了{target}号玩家')
         else:
@@ -404,6 +419,10 @@ def shoot()->dict:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if not my_role.args['shootable'] or str(my_role.position) not in game.history['dying']:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target > 0:
+            target_role = _get_role_by_pos(game, target)
+            if not target_role.alive:
+                return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         publish_history(game.gid, f'{my_role.position}号玩家发动技能“枪击”，带走了{target}号玩家')
         StepProcessor.kill(game, target, GameEnum.SKILL_SHOOT)
         return GameEnum.OK.digest()
@@ -432,5 +451,7 @@ def _get_wolf_mode_by_cards(cards):
 
 
 def _get_role_by_pos(game, pos):
+    if pos < 0:
+        return None
     uid = game.players[pos - 1]
     return Role.query.get(uid)
