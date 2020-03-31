@@ -130,7 +130,7 @@ class GameEnum(LabelledEnum):
     STEP_FLAG_WAIT_FOR_ACTION = (1201, '等待玩家操作')
 
     # 1300
-    GAME_TIMEOUT_RANDOM_FROM = (1300, 5)
-    GAME_TIMEOUT_RANDOM_TO = (1301, 8)
+    GAME_TIMEOUT_RANDOM_FROM = (1300, 12)
+    GAME_TIMEOUT_RANDOM_TO = (1301, 15)
 
     OK = (9999, 'OK')

@@ -123,6 +123,10 @@
             reset_panel();
         });
         buttons.children("button.skill-handover").on("click", function () {
+            if (candidates.length !== num_of_can) {
+                show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
+                return;
+            }
             $.ajax({
                 url: "api/handover?target=" + candidates[0].attr("pos"),
                 dataType: "json",
