@@ -254,7 +254,7 @@ class StepProcessor(object):
             if seer_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_SEER_{game.step_cnt}', func=timeout_move_on,
                                   args=(game.gid, game.step_cnt),
-                                  next_run_time=datetime.now() + timedelta(seconds=5))
+                                  next_run_time=datetime.now() + timedelta(seconds=8))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_WITCH:
             publish_music(game.gid, 'witch_start_voice', 'witch_bgm', True)
@@ -417,7 +417,9 @@ class StepProcessor(object):
         if GameEnum.GROUP_TYPE_WOLVES not in groups:
             publish_history(game.gid, '游戏结束，好人阵营胜利')
             # game.status = GameEnum.GAME_STATUS_FINISHED
+            original_players = game.players
             StepProcessor.init_game(game)
+            game.players = original_players
             all_players = Role.query.filter(Role.gid == game.gid).all()
             for p in all_players:
                 p.reset()
@@ -426,7 +428,9 @@ class StepProcessor(object):
         if game.victory_mode is GameEnum.VICTORY_MODE_KILL_GROUP and (GameEnum.GROUP_TYPE_GODS not in groups or GameEnum.GROUP_TYPE_VILLAGERS not in groups):
             publish_history(game.gid, '游戏结束，狼人阵营胜利')
             # game.status = GameEnum.GAME_STATUS_FINISHED
+            original_players = game.players
             StepProcessor.init_game(game)
+            game.players = original_players
             all_players = Role.query.filter(Role.gid == game.gid).all()
             for p in all_players:
                 p.reset()
@@ -435,7 +439,9 @@ class StepProcessor(object):
         if GameEnum.GROUP_TYPE_GODS not in groups and GameEnum.GROUP_TYPE_VILLAGERS not in groups:
             publish_history(game.gid, '游戏结束，狼人阵营胜利')
             # game.status = GameEnum.GAME_STATUS_FINISHED
+            original_players = game.players
             StepProcessor.init_game(game)
+            game.players = original_players
             all_players = Role.query.filter(Role.gid == game.gid).all()
             for p in all_players:
                 p.reset()
@@ -466,7 +472,8 @@ class StepProcessor(object):
 #         return attackable
 
 def timeout_move_on(gid, step_cnt):
-    with Game.query.with_for_update().get(gid) as game:
-        if step_cnt != game.step_cnt:
-            return
-        StepProcessor.move_on(game)
+    with scheduler.app.app_context():
+        with Game.query.with_for_update().get(gid) as game:
+            if step_cnt != game.step_cnt:
+                return
+            StepProcessor.move_on(game)
