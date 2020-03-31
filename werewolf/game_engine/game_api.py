@@ -417,10 +417,10 @@ def suicide():
     with Game.query.with_for_update().get(current_user.gid) as game:
         if game.status is not GameEnum.GAME_STATUS_DAY:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-        game.history = game.history[:game.now_index + 1]
+        game.steps = []
         publish_history(game.gid, f'{my_role.position}号玩家自爆了')
         StepProcessor.kill(game, my_role.position, GameEnum.SKILL_SUICIDE)
-        return GameEnum.OK.digest()
+        return StepProcessor.move_on(game)
 
 
 def _get_wolf_mode_by_cards(cards):

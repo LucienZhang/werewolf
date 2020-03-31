@@ -254,7 +254,7 @@ class StepProcessor(object):
             if seer_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_SEER_{game.step_cnt}', func=timeout_move_on,
                                   args=(game.gid, game.step_cnt),
-                                  next_run_time=datetime.now() + timedelta(seconds=8))
+                                  next_run_time=datetime.now() + timedelta(seconds=10))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_WITCH:
             publish_music(game.gid, 'witch_start_voice', 'witch_bgm', True)
