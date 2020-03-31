@@ -94,7 +94,7 @@ class GameEnum(LabelledEnum):
     GAME_MESSAGE_NOT_IN_GAME = (704, '你不在游戏中')
     GAME_MESSAGE_CANNOT_START = (705, '玩家不足，无法开始')
     GAME_MESSAGE_UNKNOWN_OP = (706, '未知命令')
-    GAME_MESSAGE_DIE_IN_NIGHT = (707, '昨晚，以下位置的玩家倒下了，不分先后： {}')
+    # GAME_MESSAGE_DIE_IN_NIGHT = (707, '昨晚，以下位置的玩家倒下了，不分先后： {}')
     GAME_MESSAGE_ALREADY_STARTED = (708, '游戏已经开始了')
     GAME_MESSAGE_POSITION_OCCUPIED = (709, '那个位置已经有人了')
     GAME_MESSAGE_CANNOT_ACT = (710, '当前无法操作')

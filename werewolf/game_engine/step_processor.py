@@ -236,7 +236,7 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_ANNOUNCE:
             if game.history['dying']:
-                publish_history(game.gid, GameEnum.GAME_MESSAGE_DIE_IN_NIGHT.digest(
+                publish_history(game.gid, '昨晚，以下位置的玩家倒下了，不分先后：{}'.format(
                     ','.join([str(d) for d in sorted(game.history['dying'])])
                 ))
             else:
