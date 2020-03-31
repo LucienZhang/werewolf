@@ -193,9 +193,14 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.TAG_ATTACKABLE_WOLF:
             publish_music(game.gid, 'wolf_start_voice', 'wolf_bgm', True)
-            scheduler.add_job(id=f'{game.gid}_WOLF_KILL', func=timeout_move_on,
-                              args=(game.gid, game.step_cnt),
-                              next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
+            all_players = Role.query.filter(Role.gid == game.gid, Role.alive == int(True)).limit(len(game.players)).all()
+            for p in all_players:
+                if GameEnum.TAG_ATTACKABLE_WOLF in p.tags:
+                    break
+            else:
+                scheduler.add_job(id=f'{game.gid}_WOLF_KILL_{game.step_cnt}', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_ELECT_TALK]:
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
@@ -245,21 +250,27 @@ class StepProcessor(object):
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.ROLE_TYPE_SEER:
             publish_music(game.gid, 'seer_start_voice', 'seer_bgm', True)
-            scheduler.add_job(id=f'{game.gid}_SEER', func=timeout_move_on,
-                              args=(game.gid, game.step_cnt),
-                              next_run_time=datetime.now() + timedelta(seconds=5))
+            seer_cnt = Role.query.filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SEER.value).count()
+            if seer_cnt == 0:
+                scheduler.add_job(id=f'{game.gid}_SEER_{game.step_cnt}', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=5))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_WITCH:
             publish_music(game.gid, 'witch_start_voice', 'witch_bgm', True)
-            scheduler.add_job(id=f'{game.gid}_WITCH', func=timeout_move_on,
-                              args=(game.gid, game.step_cnt),
-                              next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
+            witch_cnt = Role.query.filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_WITCH.value).count()
+            if witch_cnt == 0:
+                scheduler.add_job(id=f'{game.gid}_WITCH_{game.step_cnt}', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_start_voice', 'savior_bgm', True)
-            scheduler.add_job(id=f'{game.gid}_SAVIOR', func=timeout_move_on,
-                              args=(game.gid, game.step_cnt),
-                              next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
+            savior_cnt = Role.query.filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SAVIOR.value).count()
+            if savior_cnt == 0:
+                scheduler.add_job(id=f'{game.gid}_SAVIOR', func=timeout_move_on,
+                                  args=(game.gid, game.step_cnt),
+                                  next_run_time=datetime.now() + timedelta(seconds=random.randint(GameEnum.GAME_TIMEOUT_RANDOM_FROM.label, GameEnum.GAME_TIMEOUT_RANDOM_TO.label)))
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
 
     @staticmethod

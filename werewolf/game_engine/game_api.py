@@ -199,7 +199,7 @@ def handover()->dict:
         if now is not GameEnum.TURN_STEP_LAST_WORDS:
             current_app.logger.info(f'wrong now step:{now.label}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-        if my_role.position not in game.history['dying']:
+        if str(my_role.position) not in game.history['dying']:
             current_app.logger.info(f'not in dying: my position={my_role.position},dying={game.history["dying"]}')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         if game.captain_pos != my_role.position:
@@ -401,7 +401,7 @@ def shoot()->dict:
         now = StepProcessor.current_step(game)
         if now is not GameEnum.TURN_STEP_LAST_WORDS:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-        if not my_role.args['shootable'] or my_role.position not in game.history['dying']:
+        if not my_role.args['shootable'] or str(my_role.position) not in game.history['dying']:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         publish_history(game.gid, f'{my_role.position}号玩家发动技能“枪击”，带走了{target}号玩家')
         StepProcessor.kill(game, target, GameEnum.SKILL_SHOOT)
