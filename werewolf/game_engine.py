@@ -212,9 +212,11 @@ class GameEngine(object):
         if not my_role.alive:
             current_app.logger.info('my_role is not alive')
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target == my_role.position:
+            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         with Game.query.with_for_update().get(current_user.gid) as game:
             now = GameEngine._current_step(game)
-            if now is not GameEnum.TURN_STEP_LAST_WORDS:
+            if now not in [GameEnum.TURN_STEP_LAST_WORDS, GameEnum.TURN_STEP_ANNOUNCE]:
                 current_app.logger.info(f'wrong now step:{now.label}')
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
             if str(my_role.position) not in game.history['dying']:
@@ -346,6 +348,7 @@ class GameEngine(object):
 
     @staticmethod
     def _api_elixir()->dict:
+        # todo save self
         my_role = Role.query.get(current_user.uid)
         if not my_role.alive:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
@@ -369,6 +372,8 @@ class GameEngine(object):
         target = int(request.args.get('target'))
         my_role = Role.query.get(current_user.uid)
         if not my_role.alive:
+            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target == my_role.position:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         with Game.query.with_for_update().get(current_user.gid) as game:
             history = game.history
@@ -425,10 +430,12 @@ class GameEngine(object):
         my_role = Role.query.get(current_user.uid)
         if not my_role.alive:
             return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
+        if target == my_role.position:
+            return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
         with Game.query.with_for_update().get(current_user.gid) as game:
             history = game.history
             now = GameEngine._current_step(game)
-            if now is not GameEnum.TURN_STEP_LAST_WORDS:  # todo maybe other steps in announce?
+            if now not in [GameEnum.TURN_STEP_LAST_WORDS, GameEnum.TURN_STEP_ANNOUNCE]:
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
             if not my_role.args['shootable'] or str(my_role.position) not in game.history['dying']:
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
@@ -436,7 +443,8 @@ class GameEngine(object):
                 target_role = GameEngine._get_role_by_pos(game, target)
                 if not target_role.alive:
                     return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
-            publish_history(game.gid, f'{my_role.position}号玩家发动技能“枪击”，带走了{target}号玩家')
+                my_role.args['shootable'] = False
+            publish_history(game.gid, f'{my_role.position}号玩家发动技能“枪击”，击倒了{target}号玩家')
             GameEngine._kill(game, target, GameEnum.SKILL_SHOOT)
             return GameEnum.OK.digest()
 
@@ -628,8 +636,14 @@ class GameEngine(object):
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_end_voice', None, False)
             return GameEnum.OK.digest()
+        elif now is GameEnum.TURN_STEP_ANNOUNCE:
+            for d in game.history['dying']:
+                role = Role.query.filter(Role.gid == game.gid, Role.position == d).limit(1).first()
+                role.alive = False
+            game.history['dying'] = {}
         else:
             return GameEnum.OK.digest()
+        return GameEnum.OK.digest()
 
     @staticmethod
     def _enter_step(game: Game)->GameEnum:
@@ -697,13 +711,9 @@ class GameEngine(object):
                 publish_history(game.gid, '昨晚，以下位置的玩家倒下了，不分先后：{}'.format(
                     ','.join([str(d) for d in sorted(game.history['dying'])])
                 ))
-                for d in game.history['dying']:
-                    role = Role.query.filter(Role.gid == game.gid, Role.position == d).limit(1).first()
-                    role.alive = False
-                game.history['dying'] = {}
             else:
                 publish_history(game.gid, "昨晚是平安夜")
-            return GameEnum.STEP_FLAG_AUTO_MOVE_ON
+            return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.TURN_STEP_TURN_DAY:
             game.status = GameEnum.GAME_STATUS_DAY
             publish_music(game.gid, 'day_start_voice', 'day_bgm', False)
@@ -752,6 +762,9 @@ class GameEngine(object):
 
         if now is GameEnum.TURN_STEP_ELECT:
             return '结束上警'
+
+        if now is GameEnum.TURN_STEP_ANNOUNCE:
+            return '技能使用完毕'
 
         next_index = game.now_index + 1
         if next_index >= len(game.steps):

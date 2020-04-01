@@ -225,6 +225,32 @@
         reset_panel();
     };
 
+    skills.skill_shoot = function () {
+        $('#all_players').addClass('skill_shoot');
+        $("#skills").modal("hide");
+        tips.text("选择玩家击杀");
+        num_of_can = 1;
+        buttons.html('<button class="btn btn-warning skill-confirm">击杀</button>');
+        buttons.children("button.skill-confirm").on("click", function () {
+            if (candidates.length !== num_of_can) {
+                show_message("所选玩家数量错误，需要选择" + num_of_can + "人");
+                return;
+            }
+            $.ajax({
+                url: "api/shoot?target=" + candidates[0].attr("pos"),
+                dataType: "json",
+                success: function (info) {
+                    if (info.msg !== 'OK') {
+                        show_message(info.msg);
+                    } else {
+                        add_history(info.result, true);
+                    }
+                }
+            });
+            reset_panel();
+        });
+    };
+
     window.skills = skills
 })(window);
 

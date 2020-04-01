@@ -6,10 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>创建房间</title>
-    <link rel="stylesheet" type="text/css"
-        href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" type="text/css"
-        href="{{ url_for('static', filename='css/werewolf_setup.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/werewolf_setup.css') }}">
 </head>
 
 <body>
@@ -121,8 +119,7 @@
                 <label class="form-check-label" for="witch">女巫</label>
             </div>
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="hunter" name="single_roles" value="hunter"
-                    disabled="disabled">
+                <input type="checkbox" class="form-check-input" id="hunter" name="single_roles" value="hunter">
                 <label class="form-check-label" for="hunter">猎人</label>
             </div>
             <div class="form-group form-check">
@@ -186,8 +183,7 @@
             </div>
         </form>
     </div>
-    <script type="text/javascript"
-        src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/werewolf_setup.js') }}"></script>
     <!--     <script type="text/javascript" src="../static/js/jquery-3.4.1.min.js"></script>
     <script type="text/javascript" src="../static/js/bootstrap.min.js"></script> -->
