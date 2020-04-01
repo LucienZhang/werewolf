@@ -428,7 +428,7 @@ class GameEngine(object):
         with Game.query.with_for_update().get(current_user.gid) as game:
             history = game.history
             now = GameEngine._current_step(game)
-            if now is not GameEnum.TURN_STEP_LAST_WORDS:
+            if now is not GameEnum.TURN_STEP_LAST_WORDS:  # todo maybe other steps in announce?
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
             if not my_role.args['shootable'] or str(my_role.position) not in game.history['dying']:
                 return GameEnum.GAME_MESSAGE_CANNOT_ACT.digest()
@@ -556,6 +556,7 @@ class GameEngine(object):
             for voter in game.history['voter_votee'][0]:
                 if str(voter) not in game.history['vote_result']:
                     forfeit.append(voter)
+            forfeit.sort()
             if forfeit and now in [GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
                 return GameEnum.GAME_MESSAGE_NOT_VOTED_YET.digest(*forfeit)
             for votee, voters in sorted(announce_result.items()):
@@ -588,7 +589,6 @@ class GameEngine(object):
                 return GameEnum.OK.digest()
             else:
                 # 平票
-                # todo 无人投票
                 if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_ELECT_VOTE]:
                     if now is GameEnum.TURN_STEP_VOTE:
                         game.steps.insert(game.now_index + 1, GameEnum.TURN_STEP_PK_TALK)
@@ -610,6 +610,8 @@ class GameEngine(object):
                     msg += '以下玩家以{}票再次平票：{}\n'.format(max_ticket, ','.join(map(str, most_voted)))
                     if now is GameEnum.TURN_STEP_PK_VOTE:
                         msg += '今天是平安日，无人被公投出局'
+                        while game.now_index + 1 < len(game.steps) and game.steps[game.now_index + 1] is GameEnum.TURN_STEP_LAST_WORDS:
+                            game.steps.pop(game.now_index + 1)
                     else:
                         msg += '警徽流失，本局游戏无警长'
                     publish_history(game.gid, msg)
@@ -695,6 +697,10 @@ class GameEngine(object):
                 publish_history(game.gid, '昨晚，以下位置的玩家倒下了，不分先后：{}'.format(
                     ','.join([str(d) for d in sorted(game.history['dying'])])
                 ))
+                for d in game.history['dying']:
+                    role = Role.query.filter(Role.gid == game.gid, Role.position == d).limit(1).first()
+                    role.alive = False
+                game.history['dying'] = {}
             else:
                 publish_history(game.gid, "昨晚是平安夜")
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
@@ -735,8 +741,11 @@ class GameEngine(object):
     @staticmethod
     def get_instruction_string(game: Game)->str:
         now = GameEngine._current_step(game)
-        if now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_PK_TALK, GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_ELECT_PK_TALK, GameEnum.TURN_STEP_LAST_WORDS]:
+        if now in [GameEnum.TURN_STEP_TALK, GameEnum.TURN_STEP_PK_TALK, GameEnum.TURN_STEP_ELECT_TALK, GameEnum.TURN_STEP_ELECT_PK_TALK]:
             return '结束发言'
+
+        if now is GameEnum.TURN_STEP_LAST_WORDS:
+            return '结束遗言'
 
         if now in [GameEnum.TURN_STEP_VOTE, GameEnum.TURN_STEP_PK_VOTE, GameEnum.TURN_STEP_ELECT_VOTE, GameEnum.TURN_STEP_ELECT_PK_VOTE]:
             return '结束投票'
