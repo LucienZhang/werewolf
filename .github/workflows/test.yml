@@ -34,10 +34,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Start Redis
-      uses: superchargejs/redis-github-action@v1
-      with:
-        redis-version: 5
+    - name: Set up Redis
+      uses: zhulik/redis-action@1.1.0
 
     - name: Test with pytest
       run: |
