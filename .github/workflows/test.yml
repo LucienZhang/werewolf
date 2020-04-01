@@ -28,10 +28,17 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    
+    - name: Start Redis
+      uses: superchargejs/redis-github-action@v1
+      with:
+        redis-version: 5
+
     - name: Test with pytest
       run: |
         pip install pytest
