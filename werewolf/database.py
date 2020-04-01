@@ -67,16 +67,6 @@ class User(db.Model, UserMixin):
     avatar = db.Column(db.Integer, nullable=False)
     gid = db.Column(db.Integer, nullable=False)  # gid=-1 means not in game
 
-    # def to_json(self) -> dict:
-    #     return {'uid': self.uid,
-    #             'username': self.table.username,
-    #             'password': self.table.password,
-    #             'login_token': self.table.login_token,
-    #             'name': self.name,
-    #             'avatar': self.avatar,
-    #             'gid': self.gid,
-    #             'ishost': self.ishost}
-
 
 class Game(db.Model):
     __tablename__ = 'games'

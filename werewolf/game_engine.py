@@ -706,7 +706,8 @@ class GameEngine(object):
             return GameEnum.STEP_FLAG_AUTO_MOVE_ON
         elif now is GameEnum.ROLE_TYPE_SEER:
             publish_music(game.gid, 'seer_start_voice', 'seer_bgm', True)
-            seer_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SEER).scalar()
+            seer_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True),
+                                                                        Role.role_type == GameEnum.ROLE_TYPE_SEER).scalar()
             if seer_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_SEER_{game.step_cnt}', func=GameEngine._timeout_move_on,
                                   args=(game.gid, game.step_cnt),
@@ -714,7 +715,8 @@ class GameEngine(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_WITCH:
             publish_music(game.gid, 'witch_start_voice', 'witch_bgm', True)
-            witch_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_WITCH).scalar()
+            witch_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True),
+                                                                         Role.role_type == GameEnum.ROLE_TYPE_WITCH).scalar()
             if witch_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_WITCH_{game.step_cnt}', func=GameEngine._timeout_move_on,
                                   args=(game.gid, game.step_cnt),
@@ -722,7 +724,8 @@ class GameEngine(object):
             return GameEnum.STEP_FLAG_WAIT_FOR_ACTION
         elif now is GameEnum.ROLE_TYPE_SAVIOR:
             publish_music(game.gid, 'savior_start_voice', 'savior_bgm', True)
-            savior_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True), Role.role_type == GameEnum.ROLE_TYPE_SAVIOR).scalar()
+            savior_cnt = db.session.query(db.func.count(Role.uid)).filter(Role.gid == game.gid, Role.alive == int(True),
+                                                                          Role.role_type == GameEnum.ROLE_TYPE_SAVIOR).scalar()
             if savior_cnt == 0:
                 scheduler.add_job(id=f'{game.gid}_SAVIOR', func=GameEngine._timeout_move_on,
                                   args=(game.gid, game.step_cnt),

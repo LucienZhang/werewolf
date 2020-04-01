@@ -9,8 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 
 def generate_login_token(username):
-    return sha1((current_app.config["LOGIN_SECRET_KEY"] + username + str(datetime.utcnow().timestamp())).encode(
-        'utf-8')).hexdigest()
+    return sha1((current_app.config["LOGIN_SECRET_KEY"] + username + str(datetime.utcnow().timestamp())).encode('utf-8')).hexdigest()
 
 
 def init_login(app):
@@ -53,7 +52,8 @@ def user_logout() -> dict:
 
 def user_register() -> dict:
     avatar = 1
-    new_user = User(username=request.form['username'], password=request.form['password'], login_token='', nickname=request.form['nickname'], avatar=avatar, gid=-1)
+    new_user = User(username=request.form['username'], password=request.form['password'],
+                    login_token='', nickname=request.form['nickname'], avatar=avatar, gid=-1)
     try:
         db.session.add(new_user)
         db.session.commit()
