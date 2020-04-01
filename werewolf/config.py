@@ -12,6 +12,7 @@ class TestConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     LOGIN_SECRET_KEY = '123456'
+    REDIS_URL = "redis://localhost"
     TESTING = True
     GUNICORN = False
 

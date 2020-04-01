@@ -2,11 +2,10 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import current_user, login_required
 import functools
 from flask_sse import sse
-from werewolf.auth.login import user_login, user_logout, user_register
+from werewolf.auth import user_login, user_logout, user_register
 from werewolf.game_engine import GameEngine
 from werewolf.database import Game, User, Role
 from collections import Counter
-from werewolf.game_engine.step_processor import StepProcessor
 # from werewolf.utils.scheduler import scheduler
 # import datetime
 
@@ -58,7 +57,7 @@ def game():
                            days=current_game.days,
                            game_status=current_game.status,
                            skills=current_role.skills,
-                           next_step=StepProcessor.get_instruction_string(current_game) or '等待中',
+                           next_step=GameEngine.get_instruction_string(current_game) or '等待中',
                            dbtxt=(str(current_game.players) + str(
                                type(current_game.players)) + '\n<br />\n' + str(type(current_game.steps))))
 
