@@ -22,12 +22,7 @@ class GameEnum(LabelledEnum):
     TARGET_NO_ONE = (-1, '无目标')
 
     # 0
-    GAME_STATUS_UNKNOWN = (0, '未知状态')
-    GAME_STATUS_WAIT_TO_START = (1, '等待开始')
-    GAME_STATUS_READY = (2, '游戏已准备好')
-    GAME_STATUS_DAY = (3, '白天')
-    GAME_STATUS_NIGHT = (4, '夜晚')
-    # GAME_STATUS_FINISHED = (5, '游戏已结束')
+    OK = (1, 'OK')
 
     # 100
     VICTORY_MODE_UNKNOWN = (100, '未知胜利模式')
@@ -133,4 +128,10 @@ class GameEnum(LabelledEnum):
     GAME_TIMEOUT_RANDOM_FROM = (1300, 12)
     GAME_TIMEOUT_RANDOM_TO = (1301, 15)
 
-    OK = (9999, 'OK')
+    # 1400
+    GAME_STATUS_UNKNOWN = (1400, '未知状态')
+    GAME_STATUS_WAIT_TO_START = (1401, '等待开始')
+    GAME_STATUS_READY = (1402, '游戏已准备好')
+    GAME_STATUS_DAY = (1403, '白天')
+    GAME_STATUS_NIGHT = (1404, '夜晚')
+    # GAME_STATUS_FINISHED = (1405, '游戏已结束')

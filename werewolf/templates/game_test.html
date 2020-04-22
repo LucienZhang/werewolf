@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>狼人杀房间</title>
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/werewolf_game.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}"> -->
+</head>
+
+<body>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="{{ url_for('static', filename='js/game_test.js') }}"></script>
+
+    <!-- 
+
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script>
+        const gid_source = new EventSource("{{ url_for('sse.stream',channel=gid) }}");
+        // const uid_source = new EventSource("{{ url_for('sse.stream',channel='u'+uid|string) }}");
+    </script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/werewolf_game.js') }}"></script>
+    {% if ishost %}
+    <audio id="bgm_audio" loop></audio>
+    <audio id="instruction_audio"></audio>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/werewolf_game_host.js') }}"></script>
+    {% endif %} -->
+</body>
+
+</html>
